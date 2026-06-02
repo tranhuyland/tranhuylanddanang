@@ -26,7 +26,10 @@ export default async function NhaDatDetail({ params }: Props) {
   const item = data.find(p => p.slug === slug);
   if (!item) notFound();
   
-  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "" && a.startsWith("http")) : [];
+  // Xử lý tách nhiều ảnh: chỉ lấy các link bắt đầu bằng http, bỏ qua rác, phân tách bởi dấu phẩy
+  const danhSachAnh = item.anh 
+    ? item.anh.split(',').map((a: string) => a.trim()).filter((a: string) => a.startsWith("http")) 
+    : ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'];
 
   return (
     <>
@@ -37,23 +40,20 @@ export default async function NhaDatDetail({ params }: Props) {
         </Link>
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-          {/* Khu vực Slide Media thông minh luân chuyển hiển thị mượt mà giữa Video & Bộ sưu tập ảnh */}
+          {/* CƠ CHẾ TRƯỢT ẢNH (CAROUSEL) MƯỢT MÀ */}
           <div className="relative aspect-[16/10] bg-slate-100 w-full">
-            <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
-              {item.videoUrl && (
-                <div className="w-full h-full flex-shrink-0 snap-start relative">
-                  <iframe className="w-full h-full" src={item.videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                </div>
-              )}
+            <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth">
               {danhSachAnh.map((url: string, idx: number) => (
                 <div key={idx} className="w-full h-full flex-shrink-0 snap-start relative">
-                  <Image src={url} alt={item.tieude} fill className="object-cover" priority={idx === 0} sizes="(max-w-4xl) 100vw" />
+                  <Image src={url} alt={`${item.tieude} - Ảnh ${idx + 1}`} fill className="object-cover" priority={idx === 0} sizes="(max-w-4xl) 100vw" />
                 </div>
               ))}
             </div>
-            <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow">
-              <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{danhSachAnh.length} Ảnh
-            </div>
+            {danhSachAnh.length > 1 && (
+                <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow">
+                <Layers className="w-3 h-3 text-amber-400" /> {danhSachAnh.length} Ảnh
+                </div>
+            )}
           </div>
 
           <div className="p-6 sm:p-8">
@@ -71,7 +71,6 @@ export default async function NhaDatDetail({ params }: Props) {
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang}</span>
             </div>
 
-            {/* BẢNG THÔNG SỐ KHÔNG CÒN LỆCH CỘT */}
             <div className="grid grid-cols-3 gap-2 my-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 text-center font-semibold">
               <div>
                 <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Diện tích</div>
