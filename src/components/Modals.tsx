@@ -1,37 +1,55 @@
 'use client';
 import React, { useState } from "react";
-import { X, PenTool } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, PenTool } from "lucide-react";
 
-interface ModalsProps { type: "kygui"; isOpen: boolean; onClose: () => void; }
+interface ModalsProps { 
+  type: "product" | "kygui"; 
+  isOpen: boolean; 
+  onClose: () => void; 
+  data?: any; 
+}
 
-export function Modals({ type, isOpen, onClose }: ModalsProps) {
+export function Modals({ type, isOpen, onClose, data }: ModalsProps) {
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [kgTen, setKgTen] = useState("");
   const [kgDiaChi, setKgDiaChi] = useState("");
   const [kgGia, setKgGia] = useState("");
 
-  if (!isOpen || type !== "kygui") return null;
+  if (!isOpen) return null;
 
-  const handleKyGuiSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const msg = `Chào anh Huy, tôi muốn ký gửi nhà đất với thông tin:\n- Liên hệ: ${kgTen}\n- Địa chỉ: ${kgDiaChi}\n- Giá mong muốn: ${kgGia || "Thương lượng"}`;
-    navigator.clipboard.writeText(msg).then(() => {
-      alert("📋 Đã soạn và tự động sao chép thông tin ký gửi! Hệ thống tự động mở Zalo anh Huy, bạn chỉ cần bấm chọn 'DÁN' (Paste) và gửi đi là xong.");
-      window.open("https://zalo.me/0931555551", "_blank");
-      onClose();
-    }).catch(() => { window.open("https://zalo.me/0931555551", "_blank"); onClose(); });
-  };
+  // Xử lý Popup Sản phẩm
+  if (type === "product" && data) {
+    const images = data.anh.split(",").map((a: string) => a.trim()).filter((a: string) => a.startsWith("http"));
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden relative shadow-2xl">
+          <button onClick={onClose} className="absolute top-4 right-4 z-20 bg-black/50 text-white p-1 rounded-full"><X className="w-5 h-5" /></button>
+          
+          <div className="relative aspect-[4/3] flex items-center justify-center bg-slate-100">
+            <img src={images[currentIdx] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6'} alt={data.tieude} className="w-full h-full object-cover" />
+            {images.length > 1 && (
+              <>
+                <button onClick={() => setCurrentIdx((p) => (p - 1 + images.length) % images.length)} className="absolute left-2 z-10 bg-white/80 p-2 rounded-full"><ChevronLeft /></button>
+                <button onClick={() => setCurrentIdx((p) => (p + 1) % images.length)} className="absolute right-2 z-10 bg-white/80 p-2 rounded-full"><ChevronRight /></button>
+              </>
+            )}
+          </div>
+          <div className="p-5"><h3 className="font-bold text-lg">{data.tieude}</h3><p className="text-amber-600 font-bold">{data.gia}</p></div>
+        </div>
+      </div>
+    );
+  }
 
+  // Xử lý Popup Ký Gửi
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl p-6 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-        <h3 className="font-extrabold text-slate-900 text-base mb-1 flex items-center gap-2"><PenTool className="text-amber-500 w-4 h-4" /> Ký Gửi Nhanh Trong 10s</h3>
-        <p className="text-xs text-slate-400 mb-4">Thông tin đăng ký sẽ tự động chuyển tiếp sang ứng dụng Zalo anh Trần Huy.</p>
-        <form onSubmit={handleKyGuiSubmit} className="space-y-3 text-sm">
-          <div><label className="block font-bold text-slate-600 mb-1">Tên & SĐT Liên Hệ *</label><input type="text" required value={kgTen} onChange={(e) => setKgTen(e.target.value)} placeholder="Ví dụ: Anh Nam - 0905..." className="w-full bg-slate-50 border rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-500" /></div>
-          <div><label className="block font-bold text-slate-600 mb-1">Địa Chỉ Ký Gửi *</label><input type="text" required value={kgDiaChi} onChange={(e) => setKgDiaChi(e.target.value)} placeholder="Số nhà, tên đường, quận..." className="w-full bg-slate-50 border rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-500" /></div>
-          <div><label className="block font-bold text-slate-600 mb-1">Giá Bán Mong Muốn</label><input type="text" value={kgGia} onChange={(e) => setKgGia(e.target.value)} placeholder="Để trống nếu thương lượng" className="w-full bg-slate-50 border rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-500" /></div>
-          <button type="submit" className="w-full bg-slate-900 text-white font-bold rounded-xl py-3 text-sm mt-3 shadow-md transition-all active:scale-95">Xác Nhận Ký Gửi</button>
+      <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400"><X className="w-4 h-4" /></button>
+        <h3 className="font-extrabold text-base mb-4 flex items-center gap-2"><PenTool className="text-amber-500" /> Ký Gửi Nhanh</h3>
+        <form onSubmit={(e) => { e.preventDefault(); window.open(`https://zalo.me/0931555551`, "_blank"); onClose(); }} className="space-y-3">
+          <input type="text" required placeholder="Tên & SĐT..." className="w-full border rounded-xl px-3 py-2" onChange={(e) => setKgTen(e.target.value)} />
+          <input type="text" required placeholder="Địa chỉ..." className="w-full border rounded-xl px-3 py-2" onChange={(e) => setKgDiaChi(e.target.value)} />
+          <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl">Xác Nhận Ký Gửi</button>
         </form>
       </div>
     </div>
