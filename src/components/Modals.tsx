@@ -17,7 +17,6 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
 
   if (!isOpen) return null;
 
-  // CHỨC NĂNG 1: FORM XỬ LÝ KÝ GỬI NHÀ ĐẤT QUA ZALO ANH HUY
   const handleKyGuiSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const msg = `Chào anh Huy, tôi muốn ký gửi nhà đất với thông tin:\n- Liên hệ: ${kgTen}\n- Địa chỉ: ${kgDiaChi}\n- Giá mong muốn: ${kgGia || "Thương lượng"}`;
@@ -31,7 +30,6 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
     });
   };
 
-  // Tách mảng hình ảnh từ chuỗi ngăn cách bằng dấu phẩy Google Sheet
   const images = item?.anh ? item.anh.split(',').map((img: string) => img.trim()).filter(Boolean) : [];
 
   const nextImage = (e: React.MouseEvent) => {
@@ -51,7 +49,7 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       
-      {/* TRƯỜNG HỢP 1: HIỂN THỊ POPUP FORM KÝ GỬI NHÀ ĐẤT */}
+      {/* TRƯỜNG HỢP 1: POPUP FORM KÝ GỬI */}
       {type === "kygui" && (
         <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl p-6 relative" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
@@ -66,22 +64,28 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
         </div>
       )}
 
-      {/* TRƯỜNG HỢP 2: HIỂN THỊ POPUP CHI TIẾT SẢN PHẨM & SLIDER CHUYỂN ẢNH CÓ MŨI TÊN */}
+      {/* TRƯỜNG HỢP 2: POPUP CHI TIẾT SẢN PHẨM & SLIDER CHUYỂN ẢNH */}
       {type === "bds" && item && (
         <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-slate-100 text-slate-800 rounded-full z-10 shadow-md transition-colors"><X size={20} /></button>
 
-          {/* Khung Trình Chiếu Ảnh Slider */}
+          {/* Khung Slider Trình Chiếu Ảnh */}
           <div className="relative aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden">
             {images.length > 0 ? (
               <>
                 <img src={images[currentImgIndex]} className="w-full h-full object-contain" alt={`${item.tieude || 'BDS'} - Ảnh ${currentImgIndex + 1}`} />
                 {images.length > 1 && (
                   <>
-                    <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-10"><ChevronLeft size={24} /></button>
-                    <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-10"><ChevronRight size={24} /></button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 px-3 py-1.5 rounded-full z-10">
-                      {/* Thêm kiểu dữ liệu string cho biến chạy ẩn để vượt qua bộ kiểm tra TypeScript */}
+                    {/* Nút lướt ảnh sang TRÁI */}
+                    <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10 shadow-lg">
+                      <ChevronLeft size={24} />
+                    </button>
+                    {/* Nút lướt ảnh sang PHẢI */}
+                    <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10 shadow-lg">
+                      <ChevronRight size={24} />
+                    </button>
+                    {/* Hàng nút chấm chỉ số định vị trang ảnh */}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 px-3 py-1.5 rounded-full z-10">
                       {images.map((_img: string, idx: number) => (
                         <button key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === idx ? "bg-amber-500 scale-125" : "bg-white/60"}`} />
                       ))}
@@ -94,7 +98,7 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
             )}
           </div>
 
-          {/* Nội dung tin đăng */}
+          {/* Nội dung chi tiết tin đăng */}
           <div className="mt-5">
             <span className="inline-block bg-amber-50 text-amber-700 font-bold px-3 py-1 rounded-lg text-sm mb-2">{item.phân_loại || "Nhà Đất Đà Nẵng"}</span>
             <h2 className="text-xl md:text-2xl font-black text-slate-900 leading-snug">{item.tieude}</h2>
