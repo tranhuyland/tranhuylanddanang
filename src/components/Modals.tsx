@@ -18,7 +18,7 @@ export function Modals({ type, isOpen, item, onClose }: ModalsProps) {
     e.preventDefault();
     const msg = `Chào anh Huy, tôi muốn ký gửi nhà đất với thông tin:\n- Liên hệ: ${kgTen}\n- Địa chỉ: ${kgDiaChi}\n- Giá mong muốn: ${kgGia || "Thương lượng"}`;
     navigator.clipboard.writeText(msg).then(() => {
-      alert("📋 Đã soạn và tự động sao chép thông tin ký gửi! Hệ thống tự động mở Zalo anh Huy, bạn chỉ cần bấm chọn 'DÁN' (Paste) và gửi đi là xong.");
+      alert("📋 Đã soạn và tự động sao chép thông tin ký gửi! Hệ thống sẽ mở Zalo anh Huy, bạn chỉ cần bấm chọn 'DÁN' (Paste) và gửi đi là xong.");
       window.open("https://zalo.me/0931555551", "_blank");
       onClose();
     }).catch(() => { window.open("https://zalo.me/0931555551", "_blank"); onClose(); });
