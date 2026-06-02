@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RealEstateItem } from "@/lib/googleSheets";
-import { MapPin, Compass, Clock, Square, Bed, ChevronRight, X } from "lucide-react";
+import { MapPin, Compass, Clock, Square, Bed, ChevronRight, X, ArrowLeft } from "lucide-react";
 
 interface ListingSectionProps { allBdsItems: RealEstateItem[]; forceDistrict?: string; }
 
@@ -30,6 +30,16 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     return 1;
   });
   const itemsPerPage = 6;
+
+  // Khóa cuộn trang của nền khi Popup mở (giúp trải nghiệm giống như trang mới hoàn toàn)
+  useEffect(() => {
+    if (selectedProduct) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [selectedProduct]);
 
   // Tự động cuộn lên đầu danh sách sản phẩm khi đổi trang
   useEffect(() => {
@@ -60,7 +70,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     
     setFilteredItems(result);
     
-    // Chỉ reset về trang 1 nếu người dùng chủ động thay đổi bộ lọc
     const savedPage = parseInt(sessionStorage.getItem("bds_page") || "1");
     if (savedPage === 1) {
       setCurrentPage(1);
@@ -101,7 +110,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     return "bg-slate-900 text-white font-medium";
   };
 
-  // Hàm xử lý riêng khi bấm xem chi tiết sản phẩm để khóa số trang
   const handleViewDetail = (slug: string) => {
     setIsNavigating(true);
     router.push(`/nha-dat/${slug}`);
@@ -206,84 +214,108 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
         )}
       </main>
 
-      {/* Giao diện POPUP (MODAL) CHI TIẾT SẢN PHẨM */}
+      {/* GIAO DIỆN POPUP PHỦ KÍN TOÀN MÀN HÌNH (FULL PAGE MODAL) */}
       {selectedProduct && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 flex flex-col">
-            
+        <div className="fixed inset-0 bg-white z-[999] flex flex-col w-full h-screen overflow-y-auto animate-in fade-in slide-in-from-bottom duration-200">
+          
+          {/* Thanh tiêu đề trên cùng (Sticky Header) giống như app điện thoại */}
+          <div className="sticky top-0 bg-white border-b border-slate-100 px-4 py-4 flex items-center gap-3 z-20 shadow-sm">
             <button 
               onClick={() => setSelectedProduct(null)}
-              className="absolute top-4 right-4 z-10 bg-black/50 text-white hover:bg-black/80 p-2 rounded-full transition-colors focus:outline-none"
+              className="text-slate-800 hover:bg-slate-100 p-2 rounded-full transition-colors flex items-center justify-center"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div className="flex-1 truncate">
+              <span className="text-[10px] font-bold uppercase text-amber-500 tracking-wider block mb-0.5">{selectedProduct.khuVucFull}</span>
+              <h2 className="font-bold text-slate-900 text-sm truncate">{selectedProduct.tieude}</h2>
+            </div>
+            <button 
+              onClick={() => setSelectedProduct(null)}
+              className="text-slate-400 hover:bg-slate-100 p-2 rounded-full transition-colors flex items-center justify-center md:flex hidden"
             >
               <X className="w-5 h-5" />
             </button>
+          </div>
 
-            <div className="relative w-full aspect-[16/10] bg-slate-100">
+          {/* Phần nội dung chi tiết cuộn trang bên dưới */}
+          <div className="w-full max-w-4xl mx-auto flex-1 pb-24">
+            
+            {/* Ảnh lớn và các Tag trạng thái */}
+            <div className="relative w-full aspect-[16/10] sm:aspect-[21/9] bg-slate-100 sm:rounded-2xl sm:mt-4 overflow-hidden">
               <Image 
                 src={layUrlAnhChuan(selectedProduct.anh)} 
                 alt={selectedProduct.tieude} 
                 fill 
                 className="object-cover" 
-                sizes="(max-w-2xl) 100vw"
+                sizes="(max-w-4xl) 100vw"
+                priority
               />
-              <span className={`absolute bottom-4 left-4 text-xs px-3 py-1.5 rounded-xl shadow-md ${getTagStyle(selectedProduct.tag)}`}>
+              <span className={`absolute top-4 left-4 text-xs px-3 py-1.5 rounded-xl shadow-md ${getTagStyle(selectedProduct.tag)}`}>
                 {selectedProduct.tag || 'Nhà Đất'}
               </span>
-              <span className="absolute bottom-4 right-4 bg-slate-900/95 text-amber-400 font-black text-base px-4 py-1.5 rounded-2xl shadow-xl">
+              <span className="absolute bottom-4 right-4 bg-slate-900/95 text-amber-400 font-black text-lg px-5 py-2 rounded-2xl shadow-xl">
                 {selectedProduct.gia}
               </span>
             </div>
 
-            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-              <div className="flex items-center gap-1.5 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>{selectedProduct.khuVucFull}</span>
+            {/* Thông tin mô tả chi tiết sản phẩm */}
+            <div className="p-4 sm:p-6 space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                  <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>{selectedProduct.khuVucFull}</span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+                  {selectedProduct.tieude}
+                </h1>
               </div>
-              
-              <h2 className="text-xl font-extrabold text-slate-900 leading-snug">
-                {selectedProduct.tieude}
-              </h2>
 
-              <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl text-center">
+              {/* Hộp thông số tiện ích trực quan */}
+              <div className="grid grid-cols-3 gap-3 bg-slate-50 p-5 rounded-2xl text-center border border-slate-100">
                 <div className="flex flex-col items-center justify-center border-r border-slate-200">
-                  <Square className="w-5 h-5 text-amber-500 mb-1" />
-                  <span className="text-xs text-slate-400 font-medium">Diện tích</span>
-                  <span className="text-sm font-bold text-slate-800">{selectedProduct.dienTich}</span>
+                  <Square className="w-6 h-6 text-amber-500 mb-1" />
+                  <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Diện tích</span>
+                  <span className="text-base font-black text-slate-800 mt-0.5">{selectedProduct.dienTich}</span>
                 </div>
                 <div className="flex flex-col items-center justify-center border-r border-slate-200">
-                  <Bed className="w-5 h-5 text-amber-500 mb-1" />
-                  <span className="text-xs text-slate-400 font-medium">Phòng ngủ</span>
-                  <span className="text-sm font-bold text-slate-800">{selectedProduct.phongNgu || 'Đất ở'}</span>
+                  <Bed className="w-6 h-6 text-amber-500 mb-1" />
+                  <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Phòng ngủ</span>
+                  <span className="text-base font-black text-slate-800 mt-0.5">{selectedProduct.phongNgu || 'Đất ở'}</span>
                 </div>
                 <div className="flex flex-col items-center justify-center">
-                  <Compass className="w-5 h-5 text-amber-500 mb-1" />
-                  <span className="text-xs text-slate-400 font-medium">Hướng</span>
-                  <span className="text-sm font-bold text-slate-800">{selectedProduct.huong || 'Chưa rõ'}</span>
+                  <Compass className="w-6 h-6 text-amber-500 mb-1" />
+                  <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Hướng</span>
+                  <span className="text-base font-black text-slate-800 mt-0.5">{selectedProduct.huong || 'Chưa rõ'}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
-                <span>Đăng bán từ: {formatTimeAgo(selectedProduct.ngayDang)} ({selectedProduct.ngayDang})</span>
+              {/* Thông tin thời gian đăng */}
+              <div className="flex items-center gap-2 text-xs text-slate-400 border-t border-slate-100 pt-4 font-medium">
+                <Clock className="w-4 h-4" />
+                <span>Cập nhật lịch đăng: {formatTimeAgo(selectedProduct.ngayDang)} vào ngày ({selectedProduct.ngayDang})</span>
               </div>
             </div>
+          </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3 rounded-b-3xl">
+          {/* Thanh công cụ hành động dưới cùng cố định (Fixed Bottom Bar) */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20 flex justify-center">
+            <div className="w-full max-w-4xl flex gap-3">
               <button 
                 onClick={() => setSelectedProduct(null)}
-                className="flex-1 bg-slate-200 text-slate-700 text-sm font-bold py-3.5 rounded-xl hover:bg-slate-300 transition-colors"
+                className="flex-1 bg-slate-100 text-slate-700 text-sm font-bold py-4 rounded-xl hover:bg-slate-200 transition-colors"
               >
-                Đóng lại
+                Quay lại danh sách
               </button>
               <button
                 onClick={() => handleViewDetail(selectedProduct.slug)}
-                className="flex-1 bg-amber-500 text-slate-900 text-sm font-bold py-3.5 rounded-xl hover:bg-amber-400 transition-colors text-center flex items-center justify-center gap-1"
+                className="flex-1 bg-amber-500 text-slate-900 text-sm font-bold py-4 rounded-xl hover:bg-amber-400 transition-colors text-center flex items-center justify-center gap-1 shadow-md shadow-amber-500/20"
               >
-                Xem Toàn Bộ Chi Tiết <ChevronRight className="w-4 h-4" />
+                Xem chi tiết & liên hệ <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-
           </div>
+
         </div>
       )}
     </>
