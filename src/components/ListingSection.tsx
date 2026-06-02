@@ -1,27 +1,25 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "lucide-react";
-import { RealEstateItem } from "@/lib/googleSheets";
-import { MapPin, Compass, Clock, Square, Bed, ChevronRight, PenTool } from "lucide-react";
+import { MapPin, Compass, Clock, Square, ChevronRight, PenTool } from "lucide-react";
 import { Modals } from "./Modals";
 
 interface ListingSectionProps {
-  allBdsItems: RealEstateItem[];
+  allBdsItems: any[];
   forceDistrict?: string;
 }
 
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
-  const [filteredItems, setFilteredItems] = useState<RealEstateItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
   const [loaiHinh, setLoaiHinh] = useState("all");
   const [khoangGia, setKhoangGia] = useState("all");
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // Chỉ dùng modal cho form "kygui" nhanh, bds sẽ dùng Link nhảy URL
+  // Chỉ dùng modal cho form "kygui" nhanh, bài đăng bds sẽ dùng Link nhảy URL trang riêng
   const [modalType, setModalType] = useState<"kygui" | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
@@ -62,12 +60,20 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // Hệ thống bộ lọc giao diện
+    // Hệ thống bộ lọc giao diện dựa trên mảng an toàn (ép kiểu lowercase chống lỗi lệch chữ)
     if (khuVuc !== "all") {
-      result = result.filter(i => i.diaChi?.toLowerCase().includes(khuVuc.toLowerCase()) || i.khuVucFull?.toLowerCase().includes(khuVuc.toLowerCase()));
+      result = result.filter((i: any) => {
+        const checkDiaChi = i.diaChi || i.diChi || i.dia_chi || "";
+        const checkKhuVuc = i.khuVucFull || i.khuVuc || "";
+        return checkDiaChi.toLowerCase().includes(khuVuc.toLowerCase()) || checkKhuVuc.toLowerCase().includes(khuVuc.toLowerCase());
+      });
     }
     if (loaiHinh !== "all") {
-      result = result.filter(i => i.phân_loại?.toLowerCase().includes(loaiHinh.toLowerCase()) || i.tieude?.toLowerCase().includes(loaiHinh.toLowerCase()));
+      result = result.filter((i: any) => {
+        const checkPhanLoai = i.phân_loại || i.phanLoai || i.loaiHinh || "";
+        const checkTieude = i.tieude || i.tieuDe || "";
+        return checkPhanLoai.toLowerCase().includes(loaiHinh.toLowerCase()) || checkTieude.toLowerCase().includes(loaiHinh.toLowerCase());
+      });
     }
     if (khoangGia !== "all") {
       const parseGia = (giaStr: string) => {
@@ -82,12 +88,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       else if (khoangGia === "tren5") result = result.filter(i => getGiaNumber(i) > 5.0);
     }
     if (huong !== "all") {
-      result = result.filter(i => i.huong?.toLowerCase().includes(huong.toLowerCase()));
+      result = result.filter((i: any) => (i.huong || "").toLowerCase().includes(huong.toLowerCase()));
     }
     if (selectedTag === "mattien") {
-      result = result.filter(i => i.isMatTien === true || i.tieude?.toLowerCase().includes("mặt tiền") || i.tag?.toLowerCase().includes("mặt tiền"));
+      result = result.filter((i: any) => i.isMatTien === true || (i.tieude || "").toLowerCase().includes("mặt tiền") || (i.tag || "").toLowerCase().includes("mặt tiền"));
     } else if (selectedTag === "chinhchu") {
-      result = result.filter(i => i.tag?.toLowerCase().includes("chính chủ") || i.mota?.toLowerCase().includes("chính chủ"));
+      result = result.filter((i: any) => (i.tag || "").toLowerCase().includes("chính chủ") || (i.mota || i.moTa || "").toLowerCase().includes("chính chủ"));
     }
     
     setFilteredItems(result);
@@ -164,14 +170,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 2. DANH SÁCH SẢN PHẨM NHẢY URL TRANG RIÊNG BIỆT */}
+      {/* 2. DANH SÁCH SẢN PHẨM NHẢY URL TRANG RIÊNG BIỆT - GIỮ NGUYÊN LINK CŨ CỦA ANH HUY */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
             {currentItems.map((item) => {
               const thumbnail = layUrlAnhChuan(item.anh);
-              const displayLocation = item.diaChi || "Đà Nẵng";
-              const displayTime = item.ngayDang || "";
+              const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
+              const displayTime = item.ngayDang || item.ngay || "";
 
               return (
                 <a 
@@ -182,7 +188,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
                     <span className="absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm bg-slate-900 text-white font-medium">
-                      {item.phân_loại || 'Nhà Đất'}
+                      {item.phân_loại || item.loaiHinh || 'Nhà Đất'}
                     </span>
                     {item.huong && (
                       <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
@@ -225,7 +231,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
 
-        {/* PHÂN TRANG */}
+        {/* PHÂN TRANG THÔNG MINH */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
