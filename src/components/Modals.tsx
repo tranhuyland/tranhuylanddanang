@@ -17,7 +17,7 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
 
   if (!isOpen) return null;
 
-  // FORM CHỨC NĂNG 1: XỬ LÝ KÝ GỬI NHÀ ĐẤT QUA ZALO CỦA ANH HUY
+  // CHỨC NĂNG 1: FORM XỬ LÝ KÝ GỬI NHÀ ĐẤT QUA ZALO ANH HUY
   const handleKyGuiSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const msg = `Chào anh Huy, tôi muốn ký gửi nhà đất với thông tin:\n- Liên hệ: ${kgTen}\n- Địa chỉ: ${kgDiaChi}\n- Giá mong muốn: ${kgGia || "Thương lượng"}`;
@@ -25,10 +25,13 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
       alert("📋 Đã soạn và tự động sao chép thông tin ký gửi! Hệ thống tự động mở Zalo anh Huy, bạn chỉ cần bấm chọn 'DÁN' (Paste) và gửi đi là xong.");
       window.open("https://zalo.me/0931555551", "_blank");
       onClose();
-    }).catch(() => { window.open("https://zalo.me/0931555551", "_blank"); onClose(); });
+    }).catch(() => { 
+      window.open("https://zalo.me/0931555551", "_blank"); 
+      onClose(); 
+    });
   };
 
-  // Tách mảng hình ảnh từ chuỗi ngăn cách bằng dấu phẩy
+  // Tách mảng hình ảnh từ chuỗi ngăn cách bằng dấu phẩy Google Sheet
   const images = item?.anh ? item.anh.split(',').map((img: string) => img.trim()).filter(Boolean) : [];
 
   const nextImage = (e: React.MouseEvent) => {
@@ -63,7 +66,7 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
         </div>
       )}
 
-      {/* TRƯỜNG HỢP 2: HIỂN THỊ POPUP CHI TIẾT SẢN PHẨM & SLIDER CHUYỂN ẢNH */}
+      {/* TRƯỜNG HỢP 2: HIỂN THỊ POPUP CHI TIẾT SẢN PHẨM & SLIDER CHUYỂN ẢNH CÓ MŨI TÊN */}
       {type === "bds" && item && (
         <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-slate-100 text-slate-800 rounded-full z-10 shadow-md transition-colors"><X size={20} /></button>
@@ -72,13 +75,14 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
           <div className="relative aspect-video w-full bg-slate-900 rounded-2xl overflow-hidden">
             {images.length > 0 ? (
               <>
-                <img src={images[currentImgIndex]} className="w-full h-full object-contain" alt={`${item.tieude} - Ảnh ${currentImgIndex + 1}`} />
+                <img src={images[currentImgIndex]} className="w-full h-full object-contain" alt={`${item.tieude || 'BDS'} - Ảnh ${currentImgIndex + 1}`} />
                 {images.length > 1 && (
                   <>
                     <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-10"><ChevronLeft size={24} /></button>
                     <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-10"><ChevronRight size={24} /></button>
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 px-3 py-1.5 rounded-full z-10">
-                      {images.map((_, idx) => (
+                      {/* Thêm kiểu dữ liệu string cho biến chạy ẩn để vượt qua bộ kiểm tra TypeScript */}
+                      {images.map((_img: string, idx: number) => (
                         <button key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === idx ? "bg-amber-500 scale-125" : "bg-white/60"}`} />
                       ))}
                     </div>
