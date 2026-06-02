@@ -26,7 +26,7 @@ export default async function NhaDatDetail({ params }: Props) {
   const item = data.find(p => p.slug === slug);
   if (!item) notFound();
   
-  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "") : [];
+  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "" && a.startsWith("http")) : [];
 
   return (
     <>
@@ -37,6 +37,7 @@ export default async function NhaDatDetail({ params }: Props) {
         </Link>
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
+          {/* Khu vực Slide Media thông minh luân chuyển hiển thị mượt mà giữa Video & Bộ sưu tập ảnh */}
           <div className="relative aspect-[16/10] bg-slate-100 w-full">
             <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
               {item.videoUrl && (
