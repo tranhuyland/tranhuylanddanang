@@ -26,13 +26,24 @@ export default async function NhaDatDetail({ params }: Props) {
   const item: any = data.find(p => p.slug === slug);
   if (!item) notFound();
   
-  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()) : [];
+  // Thuật toán phòng thủ vá lỗi chuỗi text ảnh
+  const layDanhSachAnhChuan = (chuoiAnh: string) => {
+    if (!chuoiAnh) return ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80'];
+    return chuoiAnh.split(",").map(a => a.trim()).filter(a => a !== "").map(url => {
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        return "https://images.unsplash.com/" + url;
+      }
+      return url;
+    });
+  };
+
+  const danhSachAnh = layDanhSachAnhChuan(item.anh);
 
   return (
     <>
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
           <ChevronLeft className="w-4 h-4" /> QUAY LẠI TRANG CHỦ
         </Link>
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
@@ -51,7 +62,7 @@ export default async function NhaDatDetail({ params }: Props) {
           <div className="p-6 sm:p-8">
             <div className="flex items-center justify-between">
               <span className="bg-amber-500 text-slate-900 font-extrabold text-base px-3 py-1 rounded-xl shadow-sm">{item.gia}</span>
-              <span className="text-xs text-slate-400 font-bold uppercase bg-slate-50 px-2.5 py-1 rounded-lg border flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || 'Sổ hồng chính chủ'}</span>
+              <span className="text-xs text-slate-400 font-bold uppercase bg-slate-50 px-2.5 py-1 rounded-lg border flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || 'Sổ hồng sẵn sàng'}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 leading-snug">{item.tieude || item.title}</h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-400 text-xs mt-2 border-b border-slate-100 pb-4 font-semibold">
@@ -67,7 +78,7 @@ export default async function NhaDatDetail({ params }: Props) {
               {item.linkMap && <a href={item.linkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 text-emerald-700 font-bold border rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5"><Map className="w-4 h-4" /> Vị Trí Bản Đồ</a>}
               {item.anhSoDo && <a href={item.anhSoDo} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 text-indigo-700 font-bold border rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
             </div>
-            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-2">Mô tả chi tiết:</h4>
+            <h4 class="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-2">Mô tả chi tiết:</h4>
             <p className="text-slate-700 text-sm leading-relaxed text-justify whitespace-pre-line mb-8">{item.moTa}</p>
             <div className="flex gap-3 border-t border-slate-100 pt-6">
               <a href="tel:0931555551" className="flex-1 bg-slate-900 text-white font-extrabold rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-sm shadow-md"><Phone className="w-4 h-4 text-amber-400 fill-amber-400" /> Gọi Thương Lượng</a>
