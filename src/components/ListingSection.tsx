@@ -1,13 +1,14 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { RealEstateItem } from "@/lib/googleSheets";
 import { MapPin, Compass, Clock, Square, Bed, ChevronRight } from "lucide-react";
+import { Modals } from "./Modals"; // Import popup slider ảnh chi tiết
 
 interface ListingSectionProps { allBdsItems: RealEstateItem[]; forceDistrict?: string; }
 
 export default function ListingSection({ allBdsItems, forceDistrict }: ListingSectionProps) {
+  const [selectedProduct, setSelectedProduct] = useState<RealEstateItem | null>(null);
   const [filteredItems, setFilteredItems] = useState<RealEstateItem[]>(allBdsItems);
   const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
   const [loaiHinh, setLoaiHinh] = useState("all");
@@ -41,9 +42,28 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     }
   }, [currentPage]);
 
-  // Bộ lọc tìm kiếm dữ liệu bất động sản
+  // Bộ lọc tìm kiếm dữ liệu bất động sản + Tự động sắp xếp bài mới nhất lên đầu tiên
   useEffect(() => {
-    let result = allBdsItems;
+    let result = [...allBdsItems]; // Tạo mảng bản sao để sắp xếp không ảnh hưởng data gốc
+
+    // --- LOGIC SẮP XẾP SẢN PHẨM MỚI NHẤT LÊN ĐẦU TIÊN ---
+    result.sort((a, b) => {
+      if (a.ngayDang && b.ngayDang) {
+        // Hàm chuyển đổi định dạng ngày DD/MM/YYYY hoặc DD-MM-YYYY thành Object Date để so sánh chính xác
+        const parseDate = (dStr: string) => {
+          const parts = dStr.split(/[-/]/);
+          if (parts.length === 3) {
+            return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime();
+          }
+          return 0;
+        };
+        return parseDate(b.ngayDang) - parseDate(a.ngayDang); // Mới nhất đứng trước
+      }
+      // Nếu không có ngày đăng, ưu tiên xếp theo ID giảm dần (ID lớn nạp sau lên đầu)
+      return Number(b.id) - Number(a.id);
+    });
+
+    // --- HỆ THỐNG BỘ LỌC CỦA ANH HUY ---
     if (khuVuc !== "all") result = result.filter(i => i.khuVuc === khuVuc);
     if (loaiHinh !== "all") result = result.filter(i => i.loaiHinh === loaiHinh);
     if (khoangGia !== "all") {
@@ -136,16 +156,16 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
         </div>
       </section>
 
-      {/* 2. DANH SÁCH LƯỚI SẢN PHẨM CHUYỂN TRANG 100% HTML */}
+      {/* 2. DANH SÁCH SẢN PHẨM SỬ DỤNG POPUP MODAL ĐỂ GIỮ VỊ TRÍ TUYỆT ĐỐI */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {currentItems.map((item) => {
             const thumbnail = layUrlAnhChuan(item.anh);
             return (
-              <Link 
-                href={`/nha-dat/${item.slug}`} 
+              <div 
+                onClick={() => setSelectedProduct(item)} // Mở Popup trực tiếp thay thế Link nhảy trang
                 key={item.id}
-                className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
+                className="cursor-pointer bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                   <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
@@ -164,12 +184,12 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
                     <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider">Chi tiết <ChevronRight className="w-3 h-3" /></span>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
 
-        {/* PHÂN TRANG THÔNG MINH KHÔNG LO MẤT VỊ TRÍ */}
+        {/* PHÂN TRANG THÔNG MINH */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
@@ -184,6 +204,15 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
           </div>
         )}
       </main>
+
+      {/* HIỂN THỊ POPUP SLIDER ẢNH KHI ĐƯỢC CHỌN SẢN PHẨM */}
+      {selectedProduct && (
+        <Modals 
+          isOpen={!!selectedProduct} 
+          onClose={() => setSelectedProduct(null)} 
+          item={selectedProduct} 
+        />
+      )}
     </>
   );
 }
