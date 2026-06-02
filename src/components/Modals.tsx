@@ -33,14 +33,14 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
   const images = item?.anh ? item.anh.split(',').map((img: string) => img.trim()).filter(Boolean) : [];
 
   const nextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Không làm đóng Modal khi click lướt ảnh
     if (images.length > 0) {
       setCurrentImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     }
   };
 
   const prevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Không làm đóng Modal khi click lướt ảnh
     if (images.length > 0) {
       setCurrentImgIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     }
@@ -64,7 +64,7 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
         </div>
       )}
 
-      {/* TRƯỜNG HỢP 2: POPUP CHI TIẾT SẢN PHẨM & SLIDER CHUYỂN ẢNH */}
+      {/* TRƯỜNG HỢP 2: POPUP CHI TIẾT SẢN PHẨM & SLIDER CHUYỂN ẢNH CÓ MŨI TÊN */}
       {type === "bds" && item && (
         <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-slate-100 text-slate-800 rounded-full z-10 shadow-md transition-colors"><X size={20} /></button>
@@ -76,11 +76,11 @@ export function Modals({ type, isOpen, onClose, item }: ModalsProps) {
                 <img src={images[currentImgIndex]} className="w-full h-full object-contain" alt={`${item.tieude || 'BDS'} - Ảnh ${currentImgIndex + 1}`} />
                 {images.length > 1 && (
                   <>
-                    {/* Nút lướt ảnh sang TRÁI */}
+                    {/* Nút lướt ảnh sang TRÁI cố định */}
                     <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10 shadow-lg">
                       <ChevronLeft size={24} />
                     </button>
-                    {/* Nút lướt ảnh sang PHẢI */}
+                    {/* Nút lướt ảnh sang PHẢI cố định */}
                     <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10 shadow-lg">
                       <ChevronRight size={24} />
                     </button>
