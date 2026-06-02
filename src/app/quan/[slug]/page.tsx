@@ -41,9 +41,9 @@ export default async function DistrictPage({ params }: Props) {
   return (
     <>
       <Header />
-      <div class="bg-slate-900 text-white text-center py-12">
-        <h1 class="text-3xl font-extrabold uppercase">Nhà Đất Quận {districtName}</h1>
-        <p class="text-slate-400 text-xs mt-2 font-medium">Kho sản phẩm chính chủ • Khảo sát thực tế • Không tin ảo</p>
+      <div className="bg-slate-900 text-white text-center py-12">
+        <h1 className="text-3xl font-extrabold uppercase">Nhà Đất Quận {districtName}</h1>
+        <p className="text-slate-400 text-xs mt-2 font-medium">Kho sản phẩm chính chủ • Khảo sát thực tế • Không tin ảo</p>
       </div>
       <ListingSection allBdsItems={filteredData} forceDistrict={districtName} />
       <Footer />
