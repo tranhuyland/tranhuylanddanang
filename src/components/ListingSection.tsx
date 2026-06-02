@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { RealEstateItem } from "@/lib/googleSheets";
-import { MapPin, Compass, Clock, Square, Bed, ChevronRight } from "lucide-react";
+import { MapPin, Compass, Clock, Square, Bed, ChevronRight, X } from "lucide-react";
 
 interface ListingSectionProps { allBdsItems: RealEstateItem[]; forceDistrict?: string; }
 
@@ -15,6 +15,9 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
   
+  // State quản lý sản phẩm được chọn để hiển thị Popup
+  const [selectedProduct, setSelectedProduct] = useState<RealEstateItem | null>(null);
+  
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window !== "undefined") {
       return parseInt(sessionStorage.getItem("bds_page") || "1");
@@ -23,8 +26,15 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
   });
   const itemsPerPage = 6;
 
+  // Tự động cuộn lên đầu danh sách sản phẩm khi đổi trang
   useEffect(() => {
     sessionStorage.setItem("bds_page", currentPage.toString());
+    
+    // Tìm phần tử danh sách và cuộn lên mượt mà
+    const element = document.getElementById("listing-section");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }, [currentPage]);
 
   useEffect(() => {
@@ -125,16 +135,15 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
         </div>
       </section>
 
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20">
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {currentItems.map((item) => {
             const thumbnail = layUrlAnhChuan(item.anh);
             return (
-              <Link 
-                href={`/nha-dat/${item.slug}`} 
-                key={item.id} 
-                scroll={false}
-                className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
+              <div 
+                key={item.id}
+                onClick={() => setSelectedProduct(item)}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 cursor-pointer"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                   <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
@@ -155,18 +164,116 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
                     <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider">Chi tiết <ChevronRight className="w-3 h-3" /></span>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
+
+        {/* Phân trang */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
-              <button key={idx} onClick={(e) => { e.preventDefault(); setCurrentPage(idx + 1); }} className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600"}`}>{idx + 1}</button>
+              <button 
+                key={idx} 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  setCurrentPage(idx + 1); 
+                }} 
+                className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600"}`}
+              >
+                {idx + 1}
+              </button>
             ))}
           </div>
         )}
       </main>
+
+      {/* Giao diện POPUP (MODAL) CHI TIẾT SẢN PHẨM */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 flex flex-col">
+            
+            {/* Nút đóng Popup */}
+            <button 
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-4 right-4 z-10 bg-black/50 text-white hover:bg-black/80 p-2 rounded-full transition-colors focus:outline-none"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Hình ảnh lớn trong Popup */}
+            <div className="relative w-full aspect-[16/10] bg-slate-100">
+              <Image 
+                src={layUrlAnhChuan(selectedProduct.anh)} 
+                alt={selectedProduct.tieude} 
+                fill 
+                className="object-cover" 
+                sizes="(max-w-2xl) 100vw"
+              />
+              <span className={`absolute bottom-4 left-4 text-xs px-3 py-1.5 rounded-xl shadow-md ${getTagStyle(selectedProduct.tag)}`}>
+                {selectedProduct.tag || 'Nhà Đất'}
+              </span>
+              <span className="absolute bottom-4 right-4 bg-slate-900/95 text-amber-400 font-black text-base px-4 py-1.5 rounded-2xl shadow-xl">
+                {selectedProduct.gia}
+              </span>
+            </div>
+
+            {/* Nội dung thông tin chi tiết */}
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+              <div className="flex items-center gap-1.5 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>{selectedProduct.khuVucFull}</span>
+              </div>
+              
+              <h2 className="text-xl font-extrabold text-slate-900 leading-snug">
+                {selectedProduct.tieude}
+              </h2>
+
+              {/* Thông số chi tiết */}
+              <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl text-center">
+                <div className="flex flex-col items-center justify-center border-r border-slate-200">
+                  <Square className="w-5 h-5 text-amber-500 mb-1" />
+                  <span className="text-xs text-slate-400 font-medium">Diện tích</span>
+                  <span className="text-sm font-bold text-slate-800">{selectedProduct.dienTich}</span>
+                </div>
+                <div className="flex flex-col items-center justify-center border-r border-slate-200">
+                  <Bed className="w-5 h-5 text-amber-500 mb-1" />
+                  <span className="text-xs text-slate-400 font-medium">Phòng ngủ</span>
+                  <span className="text-sm font-bold text-slate-800">{selectedProduct.phongNgu || 'Đất ở'}</span>
+                </div>
+                <div className="flex flex-col items-center justify-center">
+                  <Compass className="w-5 h-5 text-amber-500 mb-1" />
+                  <span className="text-xs text-slate-400 font-medium">Hướng</span>
+                  <span className="text-sm font-bold text-slate-800">{selectedProduct.huong || 'Chưa rõ'}</span>
+                </div>
+              </div>
+
+              {/* Nhãn thời gian */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                <span>Đăng bán từ: {formatTimeAgo(selectedProduct.ngayDang)} ({selectedProduct.ngayDang})</span>
+              </div>
+            </div>
+
+            {/* Thanh điều hướng dưới cùng Popup */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3 rounded-b-3xl">
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                className="flex-1 bg-slate-200 text-slate-700 text-sm font-bold py-3.5 rounded-xl hover:bg-slate-300 transition-colors"
+              >
+                Đóng lại
+              </button>
+              <Link 
+                href={`/nha-dat/${selectedProduct.slug}`}
+                className="flex-1 bg-amber-500 text-slate-900 text-sm font-bold py-3.5 rounded-xl hover:bg-amber-400 transition-colors text-center flex items-center justify-center gap-1"
+              >
+                Xem Toàn Bộ Chi Tiết <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      )}
     </>
   );
 }
