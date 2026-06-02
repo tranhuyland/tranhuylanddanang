@@ -14,7 +14,7 @@ export default function About() {
         </div>
         <div className="bg-slate-50 border p-8 sm:p-12 rounded-[2.5rem] flex flex-col justify-center">
           <p className="text-amber-500 uppercase tracking-widest text-xs font-bold mb-2">THỊ TRƯỜNG ĐÀ NẴNG</p>
-          <h3 class="text-3xl font-extrabold text-slate-900 mb-5">Phân Tích Địa Bàn Nổi Bật</h3>
+          <h3 className="text-3xl font-extrabold text-slate-900 mb-5">Phân Tích Địa Bàn Nổi Bật</h3>
           <p className="text-slate-600 text-sm leading-relaxed text-justify">Dòng tiền lớn đổ mạnh về khu vực quận Hải Châu và Cẩm Lệ nhờ hạ tầng đồng bộ, mật độ cư dân sầm uất và tính thanh khoản bất động sản thổ cư vượt trội.</p>
         </div>
       </div>
