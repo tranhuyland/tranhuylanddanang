@@ -15,14 +15,12 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
   
-  // Logic ghi nhớ trang bằng sessionStorage
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window !== "undefined") {
       return parseInt(sessionStorage.getItem("bds_page") || "1");
     }
     return 1;
   });
-
   const itemsPerPage = 6;
 
   useEffect(() => {
@@ -135,6 +133,7 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
               <Link 
                 href={`/nha-dat/${item.slug}`} 
                 key={item.id} 
+                scroll={false}
                 className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
