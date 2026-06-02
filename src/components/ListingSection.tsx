@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RealEstateItem } from "@/lib/googleSheets";
 import { MapPin, Compass, Clock, Square, Bed, ChevronRight, X } from "lucide-react";
 
 interface ListingSectionProps { allBdsItems: RealEstateItem[]; forceDistrict?: string; }
 
 export default function ListingSection({ allBdsItems, forceDistrict }: ListingSectionProps) {
+  const router = useRouter();
   const [filteredItems, setFilteredItems] = useState<RealEstateItem[]>(allBdsItems);
   const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
   const [loaiHinh, setLoaiHinh] = useState("all");
@@ -18,6 +20,9 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
   // State quản lý sản phẩm được chọn để hiển thị Popup
   const [selectedProduct, setSelectedProduct] = useState<RealEstateItem | null>(null);
   
+  // Biến cờ hiệu ngăn chặn việc tự reset trang khi click xem chi tiết
+  const [isNavigating, setIsNavigating] = useState(false);
+
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window !== "undefined") {
       return parseInt(sessionStorage.getItem("bds_page") || "1");
@@ -28,16 +33,19 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
 
   // Tự động cuộn lên đầu danh sách sản phẩm khi đổi trang
   useEffect(() => {
+    if (isNavigating) return;
     sessionStorage.setItem("bds_page", currentPage.toString());
     
-    // Tìm phần tử danh sách và cuộn lên mượt mà
     const element = document.getElementById("listing-section");
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, [currentPage]);
+  }, [currentPage, isNavigating]);
 
+  // Bộ lọc tìm kiếm
   useEffect(() => {
+    if (isNavigating) return;
+
     let result = allBdsItems;
     if (khuVuc !== "all") result = result.filter(i => i.khuVuc === khuVuc);
     if (loaiHinh !== "all") result = result.filter(i => i.loaiHinh === loaiHinh);
@@ -51,9 +59,13 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     else if (selectedTag === "chinhchu") result = result.filter(i => i.tag?.includes("Chính Chủ"));
     
     setFilteredItems(result);
-    setCurrentPage(1);
-    sessionStorage.setItem("bds_page", "1");
-  }, [khuVuc, loaiHinh, khoangGia, huong, selectedTag, allBdsItems]);
+    
+    // Chỉ reset về trang 1 nếu người dùng chủ động thay đổi bộ lọc
+    const savedPage = parseInt(sessionStorage.getItem("bds_page") || "1");
+    if (savedPage === 1) {
+      setCurrentPage(1);
+    }
+  }, [khuVuc, loaiHinh, khoangGia, huong, selectedTag, allBdsItems, isNavigating]);
 
   const formatTimeAgo = (dateStr: string) => {
     if (!dateStr) return "Tin mới";
@@ -89,6 +101,12 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     return "bg-slate-900 text-white font-medium";
   };
 
+  // Hàm xử lý riêng khi bấm xem chi tiết sản phẩm để khóa số trang
+  const handleViewDetail = (slug: string) => {
+    setIsNavigating(true);
+    router.push(`/nha-dat/${slug}`);
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
@@ -101,7 +119,7 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khu Vực</label>
-              <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => setKhuVuc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => { sessionStorage.setItem("bds_page", "1"); setKhuVuc(e.target.value); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả Quận Huyện</option>
                 <option value="Hải Châu">Quận Hải Châu</option><option value="Thanh Khê">Quận Thanh Khê</option>
                 <option value="Liên Chiểu">Quận Liên Chiểu</option><option value="Cẩm Lệ">Quận Cẩm Lệ</option>
@@ -110,27 +128,27 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Loại Hình</label>
-              <select value={loaiHinh} onChange={(e) => setLoaiHinh(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={loaiHinh} onChange={(e) => { sessionStorage.setItem("bds_page", "1"); setLoaiHinh(e.target.value); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả Loại hình</option><option value="Nhà phố">Nhà phố / Kiệt</option><option value="Đất nền">Đất nền / Đất ở</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khoảng Giá</label>
-              <select value={khoangGia} onChange={(e) => setKhoangGia(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={khoangGia} onChange={(e) => { sessionStorage.setItem("bds_page", "1"); setKhoangGia(e.target.value); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả mức giá</option><option value="duoi3">Dưới 3 Tỷ</option><option value="3to5">Từ 3 - 5 Tỷ</option><option value="tren5">Trên 5 Tỷ</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Hướng Nhà</label>
-              <select value={huong} onChange={(e) => setHuong(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={huong} onChange={(e) => { sessionStorage.setItem("bds_page", "1"); setHuong(e.target.value); }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả các hướng</option><option value="Đông">Hướng Đông</option><option value="Tây">Hướng Tây</option><option value="Nam">Hướng Nam</option><option value="Bắc">Hướng Bắc</option>
               </select>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 items-center">
-            <button onClick={() => setSelectedTag("all")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Tất Cả</button>
-            <button onClick={() => setSelectedTag("mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Mặt Tiền Kinh Doanh</button>
-            <button onClick={() => setSelectedTag("chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Hàng Chính Chủ</button>
+            <button onClick={() => { sessionStorage.setItem("bds_page", "1"); setSelectedTag("all"); }} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Tất Cả</button>
+            <button onClick={() => { sessionStorage.setItem("bds_page", "1"); setSelectedTag("mattien"); }} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Mặt Tiền Kinh Doanh</button>
+            <button onClick={() => { sessionStorage.setItem("bds_page", "1"); setSelectedTag("chinhchu"); }} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Hàng Chính Chủ</button>
           </div>
         </div>
       </section>
@@ -190,10 +208,9 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
 
       {/* Giao diện POPUP (MODAL) CHI TIẾT SẢN PHẨM */}
       {selectedProduct && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity duration-300">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 flex flex-col">
             
-            {/* Nút đóng Popup */}
             <button 
               onClick={() => setSelectedProduct(null)}
               className="absolute top-4 right-4 z-10 bg-black/50 text-white hover:bg-black/80 p-2 rounded-full transition-colors focus:outline-none"
@@ -201,7 +218,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
               <X className="w-5 h-5" />
             </button>
 
-            {/* Hình ảnh lớn trong Popup */}
             <div className="relative w-full aspect-[16/10] bg-slate-100">
               <Image 
                 src={layUrlAnhChuan(selectedProduct.anh)} 
@@ -218,7 +234,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
               </span>
             </div>
 
-            {/* Nội dung thông tin chi tiết */}
             <div className="p-6 space-y-4 flex-1 overflow-y-auto">
               <div className="flex items-center gap-1.5 text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
@@ -229,7 +244,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
                 {selectedProduct.tieude}
               </h2>
 
-              {/* Thông số chi tiết */}
               <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl text-center">
                 <div className="flex flex-col items-center justify-center border-r border-slate-200">
                   <Square className="w-5 h-5 text-amber-500 mb-1" />
@@ -248,14 +262,12 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
                 </div>
               </div>
 
-              {/* Nhãn thời gian */}
               <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>Đăng bán từ: {formatTimeAgo(selectedProduct.ngayDang)} ({selectedProduct.ngayDang})</span>
               </div>
             </div>
 
-            {/* Thanh điều hướng dưới cùng Popup */}
             <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3 rounded-b-3xl">
               <button 
                 onClick={() => setSelectedProduct(null)}
@@ -263,12 +275,12 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
               >
                 Đóng lại
               </button>
-              <Link 
-                href={`/nha-dat/${selectedProduct.slug}`}
+              <button
+                onClick={() => handleViewDetail(selectedProduct.slug)}
                 className="flex-1 bg-amber-500 text-slate-900 text-sm font-bold py-3.5 rounded-xl hover:bg-amber-400 transition-colors text-center flex items-center justify-center gap-1"
               >
                 Xem Toàn Bộ Chi Tiết <ChevronRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
 
           </div>
