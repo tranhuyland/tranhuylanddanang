@@ -19,7 +19,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // Chỉ dùng modal cho form "kygui" nhanh, bài đăng bds sẽ dùng Link nhảy URL trang riêng
   const [modalType, setModalType] = useState<"kygui" | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
@@ -41,26 +40,37 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   useEffect(() => {
     let result = [...safeBdsItems];
 
-    // Thuật toán đảo tin mới lên đầu tiên
+    // THUẬT TOÁN ĐẢO TIN MỚI ĐĂNG LÊN ĐẦU (Khắc phục lỗi định dạng ngày Việt Nam)
     result.sort((a: any, b: any) => {
-      const dateA = a.ngayDang || a.ngay || "";
-      const dateB = b.ngayDang || b.ngay || "";
+      const dateStrA = a.ngayDang || a.ngay || "";
+      const dateStrB = b.ngayDang || b.ngay || "";
 
-      if (dateA && dateB) {
-        const parseDate = (dStr: string) => {
-          const parts = dStr.split(/[-/]/);
-          if (parts.length === 3) {
-            return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime();
-          }
-          return 0;
-        };
-        const diff = parseDate(dateB) - parseDate(dateA);
-        if (diff !== 0) return diff; 
+      // Hàm bóc tách chuỗi ngày dạng DD/MM/YYYY thành giá trị số miligiây chính xác để so sánh
+      const convertToTimestamp = (dStr: string) => {
+        if (!dStr) return 0;
+        const parts = dStr.split(/[-/]/);
+        if (parts.length === 3) {
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1; // Tháng trong JS tính từ 0 - 11
+          const year = parseInt(parts[2], 10);
+          return new Date(year, month, day).getTime();
+        }
+        return 0;
+      };
+
+      const timeA = convertToTimestamp(dateStrA);
+      const timeB = convertToTimestamp(dateStrB);
+
+      // Sắp xếp giảm dần: thời gian lớn hơn (mới hơn) sẽ đứng trước
+      if (timeB !== timeA) {
+        return timeB - timeA;
       }
+      
+      // Nếu trùng ngày hoặc không có ngày đăng, xếp theo ID giảm dần (Hàng nhập sau lên đầu)
       return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // Hệ thống bộ lọc giao diện dựa trên mảng an toàn (ép kiểu lowercase chống lỗi lệch chữ)
+    // Hệ thống các bộ lọc nâng cao
     if (khuVuc !== "all") {
       result = result.filter((i: any) => {
         const checkDiaChi = i.diaChi || i.diChi || i.dia_chi || "";
@@ -170,7 +180,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 2. DANH SÁCH SẢN PHẨM NHẢY URL TRANG RIÊNG BIỆT - GIỮ NGUYÊN LINK CŨ CỦA ANH HUY */}
+      {/* 2. DANH SÁCH SẢN PHẨM NHẢY URL TRANG RIÊNG BIỆT */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
@@ -231,7 +241,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
 
-        {/* PHÂN TRANG THÔNG MINH */}
+        {/* PHÂN TRANG */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
