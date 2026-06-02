@@ -10,7 +10,9 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 import AIChatbot from "@/components/AIChatbot";
 
 export default async function Home() {
+  // Đổ dữ liệu an toàn phía Server (SSR) tối ưu cấu trúc SEO cho Bot tìm kiếm thu thập
   const initialData = await getBdsData();
+
   return (
     <>
       <Header />
