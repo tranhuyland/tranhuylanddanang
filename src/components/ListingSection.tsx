@@ -1,38 +1,50 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, ChevronRight, PenTool } from "lucide-react";
+import Link from "lucide-react";
+import { RealEstateItem } from "@/lib/googleSheets";
+import { MapPin, Compass, Clock, Square, Bed, ChevronRight, PenTool } from "lucide-react";
 import { Modals } from "./Modals";
 
 interface ListingSectionProps {
-  allBdsItems: any[];
+  allBdsItems: RealEstateItem[];
   forceDistrict?: string;
 }
 
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
-  const [filteredItems, setFilteredItems] = useState<any[]>([]);
+  const [filteredItems, setFilteredItems] = useState<RealEstateItem[]>([]);
   const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
   const [loaiHinh, setLoaiHinh] = useState("all");
   const [khoangGia, setKhoangGia] = useState("all");
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // State điều khiển đóng mở Popup xem chi tiết và Ký gửi tại chỗ
-  const [modalType, setModalType] = useState<"bds" | "kygui" | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  
-  // Trạng thái phân trang cục bộ để không lo bị reset trạng thái khi thao tác Popup
+  // Chỉ dùng modal cho form "kygui" nhanh, bds sẽ dùng Link nhảy URL
+  const [modalType, setModalType] = useState<"kygui" | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
-  // TỰ ĐỘNG SẮP XẾP SẢN PHẨM MỚI NHẤT LÊN ĐẦU VÀ CHẠY BỘ LỌC
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedPage = sessionStorage.getItem("bds_page");
+      if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && currentPage > 0) {
+      sessionStorage.setItem("bds_page", currentPage.toString());
+    }
+  }, [currentPage]);
+
+  // Bộ lọc kết hợp logic TỰ ĐỘNG SẮP XẾP SẢN PHẨM MỚI NHẤT LÊN ĐẦU TIÊN
   useEffect(() => {
     let result = [...safeBdsItems];
 
-    // Thuật toán bóc tách chuỗi Ngày tháng (DD/MM/YYYY) và đảo hàng mới lên đầu
-    result.sort((a, b) => {
+    // Thuật toán đảo tin mới lên đầu tiên
+    result.sort((a: any, b: any) => {
       const dateA = a.ngayDang || a.ngay || "";
       const dateB = b.ngayDang || b.ngay || "";
 
@@ -40,7 +52,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         const parseDate = (dStr: string) => {
           const parts = dStr.split(/[-/]/);
           if (parts.length === 3) {
-            // Đổi chuỗi ngày Việt Nam thành số Timestamp để so sánh chính xác
             return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime();
           }
           return 0;
@@ -48,10 +59,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         const diff = parseDate(dateB) - parseDate(dateA);
         if (diff !== 0) return diff; 
       }
-      return (Number(b.id) || 0) - (Number(a.id) || 0); // Nếu trùng ngày, ID lớn hơn xếp trước
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // Các bộ lọc nâng cao của anh Huy
+    // Hệ thống bộ lọc giao diện
     if (khuVuc !== "all") {
       result = result.filter(i => i.diaChi?.toLowerCase().includes(khuVuc.toLowerCase()) || i.khuVucFull?.toLowerCase().includes(khuVuc.toLowerCase()));
     }
@@ -146,14 +157,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Mặt Tiền Kinh Doanh</button>
               <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Hàng Chính Chủ</button>
             </div>
-            <button onClick={() => { setModalType("kygui"); setSelectedProduct(null); }} className="bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:bg-amber-600 transition-colors">
+            <button onClick={() => setModalType("kygui")} className="bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:bg-amber-600 transition-colors">
               <PenTool size={14} /> Ký gửi nhà đất
             </button>
           </div>
         </div>
       </section>
 
-      {/* 2. LƯỚI DANH SÁCH SẢN PHẨM KHÔNG SỬ DỤNG THẺ LINK ĐỂ CHỐNG TRÌNH DUYỆT TỰ CUỘN */}
+      {/* 2. DANH SÁCH SẢN PHẨM NHẢY URL TRANG RIÊNG BIỆT */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
@@ -163,12 +174,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               const displayTime = item.ngayDang || "";
 
               return (
-                <div 
+                <a 
+                  href={`/nha-dat/${item.slug}`}
                   key={item.id}
-                  onClick={() => { setSelectedProduct(item); setModalType("bds"); }}
-                  className="cursor-pointer bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1"
+                  className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
                 >
-                  {/* Sử dụng aspect-[4/3] cố định khung bao để trình duyệt tính toán tọa độ cuộn chuẩn mực */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
                     <span className="absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm bg-slate-900 text-white font-medium">
@@ -205,7 +215,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                       </span>
                     </div>
                   </div>
-                </div>
+                </a>
               );
             })}
           </div>
@@ -215,7 +225,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
 
-        {/* PHÂN TRANG THÔNG MINH KHÔNG LO TẢI LẠI TRANG */}
+        {/* PHÂN TRANG */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
@@ -238,13 +248,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         )}
       </main>
 
-      {/* POPUP CHI TIẾT (SLIDER MŨI TÊN CỐ ĐỊNH) & POPUP KÝ GỬI */}
-      {modalType && (
+      {/* POPUP FORM KÝ GỬI */}
+      {modalType === "kygui" && (
         <Modals 
-          type={modalType} 
-          isOpen={!!modalType} 
-          onClose={() => { setModalType(null); setSelectedProduct(null); }} 
-          item={selectedProduct} 
+          type="kygui" 
+          isOpen={true} 
+          onClose={() => setModalType(null)} 
         />
       )}
     </>
