@@ -19,30 +19,19 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
+  // State điều khiển đóng mở Popup xem chi tiết và Ký gửi tại chỗ
   const [modalType, setModalType] = useState<"bds" | "kygui" | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  
+  // Trạng thái phân trang cục bộ để không lo bị reset trạng thái khi thao tác Popup
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 6;
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedPage = sessionStorage.getItem("bds_page");
-      if (savedPage) {
-        setCurrentPage(parseInt(savedPage, 10));
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && currentPage > 0) {
-      sessionStorage.setItem("bds_page", currentPage.toString());
-    }
-  }, [currentPage]);
-
-  // Bộ lọc tìm kiếm kết hợp TỰ ĐỘNG SẮP XẾP BÀI MỚI NHẤT LÊN ĐẦU TIÊN
+  // TỰ ĐỘNG SẮP XẾP SẢN PHẨM MỚI NHẤT LÊN ĐẦU VÀ CHẠY BỘ LỌC
   useEffect(() => {
     let result = [...safeBdsItems];
 
-    // LOGIC SẮP XẾP SẢN PHẨM MỚI NHẤT LÊN ĐẦU TIÊN
+    // Thuật toán bóc tách chuỗi Ngày tháng (DD/MM/YYYY) và đảo hàng mới lên đầu
     result.sort((a, b) => {
       const dateA = a.ngayDang || a.ngay || "";
       const dateB = b.ngayDang || b.ngay || "";
@@ -51,7 +40,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         const parseDate = (dStr: string) => {
           const parts = dStr.split(/[-/]/);
           if (parts.length === 3) {
-            // Chuyển đổi định dạng ngày DD/MM/YYYY để so sánh chính xác mốc thời gian
+            // Đổi chuỗi ngày Việt Nam thành số Timestamp để so sánh chính xác
             return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime();
           }
           return 0;
@@ -59,24 +48,15 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         const diff = parseDate(dateB) - parseDate(dateA);
         if (diff !== 0) return diff; 
       }
-      // Nếu trùng ngày hoặc không có ngày đăng, xếp theo ID giảm dần (ID lớn xếp trước)
-      return (Number(b.id) || 0) - (Number(a.id) || 0);
+      return (Number(b.id) || 0) - (Number(a.id) || 0); // Nếu trùng ngày, ID lớn hơn xếp trước
     });
 
-    // HỆ THỐNG BỘ LỌC DỮ LIỆU
+    // Các bộ lọc nâng cao của anh Huy
     if (khuVuc !== "all") {
-      result = result.filter(i => 
-        i.diaChi?.toLowerCase().includes(khuVuc.toLowerCase()) || 
-        i.khuVucFull?.toLowerCase().includes(khuVuc.toLowerCase()) ||
-        i.khuVuc?.toLowerCase().includes(khuVuc.toLowerCase())
-      );
+      result = result.filter(i => i.diaChi?.toLowerCase().includes(khuVuc.toLowerCase()) || i.khuVucFull?.toLowerCase().includes(khuVuc.toLowerCase()));
     }
     if (loaiHinh !== "all") {
-      result = result.filter(i => 
-        i.phân_loại?.toLowerCase().includes(loaiHinh.toLowerCase()) || 
-        i.loaiHinh?.toLowerCase().includes(loaiHinh.toLowerCase()) || 
-        i.tieude?.toLowerCase().includes(loaiHinh.toLowerCase())
-      );
+      result = result.filter(i => i.phân_loại?.toLowerCase().includes(loaiHinh.toLowerCase()) || i.tieude?.toLowerCase().includes(loaiHinh.toLowerCase()));
     }
     if (khoangGia !== "all") {
       const parseGia = (giaStr: string) => {
@@ -124,18 +104,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     if (filterType === "huong") setHuong(value);
     if (filterType === "tag") setSelectedTag(value);
     setCurrentPage(1);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("bds_page", "1");
-    }
   };
 
-  const itemsPerPage = 6;
   const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
   return (
     <>
-      {/* THANH BỘ LỌC TÌM KIẾM */}
+      {/* 1. THANH BỘ LỌC TÌM KIẾM CHI TIẾT */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
@@ -177,14 +153,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* DANH SÁCH LƯỚI SẢN PHẨM */}
+      {/* 2. LƯỚI DANH SÁCH SẢN PHẨM KHÔNG SỬ DỤNG THẺ LINK ĐỂ CHỐNG TRÌNH DUYỆT TỰ CUỘN */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
             {currentItems.map((item) => {
               const thumbnail = layUrlAnhChuan(item.anh);
-              const displayLocation = item.diaChi || item.khuVucFull || "Đà Nẵng";
-              const displayTime = item.ngayDang || item.ngay || "";
+              const displayLocation = item.diaChi || "Đà Nẵng";
+              const displayTime = item.ngayDang || "";
 
               return (
                 <div 
@@ -192,10 +168,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   onClick={() => { setSelectedProduct(item); setModalType("bds"); }}
                   className="cursor-pointer bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1"
                 >
+                  {/* Sử dụng aspect-[4/3] cố định khung bao để trình duyệt tính toán tọa độ cuộn chuẩn mực */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
                     <span className="absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm bg-slate-900 text-white font-medium">
-                      {item.phân_loại || item.loaiHinh || 'Nhà Đất'}
+                      {item.phân_loại || 'Nhà Đất'}
                     </span>
                     {item.huong && (
                       <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
@@ -238,7 +215,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
 
-        {/* PHÂN TRANG */}
+        {/* PHÂN TRANG THÔNG MINH KHÔNG LO TẢI LẠI TRANG */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
@@ -247,7 +224,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 onClick={(e) => { 
                   e.preventDefault(); 
                   setCurrentPage(idx + 1); 
-                  window.scrollTo({ top: 350, behavior: "smooth" }); 
+                  const element = document.getElementById("listing-section");
+                  if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
                 }} 
                 className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${
                   currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600 hover:bg-slate-50"
@@ -260,7 +238,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         )}
       </main>
 
-      {/* POPUP MODALS ĐA NĂNG */}
+      {/* POPUP CHI TIẾT (SLIDER MŨI TÊN CỐ ĐỊNH) & POPUP KÝ GỬI */}
       {modalType && (
         <Modals 
           type={modalType} 
