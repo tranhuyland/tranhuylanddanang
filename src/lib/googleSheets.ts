@@ -59,7 +59,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     const lines = csvText.split(/\r?\n/);
     if (lines.length < 2) return [];
     
-    // Đọc dòng đầu tiên để lấy danh sách tên cột thực tế trên Google Sheet
+    // Đọc chính xác hàng tiêu đề 1 từ Google Sheet thực tế của anh Huy
     const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
     const items: RealEstateItem[] = [];
     
@@ -67,48 +67,48 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // Thuật toán tách ô dữ liệu CSV có bọc dấu ngoặc kép phòng thủ
+      // Thuật toán tách ô dữ liệu CSV bảo vệ dấu phẩy an toàn
       let matches = line.match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
       if (!matches) continue;
       const currentLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
       
       const obj: any = {};
-      // Bản đồ hóa dữ liệu theo tên cột tương ứng
       headers.forEach((header, index) => {
         if (header) {
           obj[header] = currentLine[index] || "";
         }
       });
       
-      // Định nghĩa gán giá trị an toàn, đồng bộ chính xác theo các trường trên Google Sheet của anh Huy
-      const tieudeChuan = obj.tieude || obj.title || "";
-      const moTaChuan = obj.moTa || obj.description || "";
+      // Phục hồi dữ liệu tiêu đề và mô tả chuẩn xác
+      const tieudeGoc = obj.tieude || "";
+      const moTaGoc = obj.moTa || "";
       
-      if (tieudeChuan) {
+      if (tieudeGoc) {
         const itemObj: RealEstateItem = {
           id: parseInt(obj.id) || i,
-          tieude: tieudeChuan,
+          tieude: tieudeGoc,
           slug: "",
-          moTa: moTaChuan,
+          moTa: moTaGoc,
           gia: obj.gia || "",
           soGia: parseFloat(obj.soGia) || 0,
           dienTich: obj.dienTich || "",
-          khuVuc: obj.khuVuc || "",
-          khuVucFull: obj.khuVucFull || "",
-          loaiHinh: obj.loaiHinh || "",
+          khuVuc: obj.khuVuc || "Hải Châu",
+          khuVucFull: obj.khuVucFull || "Đà Nẵng",
+          loaiHinh: obj.loaiHinh || "Nhà phố",
           huong: obj.huong || "",
           phongNgu: obj.phongNgu || "",
-          phapLy: obj.phapLy || "",
+          phapLy: obj.phapLy || "Sổ hồng riêng",
           tag: obj.tag || "",
-          tagColor: obj.tagColor || "",
+          tagColor: obj.tagColor || "bg-slate-900",
           anh: obj.anh || "",
           anhSoDo: obj.anhSoDo || "",
           linkMap: obj.linkMap || "",
           videoUrl: formatYoutubeEmbed(obj.videoUrl || ""),
-          ngayDang: obj.ngayDang || "",
+          ngayDang: obj.ngayDang || "Tin mới",
           isMatTien: false
         };
         
+        // TỰ ĐỘNG SINH SLUG TỪ TIÊU ĐỀ: Khách bấm vào tự nhảy URL chuẩn SEO không sợ lỗi
         itemObj.slug = `${convertToSlug(itemObj.tieude)}-${itemObj.id}`;
         itemObj.isMatTien = itemObj.tag?.toLowerCase().includes("mặt tiền") || itemObj.tieude?.toLowerCase().includes("mặt tiền");
         items.push(itemObj);
@@ -116,7 +116,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     }
     return items;
   } catch (error) {
-    console.error("Lỗi getBdsData:", error);
+    console.error("Lỗi đồng bộ cấu trúc dữ liệu:", error);
     return [];
   }
 }
