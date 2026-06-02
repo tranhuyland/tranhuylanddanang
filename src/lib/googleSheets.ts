@@ -54,12 +54,28 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv";
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
-    if (!response.ok) throw new Error("Không thể kết nối danh sách dữ liệu Google Sheet");
+    if (!response.ok) throw new Error("Không thể kết nối dữ liệu Google Sheet");
     const csvText = await response.text();
-    const lines = csvText.split(/\r?\n/);
+    
+    // THUẬT TOÁN ĐỌC MẢNG CSV CHUYÊN SÂU: Tách dòng thông minh, bỏ qua dấu xuống dòng nội bộ của ô dữ liệu
+    const lines: string[] = [];
+    let insideQuote = false;
+    let currentLine = "";
+    
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      if (char === '"') insideQuote = !insideQuote;
+      if ((char === '\n' || char === '\r') && !insideQuote) {
+        if (currentLine.trim()) lines.push(currentLine);
+        currentLine = "";
+      } else {
+        currentLine += char;
+      }
+    }
+    if (currentLine.trim()) lines.push(currentLine);
     if (lines.length < 2) return [];
     
-    // Đọc chuẩn xác dòng tiêu đề 1 từ Google Sheet thực tế của anh Huy
+    // Đọc hàng tiêu đề 1 làm từ khóa ánh xạ động
     const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
     const items: RealEstateItem[] = [];
     
@@ -67,16 +83,15 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // Khóa chuỗi bảo vệ dấu phẩy nội bộ nâng cao bằng Regex bổ trợ
+      // Khóa chuỗi trích xuất ô dữ liệu dựa trên ngoặc kép bảo vệ
       let matches = line.match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
       if (!matches) continue;
-      const currentLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
+      const cleanLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
       
       const obj: any = {};
-      // CƠ CHẾ DYNAMIC KEY MAPPING: Dò tìm map đúng ô theo tên chữ anh Huy viết ở hàng 1
       headers.forEach((header, index) => {
         if (header) {
-          obj[header] = currentLine[index] || "";
+          obj[header] = cleanLine[index] || "";
         }
       });
       
@@ -108,7 +123,6 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
           isMatTien: false
         };
         
-        // Tự động đồng bộ hóa sinh chuỗi định tuyến slug sạch chuẩn SEO không sợ crash link
         itemObj.slug = `${convertToSlug(itemObj.tieude)}-${itemObj.id}`;
         itemObj.isMatTien = itemObj.tag?.toLowerCase().includes("mặt tiền") || itemObj.tieude?.toLowerCase().includes("mặt tiền");
         items.push(itemObj);
@@ -116,7 +130,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     }
     return items;
   } catch (error) {
-    console.error("Lỗi parse dữ liệu hệ thống:", error);
+    console.error("Lỗi biên dịch cấu trúc dữ liệu CSV:", error);
     return [];
   }
 }
