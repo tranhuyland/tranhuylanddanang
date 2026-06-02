@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, Bed, ChevronRight, PenTool } from "lucide-react";
+import { MapPin, Compass, Clock, Square, ChevronRight, PenTool } from "lucide-react";
 import { Modals } from "./Modals";
 
 interface ListingSectionProps {
@@ -9,19 +9,18 @@ interface ListingSectionProps {
   forceDistrict?: string;
 }
 
-export default function ListingSection({ allBdsItems, forceDistrict }: ListingSectionProps) {
-  const [filteredItems, setFilteredItems] = useState<any[]>(allBdsItems);
+export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
+  const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
+
+  const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
   const [loaiHinh, setLoaiHinh] = useState("all");
   const [khoangGia, setKhoangGia] = useState("all");
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // State quản lý Modal: gồm kiểu modal ("bds" hoặc "kygui") và dữ liệu bds được chọn
   const [modalType, setModalType] = useState<"bds" | "kygui" | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
-
-  // Khởi tạo số trang từ sessionStorage để giữ trạng thái khi thao tác
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
@@ -39,46 +38,69 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     }
   }, [currentPage]);
 
-  // Bộ lọc tìm kiếm dữ liệu kết hợp sắp xếp mới nhất lên đầu
+  // Bộ lọc tìm kiếm kết hợp TỰ ĐỘNG SẮP XẾP BÀI MỚI NHẤT LÊN ĐẦU TIÊN
   useEffect(() => {
-    let result = [...allBdsItems];
+    let result = [...safeBdsItems];
 
-    // 1. Tự động sắp xếp sản phẩm mới nhất lên đầu (Xếp theo cột 'ngay' hoặc 'id' giảm dần)
+    // LOGIC SẮP XẾP SẢN PHẨM MỚI NHẤT LÊN ĐẦU TIÊN
     result.sort((a, b) => {
-      if (a.ngay && b.ngay) {
-        return new Date(b.ngay).getTime() - new Date(a.ngay).getTime();
+      const dateA = a.ngayDang || a.ngay || "";
+      const dateB = b.ngayDang || b.ngay || "";
+
+      if (dateA && dateB) {
+        const parseDate = (dStr: string) => {
+          const parts = dStr.split(/[-/]/);
+          if (parts.length === 3) {
+            // Chuyển đổi định dạng ngày DD/MM/YYYY để so sánh chính xác mốc thời gian
+            return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime();
+          }
+          return 0;
+        };
+        const diff = parseDate(dateB) - parseDate(dateA);
+        if (diff !== 0) return diff; 
       }
-      return Number(b.id) - Number(a.id);
+      // Nếu trùng ngày hoặc không có ngày đăng, xếp theo ID giảm dần (ID lớn xếp trước)
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // 2. Chạy các bộ lọc dữ liệu
+    // HỆ THỐNG BỘ LỌC DỮ LIỆU
     if (khuVuc !== "all") {
-      result = result.filter(i => i.diaChi?.toLowerCase().includes(khuVuc.toLowerCase()));
+      result = result.filter(i => 
+        i.diaChi?.toLowerCase().includes(khuVuc.toLowerCase()) || 
+        i.khuVucFull?.toLowerCase().includes(khuVuc.toLowerCase()) ||
+        i.khuVuc?.toLowerCase().includes(khuVuc.toLowerCase())
+      );
     }
     if (loaiHinh !== "all") {
-      result = result.filter(i => i.phân_loại?.toLowerCase().includes(loaiHinh.toLowerCase()) || i.tieude?.toLowerCase().includes(loaiHinh.toLowerCase()));
+      result = result.filter(i => 
+        i.phân_loại?.toLowerCase().includes(loaiHinh.toLowerCase()) || 
+        i.loaiHinh?.toLowerCase().includes(loaiHinh.toLowerCase()) || 
+        i.tieude?.toLowerCase().includes(loaiHinh.toLowerCase())
+      );
     }
     if (khoangGia !== "all") {
-      // Chuyển chuỗi giá thành số để lọc (Ví dụ: "3.5 Tỷ" -> 3.5)
       const parseGia = (giaStr: string) => {
-        const num = parseFloat(giaStr?.replace(/[^0-9.]/g, "") || "0");
-        return num;
+        if (!giaStr) return 0;
+        const num = parseFloat(giaStr.replace(/[^0-9.]/g, ""));
+        return isNaN(num) ? 0 : num;
       };
-      if (khoangGia === "duoi3") result = result.filter(i => parseGia(i.gia) < 3.0);
-      else if (khoangGia === "3to5") result = result.filter(i => parseGia(i.gia) >= 3.0 && parseGia(i.gia) <= 5.0);
-      else if (khoangGia === "tren5") result = result.filter(i => parseGia(i.gia) > 5.0);
+      const getGiaNumber = (item: any) => Number(item.soGia) || parseGia(item.gia);
+
+      if (khoangGia === "duoi3") result = result.filter(i => getGiaNumber(i) < 3.0);
+      else if (khoangGia === "3to5") result = result.filter(i => getGiaNumber(i) >= 3.0 && getGiaNumber(i) <= 5.0);
+      else if (khoangGia === "tren5") result = result.filter(i => getGiaNumber(i) > 5.0);
     }
     if (huong !== "all") {
       result = result.filter(i => i.huong?.toLowerCase().includes(huong.toLowerCase()));
     }
     if (selectedTag === "mattien") {
-      result = result.filter(i => i.tieude?.toLowerCase().includes("mặt tiền") || i.tag?.toLowerCase().includes("mặt tiền"));
+      result = result.filter(i => i.isMatTien === true || i.tieude?.toLowerCase().includes("mặt tiền") || i.tag?.toLowerCase().includes("mặt tiền"));
     } else if (selectedTag === "chinhchu") {
       result = result.filter(i => i.tag?.toLowerCase().includes("chính chủ") || i.mota?.toLowerCase().includes("chính chủ"));
     }
     
     setFilteredItems(result);
-  }, [khuVuc, loaiHinh, khoangGia, huong, selectedTag, allBdsItems]);
+  }, [khuVuc, loaiHinh, khoangGia, huong, selectedTag, safeBdsItems]);
 
   const formatTimeAgo = (dateStr: string) => {
     if (!dateStr) return "Tin mới";
@@ -113,7 +135,7 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
 
   return (
     <>
-      {/* 1. THANH BỘ LỌC TÌM KIẾM CHI TIẾT */}
+      {/* THANH BỘ LỌC TÌM KIẾM */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
@@ -155,49 +177,81 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
         </div>
       </section>
 
-      {/* 2. DANH SÁCH SẢN PHẨM MỞ POPUP */}
+      {/* DANH SÁCH LƯỚI SẢN PHẨM */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
-          {currentItems.map((item) => {
-            const thumbnail = layUrlAnhChuan(item.anh);
-            return (
-              <div 
-                key={item.id}
-                onClick={() => { setSelectedProduct(item); setModalType("bds"); }}
-                className="cursor-pointer bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                  <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
-                  <span className="absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm bg-slate-900 text-white font-medium">{item.phân_loại || 'Nhà Đất'}</span>
-                  {item.huong && <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1"><Compass className="w-3 h-3 text-amber-500" />{item.huong}</span>}
-                  <span className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> {formatTimeAgo(item.ngay)}</span>
-                  <span className="absolute bottom-3 right-3 bg-slate-900/90 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-md">{item.gia}</span>
-                </div>
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2"><MapPin className="w-3.5 h-3.5 text-amber-500" /><span className="truncate">{item.diaChi}</span></div>
-                    <h3 className="font-bold text-slate-900 line-clamp-2 group-hover:text-amber-500 text-sm sm:text-base leading-snug transition-colors">{item.tieude}</h3>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-slate-500 text-sm font-medium">
-                    <div className="text-xs text-slate-400 flex items-center gap-3">
-                      <span><Square className="w-3.5 h-3.5 inline mr-0.5" /> {item.dienTich}</span>
-                    </div>
-                    <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider">Chi tiết <ChevronRight className="w-3 h-3" /></span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {currentItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+            {currentItems.map((item) => {
+              const thumbnail = layUrlAnhChuan(item.anh);
+              const displayLocation = item.diaChi || item.khuVucFull || "Đà Nẵng";
+              const displayTime = item.ngayDang || item.ngay || "";
 
-        {/* PHÂN TRANG GIỮ NGUYÊN VỊ TRÍ */}
+              return (
+                <div 
+                  key={item.id}
+                  onClick={() => { setSelectedProduct(item); setModalType("bds"); }}
+                  className="cursor-pointer bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                    <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
+                    <span className="absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm bg-slate-900 text-white font-medium">
+                      {item.phân_loại || item.loaiHinh || 'Nhà Đất'}
+                    </span>
+                    {item.huong && (
+                      <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                        <Compass className="w-3 h-3 text-amber-500" />{item.huong}
+                      </span>
+                    )}
+                    <span className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-amber-400" /> {formatTimeAgo(displayTime)}
+                    </span>
+                    <span className="absolute bottom-3 right-3 bg-slate-900/90 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-md">
+                      {item.gia}
+                    </span>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                        <MapPin className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="truncate">{displayLocation}</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 line-clamp-2 group-hover:text-amber-500 text-sm sm:text-base leading-snug transition-colors">
+                        {item.tieude}
+                      </h3>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-slate-500 text-sm font-medium">
+                      <div className="text-xs text-slate-400 flex items-center gap-3">
+                        <span><Square className="w-3.5 h-3.5 inline mr-0.5" /> {item.dienTich || "---"}</span>
+                      </div>
+                      <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider">
+                        Chi tiết <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-slate-400 font-medium bg-slate-50 rounded-3xl border border-dashed">
+            Không tìm thấy sản phẩm bất động sản nào phù hợp với bộ lọc.
+          </div>
+        )}
+
+        {/* PHÂN TRANG */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
               <button 
                 key={idx} 
-                onClick={(e) => { e.preventDefault(); setCurrentPage(idx + 1); window.scrollTo({ top: 350, behavior: "smooth" }); }} 
-                className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600"}`}
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  setCurrentPage(idx + 1); 
+                  window.scrollTo({ top: 350, behavior: "smooth" }); 
+                }} 
+                className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${
+                  currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600 hover:bg-slate-50"
+                }`}
               >
                 {idx + 1}
               </button>
@@ -206,7 +260,7 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
         )}
       </main>
 
-      {/* MODALS ĐA NĂNG */}
+      {/* POPUP MODALS ĐA NĂNG */}
       {modalType && (
         <Modals 
           type={modalType} 
