@@ -4,7 +4,7 @@ export default function Hero() {
   return (
     <section className="hero-bg text-white">
       <div className="max-w-7xl mx-auto px-4 py-20 sm:py-28">
-        <div class="max-w-3xl">
+        <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 rounded-full px-4 py-1.5 text-xs font-bold mb-6 tracking-wide uppercase">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> KHO NHÀ ĐẤT CHÍNH CHỦ ĐÀ NẴNG
           </div>
