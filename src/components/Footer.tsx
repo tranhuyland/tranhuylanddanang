@@ -15,7 +15,7 @@ export default function Footer() {
         </div>
         <div>
           <h4 className="text-white font-bold text-sm uppercase mb-5">ĐỊA BÀN KHẢO SÁT CHÍNH</h4>
-          <ul class="space-y-3 text-sm"><li>Nhà đất Quận Hải Châu</li><li>Nhà đất Quận Cẩm Lệ</li><li>Nhà đất Quận Sơn Trà</li></ul>
+          <ul className="space-y-3 text-sm"><li>Nhà đất Quận Hải Châu</li><li>Nhà đất Quận Cẩm Lệ</li><li>Nhà đất Quận Sơn Trà</li></ul>
         </div>
         <div>
           <h4 className="text-white font-bold text-sm uppercase mb-5">THÔNG TIN VĂN PHÒNG</h4>
