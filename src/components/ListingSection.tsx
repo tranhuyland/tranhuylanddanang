@@ -1,9 +1,9 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { RealEstateItem } from "@/lib/googleSheets";
 import { MapPin, Compass, Clock, Square, Bed, ChevronRight } from "lucide-react";
-import { Modals } from "./Modals";
 
 interface ListingSectionProps { allBdsItems: RealEstateItem[]; forceDistrict?: string; }
 
@@ -17,9 +17,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-  
-  const [selectedItem, setSelectedItem] = useState<RealEstateItem | null>(null);
-  const [isOpenDetail, setIsOpenDetail] = useState(false);
 
   useEffect(() => {
     let result = allBdsItems;
@@ -50,6 +47,21 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     if (diffDays === 1) return "1 ngày trước";
     if (diffDays < 7) return `${diffDays} ngày trước`;
     return `${Math.floor(diffDays / 7)} tuần trước`;
+  };
+
+  // Hàm xử lý hiển thị màu sắc nhãn phân loại (Sập hầm, Mặt tiền, Cắt lỗ...) linh hoạt
+  const getTagStyle = (tagText: string) => {
+    const text = tagText?.toLowerCase() || "";
+    if (text.includes("sập hầm") || text.includes("cắt lỗ") || text.includes("ngộp")) {
+      return "bg-rose-600 text-white font-black animate-pulse";
+    }
+    if (text.includes("mặt tiền")) {
+      return "bg-amber-500 text-slate-950 font-extrabold";
+    }
+    if (text.includes("chính chủ")) {
+      return "bg-emerald-600 text-white font-bold";
+    }
+    return "bg-slate-900 text-white font-medium";
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -104,13 +116,19 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
             const listAnh = item.anh ? item.anh.split(",") : [];
             const thumbnail = listAnh.length > 0 ? listAnh[0].trim() : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
             return (
-              <article key={item.id} onClick={() => { setSelectedItem(item); setIsOpenDetail(true); }} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group cursor-pointer transform hover:-translate-y-1">
+              <Link 
+                href={`/nha-dat/${item.slug}`} 
+                key={item.id} 
+                className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
+              >
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                  <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <span className={`absolute top-3 left-3 ${item.tagColor || 'bg-slate-900'} text-white font-bold text-[10px] uppercase px-2.5 py-1 rounded-lg`}>{item.tag || 'Bán Đất'}</span>
-                  {item.huong && <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1"><Compass className="w-3 h-3 text-amber-500" />{item.huong}</span>}
-                  <span className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> {formatTimeAgo(item.ngayDang)}</span>
-                  <span className="absolute bottom-3 right-3 bg-slate-900/90 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-md">{item.gia}</span>
+                  <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" />
+                  <span className={`absolute top-3 left-3 text-[10px] uppercase px-2.5 py-1 rounded-lg tracking-wider shadow-sm ${getTagStyle(item.tag)}`}>
+                    {item.tag || 'Nhà Đất'}
+                  </span>
+                  {item.huong && <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1"><Compass className="w-3 h-3 text-amber-500" />{item.huong}</span>}
+                  <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> {formatTimeAgo(item.ngayDang)}</span>
+                  <span className="absolute bottom-3 right-3 bg-slate-900/90 backdrop-blur-sm text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-md">{item.gia}</span>
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
@@ -119,22 +137,21 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
                   </div>
                   <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-slate-500 text-sm font-medium">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-400"><span><Square className="w-3.5 h-3.5 inline mr-0.5" /> {item.dienTich}</span><span><Bed className="w-3.5 h-3.5 inline mr-0.5" /> {item.phongNgu || 'Đất ở'}</span></div>
-                    <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider">Chi tiết <ChevronRight className="w-3 h-3" /></span>
+                    <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider transition-transform group-hover:translate-x-0.5">Chi tiết <ChevronRight className="w-3 h-3" /></span>
                   </div>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
-              <button key={idx} onClick={() => setCurrentPage(idx + 1)} className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600"}`}>{idx + 1}</button>
+              <button key={idx} onClick={(e) => { e.preventDefault(); setCurrentPage(idx + 1); }} className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105 font-extrabold" : "bg-white border text-slate-600 hover:border-slate-300"}`}>{idx + 1}</button>
             ))}
           </div>
         )}
       </main>
-      {selectedItem && <Modals type="detail" isOpen={isOpenDetail} item={selectedItem} onClose={() => { setIsOpenDetail(false); setSelectedItem(null); }} />}
     </>
   );
 }
