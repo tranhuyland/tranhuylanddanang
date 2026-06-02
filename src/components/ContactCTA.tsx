@@ -9,7 +9,7 @@ export default function ContactCTA() {
       <section className="max-w-7xl mx-auto px-4 pb-20">
         <div className="bg-gradient-to-r from-amber-500 to-yellow-400 rounded-[2.5rem] p-10 lg:p-14 text-slate-900 shadow-md">
           <div className="max-w-3xl">
-            <p class="uppercase tracking-widest text-xs font-bold mb-3 text-slate-900/80">KÝ GỬI CHÍNH CHỦ</p>
+            <p className="uppercase tracking-widest text-xs font-bold mb-3 text-slate-900/80">KÝ GỬI CHÍNH CHỦ</p>
             <h2 className="text-3xl lg:text-5xl font-extrabold mb-5">Cần Bán Nhanh Nhà Đất Tại Đà Nẵng?</h2>
             <p className="text-base leading-relaxed mb-8 font-medium">Gửi thông tin sơ bộ qua hệ thống để được anh Huy hỗ trợ kiểm tra pháp lý, trích lục bản vẽ quy hoạch và kết nối khách hàng thực tế nhanh nhất.</p>
             <div className="flex flex-wrap gap-3">
