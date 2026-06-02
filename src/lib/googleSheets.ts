@@ -54,12 +54,12 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv";
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
-    if (!response.ok) throw new Error("Fetch failed");
+    if (!response.ok) throw new Error("Không thể kết nối dữ liệu Google Sheet");
     const csvText = await response.text();
     const lines = csvText.split(/\r?\n/);
     if (lines.length < 2) return [];
     
-    // Tách lấy dòng tiêu đề và làm sạch khoảng trắng, ký tự ẩn
+    // Đọc dòng đầu tiên để lấy danh sách tên cột thực tế trên Google Sheet
     const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
     const items: RealEstateItem[] = [];
     
@@ -67,46 +67,51 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // Thuật toán tách mảng dữ liệu giữ an toàn cho dấu phẩy nội bộ
+      // Thuật toán tách ô dữ liệu CSV có bọc dấu ngoặc kép phòng thủ
       let matches = line.match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
       if (!matches) continue;
       const currentLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
       
       const obj: any = {};
-      
-      // CƠ CHẾ DYNAMIC KEY MAPPING: Map chính xác thuộc tính theo từ khóa cột trên Sheet của anh Huy
+      // Bản đồ hóa dữ liệu theo tên cột tương ứng
       headers.forEach((header, index) => {
-        let value = currentLine[index] || "";
-        obj[header] = value;
+        if (header) {
+          obj[header] = currentLine[index] || "";
+        }
       });
       
-      // Kiểm tra ép kiểu các trường dữ liệu đặc thù
-      const finalObj: any = {
-        id: parseInt(obj.id) || i,
-        tieude: obj.tieude || obj.title || "",
-        moTa: obj.moTa || obj.description || "",
-        gia: obj.gia || "",
-        soGia: parseFloat(obj.soGia) || 0,
-        dienTich: obj.dienTich || "",
-        khuVuc: obj.khuVuc || "",
-        khuVucFull: obj.khuVucFull || "",
-        loaiHinh: obj.loaiHinh || "",
-        huong: obj.huong || "",
-        phongNgu: obj.phongNgu || "",
-        phapLy: obj.phapLy || "",
-        tag: obj.tag || "",
-        tagColor: obj.tagColor || "",
-        anh: obj.anh || "",
-        anhSoDo: obj.anhSoDo || "",
-        linkMap: obj.linkMap || "",
-        videoUrl: formatYoutubeEmbed(obj.videoUrl || ""),
-        ngayDang: obj.ngayDang || ""
-      };
+      // Định nghĩa gán giá trị an toàn, đồng bộ chính xác theo các trường trên Google Sheet của anh Huy
+      const tieudeChuan = obj.tieude || obj.title || "";
+      const moTaChuan = obj.moTa || obj.description || "";
       
-      if (finalObj.tieude) {
-        finalObj.slug = `${convertToSlug(finalObj.tieude)}-${finalObj.id}`;
-        finalObj.isMatTien = finalObj.tag?.toLowerCase().includes("mặt tiền") || finalObj.tieude?.toLowerCase().includes("mặt tiền");
-        items.push(finalObj as RealEstateItem);
+      if (tieudeChuan) {
+        const itemObj: RealEstateItem = {
+          id: parseInt(obj.id) || i,
+          tieude: tieudeChuan,
+          slug: "",
+          moTa: moTaChuan,
+          gia: obj.gia || "",
+          soGia: parseFloat(obj.soGia) || 0,
+          dienTich: obj.dienTich || "",
+          khuVuc: obj.khuVuc || "",
+          khuVucFull: obj.khuVucFull || "",
+          loaiHinh: obj.loaiHinh || "",
+          huong: obj.huong || "",
+          phongNgu: obj.phongNgu || "",
+          phapLy: obj.phapLy || "",
+          tag: obj.tag || "",
+          tagColor: obj.tagColor || "",
+          anh: obj.anh || "",
+          anhSoDo: obj.anhSoDo || "",
+          linkMap: obj.linkMap || "",
+          videoUrl: formatYoutubeEmbed(obj.videoUrl || ""),
+          ngayDang: obj.ngayDang || "",
+          isMatTien: false
+        };
+        
+        itemObj.slug = `${convertToSlug(itemObj.tieude)}-${itemObj.id}`;
+        itemObj.isMatTien = itemObj.tag?.toLowerCase().includes("mặt tiền") || itemObj.tieude?.toLowerCase().includes("mặt tiền");
+        items.push(itemObj);
       }
     }
     return items;
