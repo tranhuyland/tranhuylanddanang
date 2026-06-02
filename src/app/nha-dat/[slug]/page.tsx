@@ -26,8 +26,7 @@ export default async function NhaDatDetail({ params }: Props) {
   const item = data.find(p => p.slug === slug);
   if (!item) notFound();
   
-  // Hàm làm sạch chuỗi ảnh phòng thủ lỗi khoảng trống
-  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "" && a.startsWith("http")) : [];
+  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "") : [];
 
   return (
     <>
@@ -38,7 +37,6 @@ export default async function NhaDatDetail({ params }: Props) {
         </Link>
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-          {/* Khu vực Slide Media thông minh luân chuyển giữa Video & Bộ sưu tập ảnh */}
           <div className="relative aspect-[16/10] bg-slate-100 w-full">
             <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
               {item.videoUrl && (
@@ -51,14 +49,9 @@ export default async function NhaDatDetail({ params }: Props) {
                   <Image src={url} alt={item.tieude} fill className="object-cover" priority={idx === 0} sizes="(max-w-4xl) 100vw" />
                 </div>
               ))}
-              {danhSachAnh.length === 0 && !item.videoUrl && (
-                <div className="w-full h-full flex-shrink-0 snap-start relative">
-                  <Image src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80" alt="Trần Huy Land" fill className="object-cover" />
-                </div>
-              )}
             </div>
             <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow">
-              <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}${danhSachAnh.length} Hình Ảnh
+              <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{danhSachAnh.length} Ảnh
             </div>
           </div>
 
@@ -70,11 +63,11 @@ export default async function NhaDatDetail({ params }: Props) {
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 className-snug">{item.tieude}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 leading-snug">{item.tieude}</h1>
             
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-400 text-xs mt-2 border-b border-slate-100 pb-4 font-semibold">
               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-amber-500" />{item.khuVucFull}</span>
-              {item.ngayDang && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang}</span>}
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang}</span>
             </div>
 
             {/* BẢNG THÔNG SỐ KHÔNG CÒN LỆCH CỘT */}
