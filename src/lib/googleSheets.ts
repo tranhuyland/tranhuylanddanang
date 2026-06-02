@@ -35,35 +35,18 @@ export function convertToSlug(text: string): string {
   return slug.replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
 }
 
-export function formatYoutubeEmbed(url: string): string {
-  if (!url) return "";
-  let videoId = "";
-  if (url.includes("youtu.be/")) {
-    videoId = url.split("youtu.be/")[1]?.split(/[?#]/)[0];
-  } else if (url.includes("youtube.com/watch")) {
-    videoId = url.split("v=")[1]?.split(/[&?#]/)[0];
-  } else if (url.includes("youtube.com/shorts/")) {
-    videoId = url.split("shorts/")[1]?.split(/[?#]/)[0];
-  } else if (url.includes("youtube.com/embed/")) {
-    return url;
-  }
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-}
-
 export async function getBdsData(): Promise<RealEstateItem[]> {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv";
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
-    if (!response.ok) throw new Error("Không thể kết nối dữ liệu Google Sheet");
+    if (!response.ok) throw new Error("Fetch failed");
     const csvText = await response.text();
     
-    // THUẬT TOÁN ĐỌC MẢNG CSV CHUYÊN SÂU: Tách dòng thông minh, bỏ qua dấu xuống dòng nội bộ của ô dữ liệu
-    const lines: string[] = [];
+    // Tách dòng an toàn cho các ô có chứa xuống dòng
+    const lines = [];
     let insideQuote = false;
     let currentLine = "";
-    
-    for (let i = 0; i < csvText.length; i++) {
-      const char = csvText[i];
+    for (let char of csvText) {
       if (char === '"') insideQuote = !insideQuote;
       if ((char === '\n' || char === '\r') && !insideQuote) {
         if (currentLine.trim()) lines.push(currentLine);
@@ -73,37 +56,25 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       }
     }
     if (currentLine.trim()) lines.push(currentLine);
-    if (lines.length < 2) return [];
-    
-    // Đọc hàng tiêu đề 1 làm từ khóa ánh xạ động
+
     const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
     const items: RealEstateItem[] = [];
     
     for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      // Khóa chuỗi trích xuất ô dữ liệu dựa trên ngoặc kép bảo vệ
-      let matches = line.match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
+      // Phân tách cột an toàn bằng Regex
+      let matches = lines[i].match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
       if (!matches) continue;
-      const cleanLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
+      const row = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
       
       const obj: any = {};
-      headers.forEach((header, index) => {
-        if (header) {
-          obj[header] = cleanLine[index] || "";
-        }
-      });
+      headers.forEach((h, idx) => { obj[h] = row[idx] || ""; });
       
-      const tieudeChuan = obj.tieude || obj.title || "";
-      const moTaChuan = obj.moTa || obj.description || "";
-      
-      if (tieudeChuan) {
-        const itemObj: RealEstateItem = {
+      if (obj.tieude) {
+        items.push({
           id: parseInt(obj.id) || i,
-          tieude: tieudeChuan,
-          slug: "",
-          moTa: moTaChuan,
+          tieude: obj.tieude,
+          slug: convertToSlug(obj.tieude),
+          moTa: obj.moTa || "",
           gia: obj.gia || "",
           soGia: parseFloat(obj.soGia) || 0,
           dienTich: obj.dienTich || "",
@@ -112,25 +83,21 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
           loaiHinh: obj.loaiHinh || "Nhà phố",
           huong: obj.huong || "",
           phongNgu: obj.phongNgu || "",
-          phapLy: obj.phapLy || "Sổ hồng riêng",
-          tag: obj.tag || "",
-          tagColor: obj.tagColor || "bg-slate-900",
+          phapLy: obj.phapLy || "Sổ hồng",
+          tag: obj.tag || "Chính Chủ",
+          tagColor: obj.tagColor || "bg-emerald-500",
           anh: obj.anh || "",
           anhSoDo: obj.anhSoDo || "",
           linkMap: obj.linkMap || "",
-          videoUrl: formatYoutubeEmbed(obj.videoUrl || ""),
+          videoUrl: obj.videoUrl || "",
           ngayDang: obj.ngayDang || "Tin mới",
-          isMatTien: false
-        };
-        
-        itemObj.slug = `${convertToSlug(itemObj.tieude)}-${itemObj.id}`;
-        itemObj.isMatTien = itemObj.tag?.toLowerCase().includes("mặt tiền") || itemObj.tieude?.toLowerCase().includes("mặt tiền");
-        items.push(itemObj);
+          isMatTien: obj.tag?.includes("Mặt tiền") || false
+        });
       }
     }
     return items;
   } catch (error) {
-    console.error("Lỗi biên dịch cấu trúc dữ liệu CSV:", error);
+    console.error("Lỗi getBdsData:", error);
     return [];
   }
 }
