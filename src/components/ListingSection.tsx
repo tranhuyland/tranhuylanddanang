@@ -49,17 +49,10 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     return `${Math.floor(diffDays / 7)} tuần trước`;
   };
 
-  // Thuật toán bóc tách và sửa lỗi link ảnh lỗi thời từ Google Sheet
   const layUrlAnhChuan = (chuoiAnh: string) => {
     if (!chuoiAnh) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-    const danhSach = chuoiAnh.split(",").map(a => a.trim()).filter(a => a !== "");
-    if (danhSach.length === 0) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-    
-    let url = danhSach[0];
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      url = "https://images.unsplash.com/" + url;
-    }
-    return url;
+    const danhSach = chuoiAnh.split(",").map(a => a.trim()).filter(a => a !== "" && a.startsWith("http"));
+    return danhSach.length > 0 ? danhSach[0] : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
   };
 
   const getTagStyle = (tagText: string) => {
