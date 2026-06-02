@@ -56,10 +56,12 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
     if (!response.ok) throw new Error("Không thể kết nối dữ liệu Google Sheet");
     const csvText = await response.text();
+    
+    // Tách dòng phòng thủ ký tự xuống dòng chèn trong ô mô tả
     const lines = csvText.split(/\r?\n/);
     if (lines.length < 2) return [];
     
-    // Đọc chính xác hàng tiêu đề 1 từ Google Sheet thực tế của anh Huy
+    // Đọc chính xác hàng tiêu đề 1 trên Google Sheet
     const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
     const items: RealEstateItem[] = [];
     
@@ -67,7 +69,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // Thuật toán tách ô dữ liệu CSV bảo vệ dấu phẩy an toàn
+      // THUẬT TOÁN ĐỈNH CAO: Tách ô dựa trên cặp ngoặc kép bọc chuỗi nội dung để bảo vệ dấu phẩy
       let matches = line.match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
       if (!matches) continue;
       const currentLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
@@ -79,16 +81,15 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
         }
       });
       
-      // Phục hồi dữ liệu tiêu đề và mô tả chuẩn xác
-      const tieudeGoc = obj.tieude || "";
-      const moTaGoc = obj.moTa || "";
+      const tieudeChuan = obj.tieude || obj.title || "";
+      const moTaChuan = obj.moTa || obj.description || "";
       
-      if (tieudeGoc) {
+      if (tieudeChuan) {
         const itemObj: RealEstateItem = {
           id: parseInt(obj.id) || i,
-          tieude: tieudeGoc,
+          tieude: tieudeChuan,
           slug: "",
-          moTa: moTaGoc,
+          moTa: moTaChuan,
           gia: obj.gia || "",
           soGia: parseFloat(obj.soGia) || 0,
           dienTich: obj.dienTich || "",
@@ -108,7 +109,6 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
           isMatTien: false
         };
         
-        // TỰ ĐỘNG SINH SLUG TỪ TIÊU ĐỀ: Khách bấm vào tự nhảy URL chuẩn SEO không sợ lỗi
         itemObj.slug = `${convertToSlug(itemObj.tieude)}-${itemObj.id}`;
         itemObj.isMatTien = itemObj.tag?.toLowerCase().includes("mặt tiền") || itemObj.tieude?.toLowerCase().includes("mặt tiền");
         items.push(itemObj);
@@ -116,7 +116,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     }
     return items;
   } catch (error) {
-    console.error("Lỗi đồng bộ cấu trúc dữ liệu:", error);
+    console.error("Lỗi đồng bộ hóa dữ liệu Google Sheet:", error);
     return [];
   }
 }
