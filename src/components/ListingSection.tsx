@@ -14,10 +14,34 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
   const [khoangGia, setKhoangGia] = useState("all");
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
-  
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
 
+  // Khởi tạo số trang: Ưu tiên lấy từ sessionStorage nếu có, tránh bị reset về trang 1
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Khởi tạo số trang từ sessionStorage ngay khi component vừa mount vào trình duyệt
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedPage = sessionStorage.getItem("bds_page");
+      if (savedPage) {
+        setCurrentPage(parseInt(savedPage, 10));
+      }
+    }
+  }, []);
+
+  // Mỗi khi currentPage thay đổi, lưu lại vào sessionStorage và cuộn lên đầu danh sách sản phẩm
+  useEffect(() => {
+    if (typeof window !== "undefined" && currentPage > 0) {
+      sessionStorage.setItem("bds_page", currentPage.toString());
+      
+      // Cuộn lên mượt mà đầu danh sách (Chỉ chạy khi người dùng chủ động bấm số phân trang)
+      const element = document.getElementById("listing-section");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [currentPage]);
+
+  // Bộ lọc tìm kiếm dữ liệu bất động sản
   useEffect(() => {
     let result = allBdsItems;
     if (khuVuc !== "all") result = result.filter(i => i.khuVuc === khuVuc);
@@ -32,7 +56,6 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     else if (selectedTag === "chinhchu") result = result.filter(i => i.tag?.includes("Chính Chủ"));
     
     setFilteredItems(result);
-    setCurrentPage(1);
   }, [khuVuc, loaiHinh, khoangGia, huong, selectedTag, allBdsItems]);
 
   const formatTimeAgo = (dateStr: string) => {
@@ -40,96 +63,93 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
     const parts = dateStr.split(/[-/]/);
     if (parts.length !== 3) return "Hôm nay";
     const day = parseInt(parts[0], 10), month = parseInt(parts[1], 10) - 1, year = parseInt(parts[2], 10);
-    const ngayDang = new Date(year, month, day), homNay = new Date();
-    ngayDang.setHours(0,0,0,0); homNay.setHours(0,0,0,0);
-    const diffDays = Math.floor((homNay.getTime() - ngayDang.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return "Hôm nay";
-    if (diffDays === 1) return "1 ngày trước";
-    if (diffDays < 7) return `${diffDays} ngày trước`;
-    return `${Math.floor(diffDays / 7)} tuần trước`;
+    const diffDays = Math.floor((new Date().setHours(0,0,0,0) - new Date(year, month, day).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+    return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
   };
 
   const layUrlAnhChuan = (chuoiAnh: string) => {
     if (!chuoiAnh) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-    const danhSach = chuoiAnh.split(",").map(a => a.trim()).filter(a => a !== "" && a.startsWith("http"));
+    const danhSach = chuoiAnh.split(",").map(a => a.trim()).filter(a => a.startsWith("http"));
     return danhSach.length > 0 ? danhSach[0] : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
   };
 
   const getTagStyle = (tagText: string) => {
     const text = tagText?.toLowerCase() || "";
-    if (text.includes("sập hầm") || text.includes("cắt lỗ") || text.includes("ngộp")) {
-      return "bg-red-600 text-white font-black uppercase tracking-wider animate-pulse";
-    }
-    if (text.includes("mặt tiền")) {
-      return "bg-amber-500 text-slate-950 font-black uppercase tracking-wider";
-    }
-    if (text.includes("chính chủ")) {
-      return "bg-emerald-600 text-white font-bold uppercase tracking-wider";
-    }
-    return "bg-slate-900 text-white font-medium";
+    return text.includes("sập hầm") || text.includes("cắt lỗ") || text.includes("ngộp") ? "bg-red-600 text-white font-black uppercase animate-pulse" : text.includes("mặt tiền") ? "bg-amber-500 text-slate-950 font-black uppercase" : text.includes("chính chủ") ? "bg-emerald-600 text-white font-bold uppercase" : "bg-slate-900 text-white font-medium";
   };
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+  // Hàm xử lý khi người dùng chủ động click đổi bộ lọc tìm kiếm mới reset về trang 1
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === "khuVuc") setKhuVuc(value);
+    if (filterType === "loaiHinh") setLoaiHinh(value);
+    if (filterType === "khoangGia") setKhoangGia(value);
+    if (filterType === "huong") setHuong(value);
+    if (filterType === "tag") setSelectedTag(value);
+    
+    // Reset số trang về 1 trong state và bộ nhớ tạm khi đổi tiêu chí lọc
+    setCurrentPage(1);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("bds_page", "1");
+    }
+  };
+
+  const itemsPerPage = 6;
+  const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
   return (
     <>
+      {/* 1. THANH BỘ LỌC TÌM KIẾM CHI TIẾT */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khu Vực</label>
-              <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => setKhuVuc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
-                <option value="all">Tất cả Quận Huyện</option>
-                <option value="Hải Châu">Quận Hải Châu</option><option value="Thanh Khê">Quận Thanh Khê</option>
-                <option value="Liên Chiểu">Quận Liên Chiểu</option><option value="Cẩm Lệ">Quận Cẩm Lệ</option>
-                <option value="Sơn Trà">Quận Sơn Trà</option><option value="Ngũ Hành Sơn">Quận Ngũ Hành Sơn</option>
+              <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+                <option value="all">Tất cả Quận Huyện</option><option value="Hải Châu">Quận Hải Châu</option><option value="Thanh Khê">Quận Thanh Khê</option><option value="Liên Chiểu">Quận Liên Chiểu</option><option value="Cẩm Lệ">Quận Cẩm Lệ</option><option value="Sơn Trà">Quận Sơn Trà</option><option value="Ngũ Hành Sơn">Quận Ngũ Hành Sơn</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Loại Hình</label>
-              <select value={loaiHinh} onChange={(e) => setLoaiHinh(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={loaiHinh} onChange={(e) => handleFilterChange("loaiHinh", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả Loại hình</option><option value="Nhà phố">Nhà phố / Kiệt</option><option value="Đất nền">Đất nền / Đất ở</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khoảng Giá</label>
-              <select value={khoangGia} onChange={(e) => setKhoangGia(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={khoangGia} onChange={(e) => handleFilterChange("khoangGia", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả mức giá</option><option value="duoi3">Dưới 3 Tỷ</option><option value="3to5">Từ 3 - 5 Tỷ</option><option value="tren5">Trên 5 Tỷ</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Hướng Nhà</label>
-              <select value={huong} onChange={(e) => setHuong(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={huong} onChange={(e) => handleFilterChange("huong", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả các hướng</option><option value="Đông">Hướng Đông</option><option value="Tây">Hướng Tây</option><option value="Nam">Hướng Nam</option><option value="Bắc">Hướng Bắc</option>
               </select>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 items-center">
-            <button onClick={() => setSelectedTag("all")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Tất Cả</button>
-            <button onClick={() => setSelectedTag("mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Mặt Tiền Kinh Doanh</button>
-            <button onClick={() => setSelectedTag("chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Hàng Chính Chủ</button>
+            <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Tất Cả</button>
+            <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Mặt Tiền Kinh Doanh</button>
+            <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Hàng Chính Chủ</button>
           </div>
         </div>
       </section>
 
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20">
+      {/* 2. DANH SÁCH LƯỚI SẢN PHẨM CHUYỂN TRANG 100% HTML */}
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
           {currentItems.map((item) => {
             const thumbnail = layUrlAnhChuan(item.anh);
             return (
               <Link 
                 href={`/nha-dat/${item.slug}`} 
-                key={item.id} 
+                key={item.id}
                 className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                   <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
-                  <span className={`absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm ${getTagStyle(item.tag)}`}>
-                    {item.tag || 'Nhà Đất'}
-                  </span>
+                  <span className={`absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm ${getTagStyle(item.tag)}`}>{item.tag || 'Nhà Đất'}</span>
                   {item.huong && <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1"><Compass className="w-3 h-3 text-amber-500" />{item.huong}</span>}
                   <span className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> {formatTimeAgo(item.ngayDang)}</span>
                   <span className="absolute bottom-3 right-3 bg-slate-900/90 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-md">{item.gia}</span>
@@ -148,10 +168,18 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
             );
           })}
         </div>
+
+        {/* PHÂN TRANG THÔNG MINH KHÔNG LO MẤT VỊ TRÍ */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-10">
             {Array.from({ length: totalPages }, (_, idx) => (
-              <button key={idx} onClick={(e) => { e.preventDefault(); setCurrentPage(idx + 1); }} className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600"}`}>{idx + 1}</button>
+              <button 
+                key={idx} 
+                onClick={(e) => { e.preventDefault(); setCurrentPage(idx + 1); }} 
+                className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600"}`}
+              >
+                {idx + 1}
+              </button>
             ))}
           </div>
         )}

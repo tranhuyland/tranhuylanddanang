@@ -32,12 +32,13 @@ export default async function NhaDatDetail({ params }: Props) {
     <>
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
+        {/* Đã thêm scroll={false} tại đây */}
+        <Link href="/" scroll={false} className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
           <ChevronLeft className="w-4 h-4" /> QUAY LẠI TRANG CHỦ
         </Link>
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-          {/* Khu vực Slide Media thông minh luân chuyển hiển thị mượt mà giữa Video & Bộ sưu tập ảnh */}
+          {/* Khu vực Slide Media */}
           <div className="relative aspect-[16/10] bg-slate-100 w-full">
             <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
               {item.videoUrl && (
@@ -71,7 +72,6 @@ export default async function NhaDatDetail({ params }: Props) {
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang}</span>
             </div>
 
-            {/* BẢNG THÔNG SỐ KHÔNG CÒN LỆCH CỘT */}
             <div className="grid grid-cols-3 gap-2 my-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 text-center font-semibold">
               <div>
                 <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Diện tích</div>
