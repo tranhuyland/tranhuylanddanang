@@ -40,7 +40,7 @@ export default async function NhaDatDetail({ params }: Props) {
             <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
               {danhSachAnh.map((url: string, idx: number) => (
                 <div key={idx} className="w-full h-full flex-shrink-0 snap-start relative">
-                  <Image src={url} alt={item.tieude || "Hình ảnh sản phẩm"} fill className="object-cover" priority={idx === 0} />
+                  <Image src={url} alt={item.tieude || "Hình ảnh bất động sản"} fill className="object-cover" priority={idx === 0} />
                 </div>
               ))}
             </div>
@@ -51,7 +51,7 @@ export default async function NhaDatDetail({ params }: Props) {
           <div className="p-6 sm:p-8">
             <div className="flex items-center justify-between">
               <span className="bg-amber-500 text-slate-900 font-extrabold text-base px-3 py-1 rounded-xl shadow-sm">{item.gia}</span>
-              <span className="text-xs text-slate-400 font-bold uppercase bg-slate-50 px-2.5 py-1 rounded-lg border flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || 'Sổ hồng sẵn sàng'}</span>
+              <span className="text-xs text-slate-400 font-bold uppercase bg-slate-50 px-2.5 py-1 rounded-lg border flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || 'Sổ hồng chính chủ'}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 leading-snug">{item.tieude || item.title}</h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-400 text-xs mt-2 border-b border-slate-100 pb-4 font-semibold">
@@ -61,7 +61,7 @@ export default async function NhaDatDetail({ params }: Props) {
             <div className="grid grid-cols-3 gap-2 my-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 text-center font-semibold">
               <div><div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5">Diện tích</div><strong className="text-slate-900 text-sm">{item.dienTich}</strong></div>
               <div><div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5">Cấu trúc</div><strong className="text-slate-900 text-sm">{item.phongNgu || 'Đất ở'}</strong></div>
-              <div><div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5">Hướng</div><strong class="text-slate-900 text-sm">{item.huong || 'Chưa rõ'}</strong></div>
+              <div><div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5">Hướng</div><strong className="text-slate-900 text-sm">{item.huong || 'Chưa rõ'}</strong></div>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-6">
               {item.linkMap && <a href={item.linkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 text-emerald-700 font-bold border rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5"><Map className="w-4 h-4" /> Vị Trí Bản Đồ</a>}
