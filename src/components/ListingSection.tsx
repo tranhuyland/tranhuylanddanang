@@ -114,7 +114,7 @@ export default function ListingSection({ allBdsItems, forceDistrict }: ListingSe
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2"><MapPin className="w-3.5 h-3.5 text-amber-500" /><span class="truncate">{item.khuVucFull}</span></div>
+                    <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2"><MapPin className="w-3.5 h-3.5 text-amber-500" /><span className="truncate">{item.khuVucFull}</span></div>
                     <h3 className="font-bold text-slate-900 line-clamp-2 group-hover:text-amber-500 text-sm sm:text-base leading-snug transition-colors">{item.tieude}</h3>
                   </div>
                   <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-slate-500 text-sm font-medium">
