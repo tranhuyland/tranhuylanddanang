@@ -33,11 +33,16 @@ export default async function NhaDatDetail({ params }: Props) {
 
   return (
     <>
-      <Header />
-      <main class="max-w-4xl mx-auto px-4 py-10 flex-1">
-        <Link href="/" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
-          <ChevronLeft class="w-4 h-4" /> QUAY LẠI DANH SÁCH
-        </Link>
+      //  ĐOẠN CODE ĐÃ SỬA CHUẨN NEXT.JS 15 + TYPESCRIPT
+return (
+  <>
+    <Header />
+    <main className="max-w-4xl mx-auto px-4 py-10 flex-1">
+      <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
+        <ChevronLeft className="w-4 h-4" /> QUAY LẠI DANH SÁCH
+      </Link>
+// ...
+
         
         <div class="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
           <div class="relative aspect-[16/10] bg-slate-100 w-full">
