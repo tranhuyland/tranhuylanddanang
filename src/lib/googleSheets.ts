@@ -54,14 +54,12 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv";
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
-    if (!response.ok) throw new Error("Không thể kết nối dữ liệu Google Sheet");
+    if (!response.ok) throw new Error("Không thể kết nối danh sách dữ liệu Google Sheet");
     const csvText = await response.text();
-    
-    // Tách dòng phòng thủ ký tự xuống dòng chèn trong ô mô tả
     const lines = csvText.split(/\r?\n/);
     if (lines.length < 2) return [];
     
-    // Đọc chính xác hàng tiêu đề 1 trên Google Sheet
+    // Đọc chuẩn xác dòng tiêu đề 1 từ Google Sheet thực tế của anh Huy
     const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
     const items: RealEstateItem[] = [];
     
@@ -69,12 +67,13 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // THUẬT TOÁN ĐỈNH CAO: Tách ô dựa trên cặp ngoặc kép bọc chuỗi nội dung để bảo vệ dấu phẩy
+      // Khóa chuỗi bảo vệ dấu phẩy nội bộ nâng cao bằng Regex bổ trợ
       let matches = line.match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
       if (!matches) continue;
       const currentLine = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
       
       const obj: any = {};
+      // CƠ CHẾ DYNAMIC KEY MAPPING: Dò tìm map đúng ô theo tên chữ anh Huy viết ở hàng 1
       headers.forEach((header, index) => {
         if (header) {
           obj[header] = currentLine[index] || "";
@@ -109,6 +108,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
           isMatTien: false
         };
         
+        // Tự động đồng bộ hóa sinh chuỗi định tuyến slug sạch chuẩn SEO không sợ crash link
         itemObj.slug = `${convertToSlug(itemObj.tieude)}-${itemObj.id}`;
         itemObj.isMatTien = itemObj.tag?.toLowerCase().includes("mặt tiền") || itemObj.tieude?.toLowerCase().includes("mặt tiền");
         items.push(itemObj);
@@ -116,7 +116,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     }
     return items;
   } catch (error) {
-    console.error("Lỗi đồng bộ hóa dữ liệu Google Sheet:", error);
+    console.error("Lỗi parse dữ liệu hệ thống:", error);
     return [];
   }
 }
