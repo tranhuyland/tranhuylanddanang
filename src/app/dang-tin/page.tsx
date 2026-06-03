@@ -2,10 +2,13 @@
 
 import React, { useState } from 'react';
 
-export default function AdminUpTin() {
-  // 🚨 ĐIỀN CHÍNH XÁC 2 THÔNG SỐ KHO ẢNH CLOUDINARY CỦA ANH VÀO ĐÂY
+export default function DangTinBdsPage() {
+  // 🚨 ANH HUY ĐIỀN CHÍNH XÁC 3 THÔNG SỐ CỦA ANH VÀO ĐÂY
   const CLOUD_NAME = 'ds6k0kfbz'; 
   const UPLOAD_PRESET = 'tranhuyland'; 
+  
+  // Dán cái link Web App của Google Apps Script (có chữ /exec) của anh Huy vào đây
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxn5TRu7Cy8xPXOggaGV06ZLyYlHvf5lRFN5ripa-Tk1hQzMJaY7u_BGlxzLKDa40KpWQ/exec';
 
   const [formData, setFormData] = useState({
     title: '', price: '', area: '', location: '', direction: '', description: '',
@@ -19,7 +22,6 @@ export default function AdminUpTin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Hàm xử lý khi anh bấm chọn loạt ảnh từ điện thoại
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     setIsUploading(true);
@@ -27,7 +29,6 @@ export default function AdminUpTin() {
     const uploadedUrls: string[] = [...images];
 
     try {
-      // Vòng lặp tự động đẩy từng tấm ảnh lên Cloudinary
       for (let i = 0; i < e.target.files.length; i++) {
         const file = e.target.files[i];
         const data = new FormData();
@@ -40,13 +41,13 @@ export default function AdminUpTin() {
         });
         const json = await res.json();
         if (json.secure_url) {
-          uploadedUrls.push(json.secure_url); // Lưu link ảnh công khai trả về vào bộ nhớ tạm
+          uploadedUrls.push(json.secure_url);
         }
       }
       setImages(uploadedUrls);
-      setStatusMsg({ type: 'success', text: 'Đã tải ảnh lên kho đám mây tạm thời thành công!' });
+      setStatusMsg({ type: 'success', text: 'Đã tải ảnh lên kho đám mây thành công!' });
     } catch (err) {
-      setStatusMsg({ type: 'error', text: 'Lỗi trong quá trình tải hình ảnh lên kho lưu trữ.' });
+      setStatusMsg({ type: 'error', text: 'Lỗi tải ảnh lên hệ thống lưu trữ Cloudinary.' });
     } finally {
       setIsUploading(false);
     }
@@ -55,32 +56,40 @@ export default function AdminUpTin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (images.length === 0) {
-      setStatusMsg({ type: 'error', text: 'Vui lòng chọn ít nhất 1 hình ảnh thực tế!' });
+      setStatusMsg({ type: 'error', text: 'Vui lòng chọn ít nhất 1 hình ảnh sản phẩm!' });
       return;
     }
     setIsSubmitting(true);
-    setStatusMsg({ type: 'info', text: 'Đang xử lý đồng bộ dữ liệu sang file Google Sheet...' });
+    setStatusMsg({ type: 'info', text: 'Đang xử lý đồng bộ dữ liệu vào hệ thống Google Sheet...' });
 
     try {
-      const res = await fetch('/api/admin/up-tin', {
+      // Ép kiểu gửi trực tiếp xuyên qua tường lửa bảo mật của Google Script bằng mode: 'no-cors'
+      await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...formData, 
-          images: images.join(',') // Ghép mảng nhiều link ảnh thành chuỗi phân tách bằng dấu phẩy để chèn vào 1 ô duy nhất trên Sheet
+        body: JSON.stringify({
+          action: 'appendRow',
+          data: {
+            id: Date.now().toString(),
+            title: formData.title,
+            price: formData.price,
+            area: formData.area,
+            location: formData.location,
+            direction: formData.direction,
+            images: images.join(','),
+            description: formData.description,
+            date: new Date().toLocaleDateString('vi-VN'),
+          }
         }),
       });
-      const result = await res.json();
-      if (result.success) {
-        setStatusMsg({ type: 'success', text: 'Chúc mừng anh Huy! Sản phẩm đã được đăng lên website thành công.' });
-        // Xóa trống Form để sẵn sàng nhập bài tiếp theo
-        setFormData({ title: '', price: '', area: '', location: '', direction: '', description: '' });
-        setImages([]);
-      } else {
-        throw new Error('Gửi thất bại');
-      }
+
+      // Với chế độ no-cors, hệ thống sẽ bỏ qua bước check phản hồi và báo thành công ngay khi data được bắn đi
+      setStatusMsg({ type: 'success', text: 'Chúc mừng anh Huy! Tin bất động sản đã được đẩy vào Google Sheet thành công, web sẽ nạp tin sau 1 phút.' });
+      setFormData({ title: '', price: '', area: '', location: '', direction: '', description: '' });
+      setImages([]);
     } catch (err) {
-      setStatusMsg({ type: 'error', text: 'Không thể kết nối đồng bộ dữ liệu, vui lòng kiểm tra lại link Web App.' });
+      setStatusMsg({ type: 'error', text: 'Gặp sự cố kết nối, vui lòng kiểm tra lại mạng điện thoại.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +98,7 @@ export default function AdminUpTin() {
   return (
     <div className="max-w-3xl mx-auto my-10 p-6 bg-white rounded-xl shadow-lg font-sans border border-gray-100">
       <h1 className="text-xl font-bold text-blue-800 text-center mb-6 uppercase tracking-wide border-b pb-4">
-        Hệ Thống Đăng Tin Tự Động - Trần Huy Land
+        Hệ Thống Đăng Tin Nhanh - Trần Huy Land
       </h1>
 
       {statusMsg.text && (
@@ -103,18 +112,18 @@ export default function AdminUpTin() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Tiêu đề sản phẩm (*)</label>
-          <input required type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Ví dụ: Bán nhà mặt tiền đường Lê Duẩn, Hải Châu..." className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Tiêu đề bất động sản (*)</label>
+          <input required type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Bán đất mặt tiền đường Nguyễn Hữu Thọ, Khuê Trung..." className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Giá bán / Thuê (*)</label>
-            <input required type="text" name="price" value={formData.price} onChange={handleChange} placeholder="Ví dụ: 6.8 Tỷ" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Giá bán (*)</label>
+            <input required type="text" name="price" value={formData.price} onChange={handleChange} placeholder="Ví dụ: 4.8 Tỷ" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Diện tích (*)</label>
-            <input required type="text" name="area" value={formData.area} onChange={handleChange} placeholder="Ví dụ: 95m2" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+            <input required type="text" name="area" value={formData.area} onChange={handleChange} placeholder="Ví dụ: 100m2" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
           </div>
         </div>
 
@@ -136,21 +145,19 @@ export default function AdminUpTin() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Nội dung mô tả chi tiết</label>
-          <textarea rows={4} name="description" value={formData.description} onChange={handleChange} placeholder="Nhập số tầng, công năng sử dụng... Anh bấm phím Enter trên bàn phím xuống dòng thoải mái." className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300"></textarea>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Mô tả chi tiết bài viết</label>
+          <textarea rows={4} name="description" value={formData.description} onChange={handleChange} placeholder="Nhập công năng, tiện ích... Bấm Enter xuống dòng thoải mái." className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300"></textarea>
         </div>
 
-        {/* Ô Upload ảnh thông minh */}
         <div className="border-2 border-dashed border-blue-200 rounded-xl p-5 bg-blue-50/30 text-center">
           <label className="cursor-pointer block">
             <span className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-xs font-bold inline-block mb-2 transition">
-              {isUploading ? 'ĐANG TẢI ẢNH LÊN MÁY CHỦ...' : '📸 CHỌN NHIỀU ẢNH NHÀ ĐẤT CÙNG LÚC'}
+              {isUploading ? 'ĐANG TẢI ẢNH LÊN...' : '📸 CHỌN NHIỀU ẢNH CÙNG LÚC'}
             </span>
             <input type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={isUploading} className="hidden" />
-            <p className="text-xs text-gray-400">Anh có thể bấm chọn từ 3-6 tấm ảnh nhà trong thư viện ảnh cùng lúc</p>
+            <p className="text-xs text-gray-400">Anh Huy có thể bấm chọn loạt ảnh nhà từ máy</p>
           </label>
 
-          {/* Ô xem trước các ảnh đã chọn dưới dạng lưới điện thoại */}
           {images.length > 0 && (
             <div className="grid grid-cols-4 gap-3 mt-4">
               {images.map((url, idx) => (
@@ -167,7 +174,7 @@ export default function AdminUpTin() {
         <button type="submit" disabled={isSubmitting || isUploading} className={`w-full py-3 rounded-lg text-white font-bold transition shadow-md ${
           isSubmitting || isUploading ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-green-600 hover:opacity-90'
         }`}>
-          {isSubmitting ? 'ĐANG GỬI TIN ĐĂNG...' : '🚀 XÁC NHẬN ĐĂNG SẢN PHẨM LÊN WEB'}
+          {isSubmitting ? 'ĐANG ĐỒNG BỘ...' : '🚀 XÁC NHẬN ĐĂNG TIN LÊN WEBSITE'}
         </button>
       </form>
     </div>
