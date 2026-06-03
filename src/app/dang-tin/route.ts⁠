@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // 🚨 ANH HUY DÁN ĐƯỜNG LINK WEB APP GOOGLE SHEET VỪA COPY ĐƯỢC Ở BƯỚC 1 VÀO ĐÂY
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMAU3cnfP-xT1g3WZ4U8F8MlgrxOGakzCL0ylwzQDWuX0ZC-j8hW8uJkdmHFWVziI7PA/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxn5TRu7Cy8xPXOggaGV06ZLyYlHvf5lRFN5ripa-Tk1hQzMJaY7u_BGlxzLKDa40KpWQ/exec';
 
 export async function POST(request: Request) {
   try {
