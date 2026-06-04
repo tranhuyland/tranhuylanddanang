@@ -1,36 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 
-export default function DangTinBdsPage() {
-  // 🚨 ANH HUY ĐIỀN CHÍNH XÁC 3 THÔNG SỐ CỦA ANH VÀO ĐÂY
-  const CLOUD_NAME = 'ds6k0kfbz'; 
-  const UPLOAD_PRESET = 'tranhuyland'; 
-  
-  // Dán cái link Web App của Google Apps Script (có chữ /exec) của anh Huy vào đây
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxn5TRu7Cy8xPXOggaGV06ZLyYlHvf5lRFN5ripa-Tk1hQzMJaY7u_BGlxzLKDa40KpWQ/exec';
+// === ANH HUY ĐIỀN THÔNG SỐ CLOUDINARY CỦA ANH VÀO ĐÂY ===
+const CLOUD_NAME = 'ds6k0kfbz'; 
+const UPLOAD_PRESET = 'tranhuyland'; 
 
-  const [formData, setFormData] = useState({
-    title: '', price: '', area: '', location: '', direction: '', description: '',
+interface FormDataState {
+  title: string;
+  price: string;
+  area: string;
+  district: string;
+  direction: string;
+  description: string;
+}
+
+export default function DangTinPage() {
+  const [formData, setFormData] = useState<FormDataState>({
+    title: '',
+    price: '',
+    area: '',
+    district: '',
+    direction: '',
+    description: '',
   });
   const [images, setImages] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // Xử lý thay đổi ô nhập liệu
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Xử lý Upload nhiều ảnh lên Cloudinary cùng lúc
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    setIsUploading(true);
-    setStatusMsg({ type: '', text: '' });
-    const uploadedUrls: string[] = [...images];
+    const files = Array.from(e.target.files);
+    
+    setUploading(true);
+    setMessage(null);
+    const uploadedUrls: string[] = [];
 
     try {
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i];
+      for (const file of files) {
         const data = new FormData();
         data.append('file', file);
         data.append('upload_preset', UPLOAD_PRESET);
@@ -39,142 +54,142 @@ export default function DangTinBdsPage() {
           method: 'POST',
           body: data,
         });
-        const json = await res.json();
-        if (json.secure_url) {
-          uploadedUrls.push(json.secure_url);
+
+        if (res.ok) {
+          const fileData = await res.json();
+          uploadedUrls.push(fileData.secure_url);
         }
       }
-      setImages(uploadedUrls);
-      setStatusMsg({ type: 'success', text: 'Đã tải ảnh lên kho đám mây thành công!' });
+      setImages((prev) => [...prev, ...uploadedUrls]);
+      setMessage({ type: 'success', text: `Đã tải lên thành công ${uploadedUrls.length} hình ảnh.` });
     } catch (err) {
-      setStatusMsg({ type: 'error', text: 'Lỗi tải ảnh lên hệ thống lưu trữ Cloudinary.' });
+      setMessage({ type: 'error', text: 'Lỗi tải ảnh lên kho đám mây. Vui lòng kiểm tra lại cấu hình Cloudinary.' });
     } finally {
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Xử lý Gửi toàn bộ dữ liệu về Google Sheet
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (images.length === 0) {
-      setStatusMsg({ type: 'error', text: 'Vui lòng chọn ít nhất 1 hình ảnh sản phẩm!' });
+      setMessage({ type: 'error', text: 'Vui lòng chọn và tải lên ít nhất 1 hình ảnh nhà đất!' });
       return;
     }
-    setIsSubmitting(true);
-    setStatusMsg({ type: 'info', text: 'Đang xử lý đồng bộ dữ liệu vào hệ thống Google Sheet...' });
+
+    setSubmitting(true);
+    setMessage(null);
 
     try {
-      // Ép kiểu gửi trực tiếp xuyên qua tường lửa bảo mật của Google Script bằng mode: 'no-cors'
-      await fetch(GOOGLE_SCRIPT_URL, {
+      // Gom loạt ảnh thành chuỗi cách nhau bằng dấu phẩy để ném vào 1 ô trên Sheet
+      const imageUrlsString = images.join(',');
+
+      const payload = {
+        ...formData,
+        images: imageUrlsString,
+        date: new Date().toLocaleDateString('vi-VN'),
+      };
+
+      const response = await fetch('/api/dang-tin', {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'appendRow',
-          data: {
-            id: Date.now().toString(),
-            title: formData.title,
-            price: formData.price,
-            area: formData.area,
-            location: formData.location,
-            direction: formData.direction,
-            images: images.join(','),
-            description: formData.description,
-            date: new Date().toLocaleDateString('vi-VN'),
-          }
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
-      // Với chế độ no-cors, hệ thống sẽ bỏ qua bước check phản hồi và báo thành công ngay khi data được bắn đi
-      setStatusMsg({ type: 'success', text: 'Chúc mừng anh Huy! Tin bất động sản đã được đẩy vào Google Sheet thành công, web sẽ nạp tin sau 1 phút.' });
-      setFormData({ title: '', price: '', area: '', location: '', direction: '', description: '' });
-      setImages([]);
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setMessage({ type: 'success', text: '🎉 Đăng tin thành công! Dữ liệu đã được nạp thẳng vào Google Sheet.' });
+        setFormData({ title: '', price: '', area: '', district: '', direction: '', description: '' });
+        setImages([]);
+      } else {
+        setMessage({ type: 'error', text: result.message || 'Có lỗi xảy ra khi đồng bộ với Google Sheet.' });
+      }
     } catch (err) {
-      setStatusMsg({ type: 'error', text: 'Gặp sự cố kết nối, vui lòng kiểm tra lại mạng điện thoại.' });
+      setMessage({ type: 'error', text: 'Không thể kết nối đồng bộ dữ liệu, vui lòng kiểm tra lại hệ thống.' });
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto my-10 p-6 bg-white rounded-xl shadow-lg font-sans border border-gray-100">
-      <h1 className="text-xl font-bold text-blue-800 text-center mb-6 uppercase tracking-wide border-b pb-4">
-        Hệ Thống Đăng Tin Nhanh - Trần Huy Land
-      </h1>
-
-      {statusMsg.text && (
-        <div className={`p-4 mb-5 rounded-lg text-sm font-semibold ${
-          statusMsg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 
-          statusMsg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700'
-        }`}>
-          {statusMsg.text}
+    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
+      <h2 style={{ textAlign: 'center', color: '#1d4ed8', marginBottom: '24px' }}>TRANG ÚP SẢN PHẨM NỘI BỘ</h2>
+      
+      {message && (
+        <div style={{
+          padding: '12px',
+          borderRadius: '6px',
+          marginBottom: '16px',
+          backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+          color: message.type === 'success' ? '#15803d' : '#b91c1c',
+          fontWeight: 'bold'
+        }}>
+          {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Tiêu đề bất động sản (*)</label>
-          <input required type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Bán đất mặt tiền đường Nguyễn Hữu Thọ, Khuê Trung..." className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Tiêu đề bài đăng *</label>
+          <input type="text" name="title" value={formData.title} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: Bán nhà mặt tiền Quận 1..." />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Giá bán (*)</label>
-            <input required type="text" name="price" value={formData.price} onChange={handleChange} placeholder="Ví dụ: 4.8 Tỷ" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Giá tiền *</label>
+            <input type="text" name="price" value={formData.price} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: 5.2 Tỷ" />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Diện tích (*)</label>
-            <input required type="text" name="area" value={formData.area} onChange={handleChange} placeholder="Ví dụ: 100m2" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Diện tích (m²) *</label>
+            <input type="text" name="area" value={formData.area} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: 75" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Vị trí / Quận (*)</label>
-            <input required type="text" name="location" value={formData.location} onChange={handleChange} placeholder="Ví dụ: Cẩm Lệ, Đà Nẵng" className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300" />
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Quận / Huyện *</label>
+            <input type="text" name="district" value={formData.district} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: Hải Châu" />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Hướng nhà đất</label>
-            <select name="direction" value={formData.direction} onChange={handleChange} className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300">
-              <option value="">-- Chọn hướng --</option>
-              <option value="Đông">Đông</option><option value="Tây">Tây</option>
-              <option value="Nam">Nam</option><option value="Bắc">Bắc</option>
-              <option value="Đông Nam">Đông Nam</option><option value="Đông Bắc">Đông Bắc</option>
-              <option value="Tây Nam">Tây Nam</option><option value="Tây Bắc">Tây Bắc</option>
-            </select>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Hướng nhà</label>
+            <input type="text" name="direction" value={formData.direction} onChange={handleChange} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: Đông Nam" />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Mô tả chi tiết bài viết</label>
-          <textarea rows={4} name="description" value={formData.description} onChange={handleChange} placeholder="Nhập công năng, tiện ích... Bấm Enter xuống dòng thoải mái." className="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 border-gray-300"></textarea>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Nội dung mô tả chi tiết</label>
+          <textarea name="description" value={formData.description} onChange={handleChange} rows={4} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Nhập mô tả thông tin chi tiết bất động sản..." />
         </div>
 
-        <div className="border-2 border-dashed border-blue-200 rounded-xl p-5 bg-blue-50/30 text-center">
-          <label className="cursor-pointer block">
-            <span className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-xs font-bold inline-block mb-2 transition">
-              {isUploading ? 'ĐANG TẢI ẢNH LÊN...' : '📸 CHỌN NHIỀU ẢNH CÙNG LÚC'}
-            </span>
-            <input type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={isUploading} className="hidden" />
-            <p className="text-xs text-gray-400">Anh Huy có thể bấm chọn loạt ảnh nhà từ máy</p>
-          </label>
-
+        <div style={{ background: '#f3f4f6', padding: '16px', borderRadius: '6px', border: '1px dashed #9ca3af' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#374151' }}>Hình ảnh sản phẩm (Chọn nhiều ảnh) *</label>
+          <input type="file" multiple accept="image/*" onChange={handleImageChange} disabled={uploading} style={{ marginBottom: '12px' }} />
+          {uploading && <p style={{ color: '#2563eb', margin: 0 }}>⏳ Đang tải ảnh lên đám mây, anh chờ tí nhé...</p>}
+          
           {images.length > 0 && (
-            <div className="grid grid-cols-4 gap-3 mt-4">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
               {images.map((url, idx) => (
-                <div key={idx} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="preview" className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-md">✕</button>
-                </div>
+                <img key={idx} src={url} alt="preview" style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }} />
               ))}
             </div>
           )}
         </div>
 
-        <button type="submit" disabled={isSubmitting || isUploading} className={`w-full py-3 rounded-lg text-white font-bold transition shadow-md ${
-          isSubmitting || isUploading ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-green-600 hover:opacity-90'
-        }`}>
-          {isSubmitting ? 'ĐANG ĐỒNG BỘ...' : '🚀 XÁC NHẬN ĐĂNG TIN LÊN WEBSITE'}
+        <button type="submit" disabled={submitting || uploading} style={{
+          backgroundColor: submitting || uploading ? '#9ca3af' : '#2563eb',
+          color: 'white',
+          padding: '14px',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: submitting || uploading ? 'not-allowed' : 'pointer',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          marginTop: '10px'
+        }}>
+          {submitting ? '⏳ ĐANG ĐỒNG BỘ SANG GOOGLE SHEET...' : '🚀 XÁC NHẬN ĐĂNG TIN'}
         </button>
       </form>
     </div>
