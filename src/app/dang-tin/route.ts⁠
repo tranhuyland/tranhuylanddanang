@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // ĐƯỜNG LINK WEB APP GOOGLE APPS SCRIPT CỦA ANH HUY
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_spbx92EsVNCLbc0E3RaGSpNw_3L9iauH0z5Puu9U4y_PNHYzGrts7osRjS7HvI0UAA/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrLhvyeMjS6lTQf0E66ZRUCgeGYDLI2UZgDsgm5-_kAX1s9ZA1_xYiE8u47b2h1ITQwA/exec';
 
 export async function POST(request: Request) {
   try {
