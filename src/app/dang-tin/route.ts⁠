@@ -1,7 +1,80 @@
 import { NextResponse } from 'next/server';
 
 // ĐƯỜNG LINK WEB APP GOOGLE APPS SCRIPT CỦA ANH HUY
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUziJlb-KyDFJz38BIChYu4iEHSFTAurRzj5TnBoQde-9RaAvixM6s_kbh1hlYVUbXJg/exec';
+const GOOGLE_SCRIPT_URL = '// Hàm bùa hộ mệnh chống lỗi myFunction mặc định của hệ thống Google
+function myFunction() {
+  Logger.log("Hệ thống Trần Huy Land hoạt động ổn định!");
+  return ContentService.createTextOutput("Đang hoạt động tốt!");
+}
+
+// Cổng nhận diện trạng thái kết nối (Dạng GET)
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ "status": "success", "message": "Kết nối API ổn định!" }))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeaders({ 'Access-Control-Allow-Origin': '*' });
+}
+
+// Cổng nạp dữ liệu từ Form Website đổ về Google Sheet (Dạng POST)
+function doPost(e) {
+  var headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
+  try {
+    var doc = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = doc.getSheets()[0]; // Lấy trang tính đầu tiên của anh Huy
+
+    // Nhận chuỗi dữ liệu thô gửi sang từ Next.js
+    var rawContent = e.postData.contents;
+    var data = JSON.parse(rawContent);
+
+    // Thuật toán TỰ ĐỘNG đọc hàng tiêu đề số 1 để khớp tên cột thông minh
+    var headersRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var newRow = [];
+
+    // Quét dữ liệu dựa theo đúng tên cột trên Excel của anh Huy (Chống lệch cột)
+    for (var i = 0; i < headersRow.length; i++) {
+      var headerName = headersRow[i].toString().trim();
+      
+      if (headerName === "Ngày đăng" || headerName === "Timestamp" || headerName === "Ngày") {
+        newRow.push(new Date()); // Tự động điền ngày giờ đăng hiện tại
+      } else if (data[headerName] !== undefined) {
+        newRow.push(data[headerName]); // Điền dữ liệu từ form khớp với tên cột
+      } else {
+        newRow.push(""); // Cột trống nếu không có dữ liệu truyền vào
+      }
+    }
+
+    // Ghi hàng dữ liệu mới vào dòng cuối cùng của bảng tính
+    sheet.appendRow(newRow);
+
+    // Trả về JSON thông báo thành công chuẩn chỉnh để Web tắt popup báo lỗi
+    return ContentService.createTextOutput(JSON.stringify({ "result": "success", "row": sheet.getLastRow() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
+
+  } catch (error) {
+    // Trường hợp phát sinh lỗi, trả về thông báo lỗi chi tiết dạng JSON
+    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "message": error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeaders(headers);
+  }
+}
+
+// Xử lý tiền kiểm tra (Preflight request OPTIONS) bắt buộc của trình duyệt di động
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400'
+    });
+}
+';
 
 export async function POST(request: Request) {
   try {
