@@ -1,0 +1,58 @@
+import { NextResponse } from 'next/server';
+
+// 🚨 ANH HUY THAY ĐƯỜNG LINK WEB APP GOOGLE SCRIPT CỦA ANH VÀO ĐÂY:
+const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrb1ocMD9pZYe8JN14hSxhYG1KOHPb_ruX3hJtpUzKYn270qsKbjisU0Ea40DaGh3vww/exec';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    // Định dạng ngày đăng theo giờ Việt Nam
+    const ngayDang = new Date().toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    // Gom tập hợp link ảnh thành chuỗi, phân cách bằng dấu phẩy
+    const imagesArray = [body.img1, body.img2, body.img3, body.img4, body.img5].filter(Boolean);
+    const chuoiHinhAnh = imagesArray.join(',');
+
+    // Chuẩn bị payload gửi sang Google Sheet khớp cấu trúc cột dữ liệu cũ của anh
+    const payload = {
+      title: body.title,
+      price: body.price,
+      area: body.area,
+      location: body.location,
+      direction: body.direction,
+      type: body.type,
+      description: body.description,
+      images: chuoiHinhAnh,
+      date: ngayDang
+    };
+
+    // Server Next.js gọi trực tiếp sang Google Script (An toàn, bỏ qua bộ chặn CORS trình duyệt)
+    const googleResponse = await fetch(GOOGLE_APP_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const textData = await googleResponse.text();
+    let jsonData;
+    try {
+      jsonData = JSON.parse(textData);
+    } catch {
+      jsonData = { status: 'success' }; // Fallback nếu Google trả về dạng text chuỗi thô công khai
+    }
+
+    return NextResponse.json({ success: true, data: jsonData });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || 'Lỗi xử lý kết nối dữ liệu tại Server hệ thống.' },
+      { status: 500 }
+    );
+  }
+}
