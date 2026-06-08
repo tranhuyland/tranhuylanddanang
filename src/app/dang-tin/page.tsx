@@ -1,197 +1,159 @@
 'use client';
 
-import { useState, ChangeEvent, FormEvent } from 'react';
-
-// === ANH HUY ĐIỀN THÔNG SỐ CLOUDINARY CỦA ANH VÀO ĐÂY ===
-const CLOUD_NAME = 'ds6k0kfbz'; 
-const UPLOAD_PRESET = 'tranhuyland'; 
-
-interface FormDataState {
-  title: string;
-  price: string;
-  area: string;
-  district: string;
-  direction: string;
-  description: string;
-}
+import React, { useState } from 'react';
 
 export default function DangTinPage() {
-  const [formData, setFormData] = useState<FormDataState>({
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  const [formData, setFormData] = useState({
     title: '',
     price: '',
     area: '',
-    district: '',
-    direction: '',
+    location: 'Hải Châu',
+    direction: 'Đông',
+    type: 'Đất nền',
     description: '',
+    img1: '',
+    img2: '',
+    img3: '',
+    img4: '',
+    img5: ''
   });
-  const [images, setImages] = useState<string[]>([]);
-  const [uploading, setUploading] = useState<boolean>(false);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Xử lý thay đổi ô nhập liệu
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
-  // Xử lý Upload nhiều ảnh lên Cloudinary cùng lúc
-  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files);
-    
-    setUploading(true);
-    setMessage(null);
-    const uploadedUrls: string[] = [];
-
-    try {
-      for (const file of files) {
-        const data = new FormData();
-        data.append('file', file);
-        data.append('upload_preset', UPLOAD_PRESET);
-
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: data,
-        });
-
-        if (res.ok) {
-          const fileData = await res.json();
-          uploadedUrls.push(fileData.secure_url);
-        }
-      }
-      setImages((prev) => [...prev, ...uploadedUrls]);
-      setMessage({ type: 'success', text: `Đã tải lên thành công ${uploadedUrls.length} hình ảnh.` });
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Lỗi tải ảnh lên kho đám mây. Vui lòng kiểm tra lại cấu hình Cloudinary.' });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Xử lý Gửi toàn bộ dữ liệu về Google Sheet
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (images.length === 0) {
-      setMessage({ type: 'error', text: 'Vui lòng chọn và tải lên ít nhất 1 hình ảnh nhà đất!' });
-      return;
-    }
-
-    setSubmitting(true);
-    setMessage(null);
+    setLoading(true);
+    setMessage({ type: '', text: '' });
 
     try {
-      // Gom loạt ảnh thành chuỗi cách nhau bằng dấu phẩy để ném vào 1 ô trên Sheet
-      const imageUrlsString = images.join(',');
-
-      const payload = {
-        ...formData,
-        images: imageUrlsString,
-        date: new Date().toLocaleDateString('vi-VN'),
-      };
-
+      // Gọi lên API Route nội bộ của Next.js để xử lý trung gian an toàn
       const response = await fetch('/api/dang-tin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setMessage({ type: 'success', text: '🎉 Đăng tin thành công! Dữ liệu đã được nạp thẳng vào Google Sheet.' });
-        setFormData({ title: '', price: '', area: '', district: '', direction: '', description: '' });
-        setImages([]);
+        setMessage({ type: 'success', text: '🎉 Đăng sản phẩm thành công! Dữ liệu đã đồng bộ lên Google Sheet.' });
+        // Reset form về trống
+        setFormData({
+          title: '', price: '', area: '', location: 'Hải Châu', direction: 'Đông', type: 'Đất nền',
+          description: '', img1: '', img2: '', img3: '', img4: '', img5: ''
+        });
       } else {
-        setMessage({ type: 'error', text: result.message || 'Có lỗi xảy ra khi đồng bộ với Google Sheet.' });
+        setMessage({ type: 'error', text: result.error || 'Có lỗi xảy ra khi đồng bộ dữ liệu.' });
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Không thể kết nối đồng bộ dữ liệu, vui lòng kiểm tra lại hệ thống.' });
+    } catch (error) {
+      setMessage({ type: 'error', text: '❌ Không thể kết nối đồng bộ dữ liệu, vui lòng kiểm tra lại hệ thống.' });
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2 style={{ textAlign: 'center', color: '#1d4ed8', marginBottom: '24px' }}>TRANG ÚP SẢN PHẨM NỘI BỘ</h2>
-      
-      {message && (
-        <div style={{
-          padding: '12px',
-          borderRadius: '6px',
-          marginBottom: '16px',
-          backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-          color: message.type === 'success' ? '#15803d' : '#b91c1c',
-          fontWeight: 'bold'
-        }}>
-          {message.text}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Tiêu đề bài đăng *</label>
-          <input type="text" name="title" value={formData.title} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: Bán nhà mặt tiền Quận 1..." />
+    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 sm:p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold text-blue-600">TRẦN HUY LAND</h1>
+          <p className="text-gray-500 mt-2 font-medium">Hệ Thống Nhập Liệu Sản Phẩm Nội Bộ</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Giá tiền *</label>
-            <input type="text" name="price" value={formData.price} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: 5.2 Tỷ" />
+        {message.text && (
+          <div className={`p-4 rounded-lg mb-6 text-sm font-semibold ${
+            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {message.text}
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Diện tích (m²) *</label>
-            <input type="text" name="area" value={formData.area} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: 75" />
-          </div>
-        </div>
+        )}
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Quận / Huyện *</label>
-            <input type="text" name="district" value={formData.district} onChange={handleChange} required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: Hải Châu" />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Tiêu đề bất động sản (*)</label>
+            <input type="text" name="title" required value={formData.title} onChange={handleChange} placeholder="Ví dụ: Bán đất mặt tiền Nguyễn Sinh Sắc siêu đẹp..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Hướng nhà</label>
-            <input type="text" name="direction" value={formData.direction} onChange={handleChange} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Ví dụ: Đông Nam" />
-          </div>
-        </div>
 
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px' }}>Nội dung mô tả chi tiết</label>
-          <textarea name="description" value={formData.description} onChange={handleChange} rows={4} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} placeholder="Nhập mô tả thông tin chi tiết bất động sản..." />
-        </div>
-
-        <div style={{ background: '#f3f4f6', padding: '16px', borderRadius: '6px', border: '1px dashed #9ca3af' }}>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#374151' }}>Hình ảnh sản phẩm (Chọn nhiều ảnh) *</label>
-          <input type="file" multiple accept="image/*" onChange={handleImageChange} disabled={uploading} style={{ marginBottom: '12px' }} />
-          {uploading && <p style={{ color: '#2563eb', margin: 0 }}>⏳ Đang tải ảnh lên đám mây, anh chờ tí nhé...</p>}
-          
-          {images.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-              {images.map((url, idx) => (
-                <img key={idx} src={url} alt="preview" style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }} />
-              ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Giá cả (Tỷ hoặc Triệu) (*)</label>
+              <input type="text" name="price" required value={formData.price} onChange={handleChange} placeholder="Ví dụ: 5.2 Tỷ" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
             </div>
-          )}
-        </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Diện tích (m²) (*)</label>
+              <input type="text" name="area" required value={formData.area} onChange={handleChange} placeholder="Ví dụ: 100" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
+            </div>
+          </div>
 
-        <button type="submit" disabled={submitting || uploading} style={{
-          backgroundColor: submitting || uploading ? '#9ca3af' : '#2563eb',
-          color: 'white',
-          padding: '14px',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: submitting || uploading ? 'not-allowed' : 'pointer',
-          fontWeight: 'bold',
-          fontSize: '16px',
-          marginTop: '10px'
-        }}>
-          {submitting ? '⏳ ĐANG ĐỒNG BỘ SANG GOOGLE SHEET...' : '🚀 XÁC NHẬN ĐĂNG TIN'}
-        </button>
-      </form>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Quận/Huyện</label>
+              <select name="location" value={formData.location} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white">
+                <option value="Hải Châu">Hải Châu</option>
+                <option value="Thanh Khê">Thanh Khê</option>
+                <option value="Liên Chiểu">Liên Chiểu</option>
+                <option value="Cẩm Lệ">Cẩm Lệ</option>
+                <option value="Sơn Trà">Sơn Trà</option>
+                <option value="Ngũ Hành Sơn">Ngũ Hành Sơn</option>
+                <option value="Hòa Vang">Hòa Vang</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Hướng nhà đất</label>
+              <select name="direction" value={formData.direction} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white">
+                <option value="Đông">Đông</option>
+                <option value="Tây">Tây</option>
+                <option value="Nam">Nam</option>
+                <option value="Bắc">Bắc</option>
+                <option value="Đông Nam">Đông Nam</option>
+                <option value="Đông Bắc">Đông Bắc</option>
+                <option value="Tây Nam">Tây Nam</option>
+                <option value="Tây Bắc">Tây Bắc</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Loại hình</label>
+              <select name="type" value={formData.type} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white">
+                <option value="Đất nền">Đất nền</option>
+                <option value="Nhà phố">Nhà phố</option>
+                <option value="Căn hộ">Căn hộ</option>
+                <option value="Biệt thự">Biệt thự</option>
+                <option value="Kho xưởng">Kho xưởng</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Mô tả chi tiết (Hỗ trợ xuống dòng)</label>
+            <textarea name="description" rows={5} value={formData.description} onChange={handleChange} placeholder="Nhập thông tin mô tả chi tiết bất động sản tại đây..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900" />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-bold text-gray-700 -mb-1">Danh sách link hình ảnh (Tối đa 5 ảnh)</label>
+            <input type="text" name="img1" value={formData.img1} onChange={handleChange} placeholder="Đường dẫn hình ảnh 1 (Ảnh bìa bắt buộc)" className="w-full px-4 py-2 border rounded-lg text-sm text-gray-900" />
+            <input type="text" name="img2" value={formData.img2} onChange={handleChange} placeholder="Đường dẫn hình ảnh 2" className="w-full px-4 py-2 border rounded-lg text-sm text-gray-900" />
+            <input type="text" name="img3" value={formData.img3} onChange={handleChange} placeholder="Đường dẫn hình ảnh 3" className="w-full px-4 py-2 border rounded-lg text-sm text-gray-900" />
+            <input type="text" name="img4" value={formData.img4} onChange={handleChange} placeholder="Đường dẫn hình ảnh 4" className="w-full px-4 py-2 border rounded-lg text-sm text-gray-900" />
+            <input type="text" name="img5" value={formData.img5} onChange={handleChange} placeholder="Đường dẫn hình ảnh 5" className="w-full px-4 py-2 border rounded-lg text-sm text-gray-900" />
+          </div>
+
+          <button type="submit" disabled={loading} className={`w-full py-3 px-4 rounded-lg text-white font-bold transition duration-200 ${
+            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          }`}>
+            {loading ? '⏳ ĐANG ĐỒNG BỘ DỮ LIỆU...' : '🚀 XÁC NHẬN ĐĂNG TIN'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
