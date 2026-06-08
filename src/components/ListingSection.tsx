@@ -13,7 +13,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
-  const [khuVuc, setKhuVuc] = useState(forceDistrict || "all"); // Biến khuVuc này đóng vai trò bộ lọc Phường
+  const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
   const [loaiHinh, setLoaiHinh] = useState("all");
   const [khoangGia, setKhoangGia] = useState("all");
   const [huong, setHuong] = useState("all");
@@ -146,17 +146,61 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Phường</label>
               <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="all">Tất cả Phường</option>
-                {/* Anh hãy bổ sung hoặc điều chỉnh các tên Phường thực tế trên Google Sheet của anh vào đây nhé */}
-                <option value="Hòa Khánh Bắc">Phường Hòa Khánh Bắc</option>
-                <option value="Hòa Khánh Nam">Phường Hòa Khánh Nam</option>
-                <option value="Hòa Minh">Phường Hòa Minh</option>
-                <option value="Hiệp Bắc">Phường Hiệp Bắc</option>
-                <option value="Thạch Thang">Phường Thạch Thang</option>
+                
+                {/* QUẬN HẢI CHÂU */}
+                <option disabled className="font-bold text-slate-400 bg-slate-100">-- Quận Hải Châu --</option>
                 <option value="Hải Châu I">Phường Hải Châu I</option>
-                <option value="Hải Châu II">Phường Hải Châu II</option>
+                <option value="Thạch Thang">Phường Thạch Thang</option>
+                <option value="Thanh Bình">Phường Thanh Bình</option>
+                <option value="Thuận Phước">Phường Thuận Phước</option>
                 <option value="Phước Ninh">Phường Phước Ninh</option>
+                <option value="Bình Thuận">Phường Bình Thuận</option>
                 <option value="Hòa Thuận Đông">Phường Hòa Thuận Đông</option>
                 <option value="Hòa Thuận Tây">Phường Hòa Thuận Tây</option>
+                <option value="Hòa Cường Bắc">Phường Hòa Cường Bắc</option>
+                <option value="Hòa Cường Nam">Phường Hòa Cường Nam</option>
+
+                {/* QUẬN THANH KHÊ */}
+                <option disabled className="font-bold text-slate-400 bg-slate-100">-- Quận Thanh Khê --</option>
+                <option value="Thạc Gián">Phường Thạc Gián</option>
+                <option value="Tân Chính">Phường Tân Chính</option>
+                <option value="Chính Gián">Phường Chính Gián</option>
+                <option value="Hòa Khê">Phường Hòa Khê</option>
+                <option value="An Khê">Phường An Khê</option>
+                <option value="Thanh Khê Đông">Phường Thanh Khê Đông</option>
+                <option value="Xuân Hà">Phường Xuân Hà</option>
+
+                {/* QUẬN SƠN TRÀ */}
+                <option disabled className="font-bold text-slate-400 bg-slate-100">-- Quận Sơn Trà --</option>
+                <option value="An Hải Tây">Phường An Hải Tây</option>
+                <option value="Mân Thái">Phường Mân Thái</option>
+                <option value="An Hải Bắc">Phường An Hải Bắc</option>
+                <option value="An Hải Đông">Phường An Hải Đông</option>
+                <option value="Nại Hiên Đông">Phường Nại Hiên Đông</option>
+
+                {/* QUẬN LIÊN CHIỂU */}
+                <option disabled className="font-bold text-slate-400 bg-slate-100">-- Quận Liên Chiểu --</option>
+                <option value="Hòa Minh">Phường Hòa Minh</option>
+                <option value="Hòa Khánh Bắc">Phường Hòa Khánh Bắc</option>
+                <option value="Hòa Khánh Nam">Phường Hòa Khánh Nam</option>
+                <option value="Hòa Hiệp Bắc">Phường Hòa Hiệp Bắc</option>
+                <option value="Hòa Hiệp Nam">Phường Hòa Hiệp Nam</option>
+
+                {/* QUẬN CẨM LỆ */}
+                <option disabled className="font-bold text-slate-400 bg-slate-100">-- Quận Cẩm Lệ --</option>
+                <option value="Khuê Trung">Phường Khuê Trung</option>
+                <option value="Hòa Thọ Đông">Phường Hòa Thọ Đông</option>
+                <option value="Hòa Thọ Tây">Phường Hòa Thọ Tây</option>
+                <option value="Hòa An">Phường Hòa An</option>
+                <option value="Hòa Phát">Phường Hòa Phát</option>
+                <option value="Hòa Xuân">Phường Hòa Xuân</option>
+
+                {/* QUẬN NGŨ HÀNH SƠN */}
+                <option disabled className="font-bold text-slate-400 bg-slate-100">-- Quận Ngũ Hành Sơn --</option>
+                <option value="Mỹ An">Phường Mỹ An</option>
+                <option value="Khuê Mỹ">Phường Khuê Mỹ</option>
+                <option value="Hòa Hải">Phường Hòa Hải</option>
+                <option value="Hòa Quý">Phường Hòa Quý</option>
               </select>
             </div>
             <div>
