@@ -3,9 +3,9 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 
 // 🚨 CẤU HÌNH THÔNG SỐ: Anh điền chính xác các thông số của anh vào đây
-const GOOGLE_WEBAPP_URL = 'LINK_WEB_APP_EXEC_CỦA_ANH_VÀO_ĐÂY';
-const CLOUDINARY_CLOUD_NAME = 'TÊN_CLOUD_NAME_CỦA_ANH'; 
-const CLOUDINARY_UPLOAD_PRESET = 'TÊN_UPLOAD_PRESET_UNSIGNED_CỦA_ANH';
+const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzrb1ocMD9pZYe8JN14hSxhYG1KOHPb_ruX3hJtpUzKYn270qsKbjisU0Ea40DaGh3vww/exec';
+const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
+const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland';
 
 export default function DangTinPage() {
   const [formData, setFormData] = useState({
