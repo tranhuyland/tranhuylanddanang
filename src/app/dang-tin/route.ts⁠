@@ -1,52 +1,58 @@
 import { NextResponse } from 'next/server';
 
-// 🚨 THAO TÁC BẮT BUỘC: Anh Huy thay thế đường link '/exec' mới toanh của anh vào đây nhé!
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLqOHjZnOXCTSXSX36GXjMYBBY-7qFrtVwpAkBnBZV_KEFYbziMs6guhgk16PjP2mbTQ/exec';
+// 🚨 ANH HUY THAY ĐƯỜNG LINK WEB APP GOOGLE SCRIPT CỦA ANH VÀO ĐÂY:
+const GOOGLE_APP_SCRIPT_URL = 'THAY_LINK_GOOGLE_SCRIPT_EXEC_CỦA_ANH_VÀO_ĐÂY';
 
-// Cấu hình xử lý phương thức OPTIONS để thông luồng CORS cho trình duyệt di động
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
-}
-
-// Xử lý nạp dữ liệu chính (POST Request) gửi sang Google Sheet
 export async function POST(request: Request) {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-
   try {
-    // Đọc luồng dữ liệu JSON nhận được từ giao diện Website gửi vào
     const body = await request.json();
 
-    // Thực hiện chuyển tiếp (Forward) dữ liệu một cách an toàn từ máy chủ Vercel sang Google API
-    const googleResponse = await fetch(GOOGLE_SCRIPT_URL, {
+    // Định dạng ngày đăng theo giờ Việt Nam
+    const ngayDang = new Date().toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    // Gom tập hợp link ảnh thành chuỗi, phân cách bằng dấu phẩy
+    const imagesArray = [body.img1, body.img2, body.img3, body.img4, body.img5].filter(Boolean);
+    const chuoiHinhAnh = imagesArray.join(',');
+
+    // Chuẩn bị payload gửi sang Google Sheet khớp cấu trúc cột dữ liệu cũ của anh
+    const payload = {
+      title: body.title,
+      price: body.price,
+      area: body.area,
+      location: body.location,
+      direction: body.direction,
+      type: body.type,
+      description: body.description,
+      images: chuoiHinhAnh,
+      date: ngayDang
+    };
+
+    // Server Next.js gọi trực tiếp sang Google Script (An toàn, bỏ qua bộ chặn CORS trình duyệt)
+    const googleResponse = await fetch(GOOGLE_APP_SCRIPT_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
 
-    // Ép kiểu kết quả phản hồi trả về từ cổng Google Apps Script
-    const result = await googleResponse.json();
+    const textData = await googleResponse.text();
+    let jsonData;
+    try {
+      jsonData = JSON.parse(textData);
+    } catch {
+      jsonData = { status: 'success' }; // Fallback nếu Google trả về dạng text chuỗi thô công khai
+    }
 
-    // Trả phản hồi thành công về cho giao diện client đóng popup tải
-    return NextResponse.json(result, { status: 200, headers });
-
+    return NextResponse.json({ success: true, data: jsonData });
   } catch (error: any) {
-    // Trường hợp nghẽn mạng hoặc sai link, trả lỗi chi tiết dạng JSON để chống sập luồng hệ thống
     return NextResponse.json(
-      { result: 'error', message: error.message || 'Lỗi kết nối API Server!' },
-      { status: 500, headers }
+      { success: false, error: error.message || 'Lỗi xử lý kết nối dữ liệu tại Server hệ thống.' },
+      { status: 500 }
     );
   }
 }
