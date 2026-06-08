@@ -13,7 +13,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
-  const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
+  const [khuVuc, setKhuVuc] = useState(forceDistrict || "all"); // Biến khuVuc này đóng vai trò bộ lọc Phường
   const [loaiHinh, setLoaiHinh] = useState("all");
   const [khoangGia, setKhoangGia] = useState("all");
   const [huong, setHuong] = useState("all");
@@ -138,14 +138,25 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
-      {/* 1. THANH BỘ LỌC TÌM KIẾM CHI TIẾT */}
+      {/* 1. THANH BỘ LỌC TÌM KIẾM CHI TIẾT THEO PHƯỜNG */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khu Vực</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Phường</label>
               <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
-                <option value="all">Tất cả Quận Huyện</option><option value="Hải Châu">Quận Hải Châu</option><option value="Thanh Khê">Quận Thanh Khê</option><option value="Liên Chiểu">Quận Liên Chiểu</option><option value="Cẩm Lệ">Quận Cẩm Lệ</option><option value="Sơn Trà">Quận Sơn Trà</option><option value="Ngũ Hành Sơn">Quận Ngũ Hành Sơn</option>
+                <option value="all">Tất cả Phường</option>
+                {/* Anh hãy bổ sung hoặc điều chỉnh các tên Phường thực tế trên Google Sheet của anh vào đây nhé */}
+                <option value="Hòa Khánh Bắc">Phường Hòa Khánh Bắc</option>
+                <option value="Hòa Khánh Nam">Phường Hòa Khánh Nam</option>
+                <option value="Hòa Minh">Phường Hòa Minh</option>
+                <option value="Hiệp Bắc">Phường Hiệp Bắc</option>
+                <option value="Thạch Thang">Phường Thạch Thang</option>
+                <option value="Hải Châu I">Phường Hải Châu I</option>
+                <option value="Hải Châu II">Phường Hải Châu II</option>
+                <option value="Phước Ninh">Phường Phước Ninh</option>
+                <option value="Hòa Thuận Đông">Phường Hòa Thuận Đông</option>
+                <option value="Hòa Thuận Tây">Phường Hòa Thuận Tây</option>
               </select>
             </div>
             <div>
