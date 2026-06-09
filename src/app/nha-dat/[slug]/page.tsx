@@ -1,8 +1,8 @@
-import { getBdsData } from "@/lib/googleSheets";
+import { getBdsData } from "@/lib/googleSheets"; // Đã sửa chữ i viết thường chuẩn cú pháp
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
-import PropertyGallery from "@/components/PropertyGallery"; // Import component slide phóng to mới
+import PropertyGallery from "@/components/PropertyGallery"; 
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, Phone } from "lucide-react";
@@ -45,11 +45,9 @@ export default async function NhaDatDetail({ params }: Props) {
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
           
-          {/* KHU VỰC CẬP NHẬT: THAY THẾ SLIDE CŨ BẰNG PROPERTY GALLERY THÔNG MINH */}
-          <div className="relative aspect-[16/10] bg-slate-100 w-full group-gallery">
+          {/* KHU VỰC CẬP NHẬT: HIỂN THỊ TRÀN KHUNG ĐẸP MẮT */}
+          <div className="relative aspect-[16/10] bg-slate-100 w-full group-gallery overflow-hidden">
             {item.videoUrl ? (
-              // Nếu nhà đất có video, hiển thị cấu trúc chia đôi hoặc tab media, 
-              // Tuy nhiên để tối ưu trải nghiệm, em giữ nguyên iframe video hoặc ưu tiên chạy Slide ảnh vuốt phóng to
               <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
                 <div className="w-full h-full flex-shrink-0 snap-start relative">
                   <iframe className="w-full h-full" src={item.videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
@@ -59,7 +57,6 @@ export default async function NhaDatDetail({ params }: Props) {
                 </div>
               </div>
             ) : (
-              // Nếu không có video, hiển thị full tràn khung Slider vuốt tay + chạm phóng to bự
               <PropertyGallery images={tatCaAnhGallery} alt={item.tieude} />
             )}
 
