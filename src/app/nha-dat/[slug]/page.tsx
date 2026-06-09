@@ -2,7 +2,8 @@ import { getBdsData } from "@/lib/googleSheets"; // Đã sửa chữ i viết th
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
-import PropertyGallery from "@/components/PropertyGallery"; 
+import PropertyGallery from "@/components/SlideBds.tsx
+"; 
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, Phone } from "lucide-react";
