@@ -2,10 +2,10 @@ import { getBdsData } from "@/lib/googleSheets";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
+import PropertyGallery from "@/components/PropertyGallery"; // Import component slide phóng to mới
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, MapPin, Calendar, ShieldCheck, Square, Bed, Layers, Map, FileText, Phone } from "lucide-react";
+import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, Phone } from "lucide-react";
 
 interface Props { params: Promise<{ slug: string }>; }
 
@@ -26,34 +26,46 @@ export default async function NhaDatDetail({ params }: Props) {
   const item = data.find(p => p.slug === slug);
   if (!item) notFound();
   
+  // Thu thập danh sách ảnh chính từ cột 'anh' trong Google Sheet
   const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "" && a.startsWith("http")) : [];
+
+  // Gom thêm ảnh sổ đỏ/bản vẽ vào chung danh sách slide nếu có để khách tiện vuốt xem một lượt
+  const tatCaAnhGallery = [...danhSachAnh];
+  if (item.anhSoDo && item.anhSoDo.startsWith("http") && !tatCaAnhGallery.includes(item.anhSoDo)) {
+    tatCaAnhGallery.push(item.anhSoDo);
+  }
 
   return (
     <>
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1">
-        {/* Đã thêm scroll={false} tại đây */}
         <Link href="/" scroll={false} className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
           <ChevronLeft className="w-4 h-4" /> QUAY LẠI TRANG CHỦ
         </Link>
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-          {/* Khu vực Slide Media */}
-          <div className="relative aspect-[16/10] bg-slate-100 w-full">
-            <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
-              {item.videoUrl && (
+          
+          {/* KHU VỰC CẬP NHẬT: THAY THẾ SLIDE CŨ BẰNG PROPERTY GALLERY THÔNG MINH */}
+          <div className="relative aspect-[16/10] bg-slate-100 w-full group-gallery">
+            {item.videoUrl ? (
+              // Nếu nhà đất có video, hiển thị cấu trúc chia đôi hoặc tab media, 
+              // Tuy nhiên để tối ưu trải nghiệm, em giữ nguyên iframe video hoặc ưu tiên chạy Slide ảnh vuốt phóng to
+              <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
                 <div className="w-full h-full flex-shrink-0 snap-start relative">
                   <iframe className="w-full h-full" src={item.videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                 </div>
-              )}
-              {danhSachAnh.map((url: string, idx: number) => (
-                <div key={idx} className="w-full h-full flex-shrink-0 snap-start relative">
-                  <Image src={url} alt={item.tieude} fill className="object-cover" priority={idx === 0} sizes="(max-w-4xl) 100vw" />
+                <div className="w-full h-full flex-shrink-0 snap-start relative">
+                  <PropertyGallery images={tatCaAnhGallery} alt={item.tieude} />
                 </div>
-              ))}
-            </div>
-            <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow">
-              <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{danhSachAnh.length} Ảnh
+              </div>
+            ) : (
+              // Nếu không có video, hiển thị full tràn khung Slider vuốt tay + chạm phóng to bự
+              <PropertyGallery images={tatCaAnhGallery} alt={item.tieude} />
+            )}
+
+            {/* Badge thông báo tổng số lượng hình ảnh */}
+            <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow pointer-events-none">
+              <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{tatCaAnhGallery.length} Hình Ảnh
             </div>
           </div>
 
