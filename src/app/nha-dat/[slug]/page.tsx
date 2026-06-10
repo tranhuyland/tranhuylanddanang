@@ -1,3 +1,5 @@
+"use client";
+
 import { getBdsData } from "@/lib/googleSheets"; 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -5,36 +7,49 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 import PropertyGallery from "@/components/SlideBds"; 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText } from "lucide-react";
+import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import React, { useState, useEffect } from "react";
 
 // Cấu trúc Type chuẩn của Next.js 15 dành cho Params dạng Promise
 interface Props { 
   params: Promise<{ slug: string }>; 
 }
 
-export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
-  const data = await getBdsData();
-  const item = data.find(p => p.slug === slug) as any;
-  if (!item) return { title: "Không tìm thấy sản phẩm" };
+export default function NhaDatDetail({ params }: Props) {
+  // Giải nén params an toàn bằng React.use() do cấu trúc component dạng client hoặc unwrapped
+  const { slug } = React.use(params);
   
-  const titleText = item.tieude || item.Tieude || item.title || "Chi tiết bất động sản";
-  const priceText = item.gia || item.Gia || "Liên hệ";
-  const areaText = item.dienTich || item.DienTich || item.dientich || "Chưa rõ";
-  const locationText = item.khuVucFull || item.khuvucFull || item.diachi || "";
+  const [item, setItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-  return {
-    title: `${titleText} | Trần Huy Land`,
-    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. Vị trí: ${locationText}.`,
-  };
-}
+  // Fetch dữ liệu phía Client để đồng bộ trạng thái Popup tương tác
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getBdsData();
+        const foundItem = data.find(p => p.slug === slug);
+        if (foundItem) {
+          setItem(foundItem);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy dữ liệu chi tiết:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [slug]);
 
-export default async function NhaDatDetail({ params }: Props) {
-  // Giải nén slug an toàn bằng await theo đúng chuẩn Next.js 15
-  const { slug } = await params;
-  const data = await getBdsData();
-  const item = data.find(p => p.slug === slug) as any;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500"></div>
+      </div>
+    );
+  }
+
   if (!item) notFound();
   
   // Thu thập danh sách ảnh chính từ cột 'anh' trong Google Sheet
@@ -112,28 +127,32 @@ export default async function NhaDatDetail({ params }: Props) {
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-6 w-full">
-              {(item.linkMap || item.LinkMap) && <a href={item.linkMap || item.LinkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><Map className="w-4 h-4" /> Vị Trí Bản Đồ</a>}
-              {anhSoDoGoc && <a href={anhSoDoGoc} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
+              {(item.linkMap || item.LinkMap) && (
+                <a href={item.linkMap || item.LinkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors">
+                  <Map className="w-4 h-4" /> Vị Trí Bản Đồ
+                </a>
+              )}
+              {anhSoDoGoc && (
+                <button 
+                  onClick={() => setIsPopupOpen(true)} 
+                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ
+                </button>
+              )}
             </div>
 
             <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
             
-            {/* HỆ THỐNG HIỂN THỊ CHỮ SINH ĐỘNG CHỐNG CHỮ NHỎ, HỖ TRỢ ĐỊNH DẠNG TO/NHỎ/IN ĐẬM TỪ GOOGLE SHEET */}
             <div className="text-slate-700 text-base sm:text-lg leading-relaxed text-justify w-full prose max-w-none">
               <ReactMarkdown
                 components={{
-                  // Chữ tiêu đề lớn nổi bật màu hổ phách (Gõ 1 dấu # trên Excel)
                   h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-black text-amber-600 mt-5 mb-2 border-b border-amber-100 pb-1" {...props} />,
-                  // Chữ tiêu đề vừa (Gõ 2 dấu ## trên Excel)
                   h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-extrabold text-slate-800 mt-4 mb-1.5" {...props} />,
-                  // Chữ tiêu đề nhỏ (Gõ 3 dấu ### trên Excel)
                   h3: ({node, ...props}) => <h3 className="text-base sm:text-md font-bold text-slate-800 mt-3 mb-1" {...props} />,
-                  // Đoạn văn bản thường (Cỡ chữ được phóng to rõ ràng, giữ nguyên xuống dòng mượt mà)
                   p: ({node, ...props}) => <p className="mb-3.5 whitespace-pre-wrap text-slate-600 font-medium" {...props} />,
-                  // Định dạng dấu cộng hoặc gạch đầu dòng (Gõ dấu * hoặc dấu - trên Excel)
                   ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3.5 space-y-1" {...props} />,
                   li: ({node, ...props}) => <li className="text-slate-600 font-medium" {...props} />,
-                  // Chữ điểm nhấn được bọc in đậm đậm nét (Gõ 2 dấu sao ** bọc chữ trên Excel)
                   strong: ({node, ...props}) => <strong className="font-black text-slate-900 bg-amber-50 px-1 rounded text-amber-700" {...props} />,
                 }}
               >
@@ -145,6 +164,38 @@ export default async function NhaDatDetail({ params }: Props) {
       </main>
       <Footer />
       <FloatingWidgets /> 
+
+      {/* POPUP SỔ HỒNG THÔNG MINH - BẤM X HOẶC VUỐT RA NGOÀI ĐỂ ĐÓNG */}
+      {isPopupOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fade-in touch-none"
+          onClick={() => setIsPopupOpen(false)}
+        >
+          {/* Nút đóng hình tròn góc trên bên phải */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsPopupOpen(false);
+            }}
+            className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-all z-50 cursor-pointer border border-white/10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Vùng chứa hình ảnh thực tế */}
+          <div 
+            className="relative max-w-3xl max-h-[85vh] w-full h-full flex items-center justify-center select-none"
+            onClick={(e) => e.stopPropagation()} // Chống tắt khi click trúng ảnh
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={anhSoDoGoc} 
+              alt="Sổ hồng bản vẽ chi tiết" 
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl pointer-events-auto cursor-zoom-in"
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
