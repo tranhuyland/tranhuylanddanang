@@ -24,7 +24,18 @@ export interface RealEstateItem {
 
 export function convertToSlug(text: string): string {
   if (!text) return "";
-  return text.toLowerCase().replace(/á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ/gi, 'a').replace(/é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/gi, 'e').replace(/i|í|ì|ỉ|ĩ|ị/gi, 'i').replace(/ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/gi, 'o').replace(/ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/gi, 'u').replace(/ý|ỳ|ỷ|ỹ|ị/gi, 'y').replace(/đ/gi, 'd').replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+  return text
+    .toLowerCase()
+    .replace(/á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ/gi, 'a')
+    .replace(/é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/gi, 'e')
+    .replace(/i|í|ì|ỉ|ĩ|ị/gi, 'i')
+    .replace(/ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/gi, 'o')
+    .replace(/ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/gi, 'u')
+    .replace(/ý|ỳ|ỷ|ỹ|ị/gi, 'y')
+    .replace(/đ/gi, 'd')
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 }
 
 export async function getBdsData(): Promise<RealEstateItem[]> {
@@ -32,49 +43,106 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 0 } });
     const csvText = await response.text();
-    const lines = csvText.split(/\r?\n/);
-    if (lines.length < 2) return [];
     
-    // TỰ ĐỘNG LẤY TÊN CỘT TỪ HÀNG 1 CỦA SHEET
-    const headers = lines[0].split(',').map(h => h.trim().replace(/['"]+/g, ''));
+    // Thuật toán bóc tách dữ liệu cao cấp: Duyệt từng ký tự để giữ nguyên dấu phẩy và dấu Enter trong dấu ngoặc kép ""
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      const nextChar = csvText[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // Xử lý dấu ngoặc kép kép bên trong văn bản (escaped quote "")
+          currentField += '"';
+          i++;
+        } else {
+          // Đảo trạng thái ngoặc kép
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // Gặp dấu phẩy phân tách cột ngoài ngoặc kép
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        // Gặp dấu xuống hàng kết thúc bản ghi ngoài ngoặc kép
+        if (char === '\r' && nextChar === '\n') {
+          i++; // Bỏ qua ký tự \n đi kèm của Windows
+        }
+        currentRow.push(currentField.trim());
+        if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentField = '';
+      } else {
+        // Gom ký tự thường vào ô dữ liệu hiện tại
+        currentField += char;
+      }
+    }
+    
+    // Gom ô dữ liệu cuối cùng của file nếu không có dấu xuống hàng ở cuối file
+    if (currentField || currentRow.length > 0) {
+      currentRow.push(currentField.trim());
+      if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+        rows.push(currentRow);
+      }
+    }
+
+    if (rows.length < 2) return [];
+
+    // Lấy tiêu đề cột và chuẩn hóa về dạng chữ thường không khoảng cách
+    const headers = rows[0].map(h => h.trim().replace(/['"]+/g, '').toLowerCase());
     const items: RealEstateItem[] = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      // Dùng Regex để tách cột chính xác kể cả khi ô có chứa dấu phẩy
-      const matches = lines[i].match(/(".*?"|[^",]+|(?<=,)(?=,)|(?<=,)$)/g);
-      if (!matches) continue;
-      const row = matches.map(val => val.trim().replace(/^"|"$/g, '').trim());
-      
+
+    for (let i = 1; i < rows.length; i++) {
+      const rowData = rows[i];
       const obj: any = {};
-      headers.forEach((h, idx) => { obj[h] = row[idx] || ""; });
       
-      // ÁNH XẠ DỮ LIỆU ĐỘNG (Dù anh đổi tên cột trong Sheet, code vẫn chạy đúng)
+      headers.forEach((headerName, idx) => {
+        // Loại bỏ dấu ngoặc kép dư thừa ở đầu và cuối chuỗi dữ liệu thô
+        let value = rowData[idx] || "";
+        obj[headerName] = value.replace(/^"|"$/g, '').trim();
+      });
+
+      // Tạo các trường aliases hỗ trợ linh hoạt chữ hoa chữ thường tránh lỗi map dữ liệu
+      const tieuDeBds = obj.tieude || obj.title || "Chưa có tiêu đề";
+      const moTaBds = obj.mota || obj.mota || obj.description || "";
+
       const item: RealEstateItem = {
         id: parseInt(obj.id) || i,
-        tieude: obj.tieude || obj.title || "Chưa có tiêu đề",
-        slug: convertToSlug(obj.tieude || obj.title || ""),
-        moTa: obj.moTa || obj.description || "",
+        tieude: tieuDeBds,
+        slug: convertToSlug(tieuDeBds),
+        moTa: moTaBds,
         gia: obj.gia || "",
-        soGia: parseFloat(obj.soGia) || 0,
-        dienTich: obj.dienTich || "",
-        khuVuc: obj.khuVuc || "Hải Châu",
-        khuVucFull: obj.khuVucFull || obj.diaChi || "Đà Nẵng",
-        loaiHinh: obj.loaiHinh || "Nhà phố",
+        soGia: parseFloat(obj.sogia) || 0,
+        dienTich: obj.dientich || obj.dien_tich || "",
+        khuVuc: obj.khuvuc || "Hải Châu",
+        khuVucFull: obj.khuvucfull || obj.diachi || obj.dia_chi || "Đà Nẵng",
+        loaiHinh: obj.loaihinh || "Nhà phố",
         huong: obj.huong || "",
-        phongNgu: obj.phongNgu || "",
-        phapLy: obj.phapLy || "Sổ hồng",
+        phongNgu: obj.phongngu || "",
+        phapLy: obj.phaply || "Sổ hồng",
         tag: obj.tag || "Chính Chủ",
-        tagColor: obj.tagColor || "bg-emerald-500",
+        tagColor: obj.tagcolor || "bg-emerald-500",
         anh: obj.anh || obj.image || "",
-        anhSoDo: obj.anhSoDo || obj.soDo || "",
-        linkMap: obj.linkMap || "",
-        videoUrl: obj.videoUrl || "",
-        ngayDang: obj.ngayDang || "Tin mới",
-        isMatTien: (obj.tag?.toLowerCase().includes("mặt tiền") || obj.isMatTien === "TRUE")
+        anhSoDo: obj.anhsodo || obj.sodo || "",
+        linkMap: obj.linkmap || "",
+        videoUrl: obj.videourl || "",
+        ngayDang: obj.ngaydang || "Tin mới",
+        isMatTien: ((obj.tag?.toLowerCase().includes("mặt tiền")) || obj.ismattien === "TRUE")
       };
-      items.push(item);
+      
+      if (item.slug) {
+        items.push(item);
+      }
     }
     return items;
-  } catch (e) { return []; }
+  } catch (e) { 
+    console.error("Lỗi parse file Google Sheet CSV:", e);
+    return []; 
+  }
 }
