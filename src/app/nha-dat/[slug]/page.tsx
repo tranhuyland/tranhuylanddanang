@@ -142,5 +142,5 @@ export default async function NhaDatDetail({ params }: Props) {
       <Footer />
       <FloatingWidgets /> 
     </>
-  );
+  ); 
 }
