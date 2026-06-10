@@ -84,7 +84,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     // Hệ thống các bộ lọc nâng cao kết hợp hàm xóa dấu thông minh chống lệch Unikey
     if (khuVuc !== "all") {
       result = result.filter((i: any) => {
-        const checkDiaChi = cleanVietnameseText(i.diaChi || i.diChi || i.dia_chi || "");
+        const checkDiaChi = cleanVietnameseText(i.diaChi || i.diaChiFull || i.diChi || i.dia_chi || "");
         const checkKhuVuc = cleanVietnameseText(i.khuVucFull || i.khuVuc || "");
         const targetKhuVuc = cleanVietnameseText(khuVuc);
         
@@ -116,9 +116,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter((i: any) => cleanVietnameseText(i.huong || "").includes(cleanVietnameseText(huong)));
     }
     if (selectedTag === "mattien") {
-      result = result.filter((i: any) => i.isMatTien === true || cleanVietnameseText(i.tieude || "").includes("mat tien") || cleanVietnameseText(i.tag || "").includes("mat tien"));
+      result = result.filter((i: any) => i.isMatTien === true || cleanVietnameseText(i.tieude || "").includes("mat tien") || cleanVietnameseText(i.tag || "").includes("mat tien") || cleanVietnameseText(i.mota || i.moTa || "").includes("mat tien"));
     } else if (selectedTag === "chinhchu") {
-      result = result.filter((i: any) => cleanVietnameseText(i.tag || "").includes("chinh chu") || cleanVietnameseText(i.mota || i.moTa || "").includes("chinh chu"));
+      result = result.filter((i: any) => cleanVietnameseText(i.tag || "").includes("chinh chu") || cleanVietnameseText(i.mota || i.moTa || "").includes("chinh chu") || cleanVietnameseText(i.tieude || "").includes("chinh chu"));
     }
     
     setFilteredItems(result);
@@ -159,7 +159,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Phường / Xã</label>
-              <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
                 <option value="all">Tất cả Vị trí</option>
                 
                 {/* DANH SÁCH 16 PHƯỜNG CHUẨN CỦA ANH */}
@@ -190,30 +190,30 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Loại Hình</label>
-              <select value={loaiHinh} onChange={(e) => handleFilterChange("loaiHinh", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={loaiHinh} onChange={(e) => handleFilterChange("loaiHinh", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
                 <option value="all">Tất cả Loại hình</option><option value="Nhà phố">Nhà phố / Kiệt</option><option value="Đất nền">Đất nền / Đất ở</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khoảng Giá</label>
-              <select value={khoangGia} onChange={(e) => handleFilterChange("khoangGia", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={khoangGia} onChange={(e) => handleFilterChange("khoangGia", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
                 <option value="all">Tất cả mức giá</option><option value="duoi3">Dưới 3 Tỷ</option><option value="3to5">Từ 3 - 5 Tỷ</option><option value="tren5">Trên 5 Tỷ</option>
               </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Hướng Nhà</label>
-              <select value={huong} onChange={(e) => handleFilterChange("huong", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={huong} onChange={(e) => handleFilterChange("huong", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
                 <option value="all">Tất cả các hướng</option><option value="Đông">Hướng Đông</option><option value="Tây">Hướng Tây</option><option value="Nam">Hướng Nam</option><option value="Bắc">Hướng Bắc</option>
               </select>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 items-center justify-between">
             <div className="flex flex-wrap gap-2 items-center">
-              <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Tất Cả</button>
-              <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Mặt Tiền Kinh Doanh</button>
-              <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600"}`}>Hàng Chính Chủ</button>
+              <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Tất Cả</button>
+              <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Mặt Tiền Kinh Doanh</button>
+              <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Hàng Chính Chủ</button>
             </div>
-            <button onClick={() => setModalType("kygui")} className="bg-amber-500 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:bg-amber-600 transition-colors">
+            <button onClick={() => setModalType("kygui")} className="bg-orange-500 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:bg-orange-600 transition-colors">
               <PenTool size={14} /> Ký gửi nhà đất
             </button>
           </div>
@@ -223,51 +223,104 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       {/* 2. DANH SÁCH SẢN PHẨM NHẢY URL TRANG RIÊNG BIỆT */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentItems.map((item) => {
               const thumbnail = layUrlAnhChuan(item.anh);
               const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
               const displayTime = item.ngayDang || item.ngay || "";
 
+              // Tự động phân tích chuỗi văn bản nhận diện Badge đặc quyền
+              const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || ""));
+              const isChinhChu = textLower.includes("chinh chu");
+              const isMatTien = textLower.includes("mat tien");
+              const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+
               return (
                 <a 
                   href={`/nha-dat/${item.slug}`}
                   key={item.id}
-                  className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group transform hover:-translate-y-1 block"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                    <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-w-7xl) 100vw" priority />
-                    <span className="absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-lg shadow-sm bg-slate-900 text-white font-medium">
+                  {/* KHU VỰC HÌNH ẢNH & BADGES ĐỘC QUYỀN */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
+                    <Image 
+                      src={thumbnail} 
+                      alt={item.tieude || "Trần Huy Land"} 
+                      fill 
+                      className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" 
+                      sizes="(max-w-7xl) 100vw" 
+                      priority 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Hệ thống Badge góc trên bên trái */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                      {isSapHam && (
+                        <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider animate-pulse">
+                          🔥 Sập Hầm
+                        </span>
+                      )}
+                      {isChinhChu && (
+                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider">
+                          ✓ Chính Chủ
+                        </span>
+                      )}
+                      {isMatTien && (
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider">
+                          🏢 Mặt Tiền
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tag Loại hình BDS góc dưới bên trái */}
+                    <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2.5 py-1 rounded-md font-medium">
                       {item.phân_loại || item.loaiHinh || 'Nhà Đất'}
-                    </span>
-                    {item.huong && (
-                      <span className="absolute top-3 right-3 bg-white/95 text-slate-800 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
-                        <Compass className="w-3 h-3 text-amber-500" />{item.huong}
-                      </span>
-                    )}
-                    <span className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-amber-400" /> {formatTimeAgo(displayTime)}
-                    </span>
-                    <span className="absolute bottom-3 right-3 bg-slate-900/90 text-white font-extrabold text-sm px-3 py-1 rounded-xl shadow-md">
-                      {item.gia}
-                    </span>
+                    </div>
                   </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between">
+
+                  {/* KHU VỰC NỘI DUNG CHI TIẾT */}
+                  <div className="p-4 flex flex-col flex-grow justify-between">
                     <div>
-                      <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
-                        <MapPin className="w-3.5 h-3.5 text-amber-500" />
+                      {/* Vị trí dự án */}
+                      <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                         <span className="truncate">{displayLocation}</span>
                       </div>
-                      <h3 className="font-bold text-slate-900 line-clamp-2 group-hover:text-amber-500 text-sm sm:text-base leading-snug transition-colors">
+
+                      {/* Tiêu đề bài đăng */}
+                      <h3 className="text-gray-800 font-bold text-base line-clamp-2 group-hover:text-orange-500 transition-colors duration-200 mb-3 min-h-[3rem] leading-snug">
                         {item.tieude}
                       </h3>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-slate-500 text-sm font-medium">
-                      <div className="text-xs text-slate-400 flex items-center gap-3">
-                        <span><Square className="w-3.5 h-3.5 inline mr-0.5" /> {item.dienTich || "---"}</span>
+
+                    {/* KHU VỰC THÔNG SỐ GRID 3 Ô SANG TRỌNG */}
+                    <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-gray-50 text-gray-600 text-xs">
+                      {/* Diện tích */}
+                      <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
+                        <Square className="w-3.5 h-3.5 text-orange-500 mb-0.5" />
+                        <span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
                       </div>
-                      <span className="text-amber-500 font-bold flex items-center gap-0.5 text-xs uppercase tracking-wider">
-                        Chi tiết <ChevronRight className="w-3 h-3" />
+
+                      {/* Hướng */}
+                      <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
+                        <Compass className="w-3.5 h-3.5 text-orange-500 mb-0.5" />
+                        <span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.huong || "---"}</span>
+                      </div>
+
+                      {/* Giá tiền */}
+                      <div className="flex flex-col items-center justify-center bg-orange-50/40 rounded-lg py-1.5 border border-orange-100/30">
+                        <span className="text-[10px] text-orange-600 uppercase font-bold mb-0.5">Giá Bán</span>
+                        <span className="font-bold text-orange-600 text-xs sm:text-sm truncate max-w-full px-0.5">{item.gia}</span>
+                      </div>
+                    </div>
+
+                    {/* THỜI GIAN ĐĂNG & NÚT XEM CHI TIẾT */}
+                    <div className="flex items-center justify-between mt-3 pt-2">
+                      <span className="text-[11px] text-gray-400 italic flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-gray-300" /> {formatTimeAgo(displayTime)}
+                      </span>
+                      <span className="text-orange-500 text-xs font-bold inline-flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-200">
+                        Xem chi tiết <ChevronRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </div>
@@ -281,9 +334,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
 
-        {/* PHÂN TRANG */}
+        {/* PHÂN TRANG THUẬT TOÁN */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-10">
+          <div className="flex justify-center items-center gap-2 mt-12">
             {Array.from({ length: totalPages }, (_, idx) => (
               <button 
                 key={idx} 
@@ -294,7 +347,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
                 }} 
                 className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${
-                  currentPage === idx + 1 ? "bg-amber-500 text-slate-900 scale-105" : "bg-white border text-slate-600 hover:bg-slate-50"
+                  currentPage === idx + 1 ? "bg-orange-500 text-white scale-105 shadow-md shadow-orange-500/20" : "bg-white border text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {idx + 1}
