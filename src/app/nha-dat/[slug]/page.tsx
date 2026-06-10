@@ -7,14 +7,14 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import PropertyClient from "./PropertyClient";
 
-// Ép trang luôn lấy dữ liệu mới nhất (Incremental Static Regeneration hoặc Force Dynamic)
+// Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE
+// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE (Robot đọc được ngay)
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
@@ -33,11 +33,11 @@ export async function generateMetadata({ params }: Props) {
   const imageSeo = danhSachAnh.find((a: string) => a.startsWith("http")) || "/icon.png";
 
   return {
-    title: `${titleText} - Giá: ${priceText} | Trần Huy Land`,
-    description: `Bán bất động sản tại ${locationText}. Diện tích: ${areaText}, giá bán công khai: ${priceText}. Sổ hồng chính chủ, hỗ trợ pháp lý nhanh chóng.`,
+    title: `${titleText} - Giá tốt: ${priceText} | Trần Huy Land`,
+    description: `Bán bất động sản chính chủ tại ${locationText}. Diện tích thực tế: ${areaText}, giá bán công khai: ${priceText}. Sổ hồng chính chủ, hỗ trợ tư vấn pháp lý nhanh chóng.`,
     openGraph: {
       title: titleText,
-      description: `Diện tích ${areaText} - Giá ${priceText} tại khu vực ${locationText}.`,
+      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại khu vực ${locationText}.`,
       images: [{ url: imageSeo }],
       type: "article",
     },
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-// 🏢 2. TỆP ĐIỀU HƯỚNG GỐC CHẠY TRÊN SERVER (TẢI TỨC THÌ 0.01 GIÂY)
+// 🏢 2. KHUNG TRANG RENDER THỜI GIAN THỰC TỪ SERVER (Tải tức thì dưới 0.1 giây)
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
@@ -57,7 +57,7 @@ export default async function NhaDatDetail({ params }: Props) {
 
   if (!item) notFound();
 
-  // Khai báo Schema cấu trúc dữ liệu Bất Động Sản báo cáo lên Google Bot
+  // Khai báo cấu trúc dữ liệu Schema tự động báo cáo lên Google Bot (Thúc đẩy lên Top nhanh hơn)
   const titleText = item.tieude || item.Tieude || "";
   const priceText = item.gia || item.Gia || "";
   const locationText = item.khuVucFull || item.khuvucFull || "";
@@ -69,7 +69,7 @@ export default async function NhaDatDetail({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     "name": titleText,
-    "description": `${titleText} tại ${locationText} với mức giá ${priceText}`,
+    "description": `${titleText} tại khu vực ${locationText} với mức giá ${priceText}`,
     "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString(),
     "image": imageSeo,
     "offers": {
@@ -81,7 +81,7 @@ export default async function NhaDatDetail({ params }: Props) {
 
   return (
     <>
-      {/* Nhúng mã Schema.org ẩn giúp SEO tăng tốc lên top tìm kiếm */}
+      {/* Tích hợp trực tiếp cấu trúc JSON-LD ẩn giúp gia tăng sức mạnh SEO */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -97,7 +97,7 @@ export default async function NhaDatDetail({ params }: Props) {
           <ChevronLeft className="w-4 h-4" /> QUAY LẠI TRANG CHỦ
         </Link>
 
-        {/* Bàn giao cục dữ liệu gốc siêu sạch sang cho Client xử lý hiệu ứng bấm */}
+        {/* Bàn giao gói dữ liệu gốc siêu sạch sang cho Client xử lý hiệu ứng tương tác */}
         <PropertyClient item={item} />
       </main>
       <Footer />
