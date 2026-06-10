@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props) {
 
   return {
     title: `${titleText} | Trần Huy Land`,
-    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. Vị trí: ${locationText}.`,
+    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. V vị trí: ${locationText}.`,
   };
 }
 
@@ -43,13 +43,8 @@ export default async function NhaDatDetail({ params }: Props) {
     tatCaAnhGallery.push(anhSoDoGoc);
   }
 
-  // Kiểm tra dữ liệu thô của cột Mô tả từ Google Sheet (chấp nhận mọi kiểu viết hoa/thường)
-  const vanBanGoc = item.mota || item.moTa || item.Mota || item.description || item.Description || "";
-
-  // XỬ LÝ KHOẢNG TRẮNG ENTER: Tách chuỗi theo ký tự xuống dòng
-  const danhSachDongMoTa = vanBanGoc 
-    ? vanBanGoc.split(/\r?\n/).map((dong: string) => dong.trim()).filter((dong: string) => dong !== "") 
-    : ["Thông tin đang được cập nhật..."];
+  // Khắc phục lỗi lệch chữ hoa/thường để bảo đảm luôn lấy được văn bản mô tả từ Google Sheet
+  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
 
   return (
     <>
@@ -116,14 +111,12 @@ export default async function NhaDatDetail({ params }: Props) {
               {anhSoDoGoc && <a href={anhSoDoGoc} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
             </div>
 
-            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
+            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-2">Mô tả chi tiết:</h4>
             
-            {/* ĐÃ SỬA ĐỒI LOẠI BỎ LỖI ANY TYPE: Thêm định nghĩa (dong: string) tường minh */}
-            <div className="text-slate-700 text-sm leading-relaxed text-justify space-y-3 mb-8 w-full">
-              {danhSachDongMoTa.map((dong: string, index: number) => (
-                <p key={index} className="w-full m-0">{dong}</p>
-              ))}
-            </div>
+            {/* BẢN SỬA ĐỔI HOÀN HẢO: Sử dụng trực tiếp dữ liệu chuỗi kết hợp CSS wrap khoảng trắng cao cấp */}
+            <p className="text-slate-700 text-sm leading-relaxed text-justify whitespace-pre-wrap mb-8 w-full">
+              {noiDungMoTa}
+            </p>
 
             <div className="flex gap-3 border-t border-slate-100 pt-6 w-full">
               <a href="tel:0931555551" className="flex-1 bg-slate-900 text-white font-extrabold rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-sm shadow-md transition-transform active:scale-95"><Phone className="w-4 h-4 text-amber-400 fill-amber-400" /> Gọi Thương Lượng</a>
@@ -133,7 +126,7 @@ export default async function NhaDatDetail({ params }: Props) {
         </div>
       </main>
       <Footer />
-      <FloatingWidgets />
+      <FloatingWidgets /> 
     </>
   );
 }
