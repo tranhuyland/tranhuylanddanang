@@ -140,7 +140,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
-    if (filterType === "khuVuc") setKucVuc(value);
+    if (filterType === "khuVuc") setKhuVuc(value);
     if (filterType === "loaiHinh") setLoaiHinh(value);
     if (filterType === "khoangGia") setKhoangGia(value);
     if (filterType === "huong") setHuong(value);
@@ -309,7 +309,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         <Modals 
           type="kygui" 
           isOpen={true} 
-          /nha-dat/			
           onClose={() => setModalType(null)} 
         />
       )}
