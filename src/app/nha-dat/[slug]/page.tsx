@@ -1,150 +1,107 @@
-import { getBdsData } from "@/lib/googleSheets"; 
+import { getBdsData } from "@/lib/googleSheets";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
-import PropertyGallery from "@/components/SlideBds"; 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { ChevronLeft } from "lucide-react";
+import PropertyClient from "./PropertyClient";
 
-// Cấu trúc Type chuẩn của Next.js 15 dành cho Params dạng Promise
-interface Props { 
-  params: Promise<{ slug: string }>; 
+// Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
+export const dynamic = "force-dynamic";
+
+interface Props {
+  params: Promise<{ slug: string }>;
 }
 
+// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE (Robot đọc được ngay)
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
-  const item = data.find(p => p.slug === slug) as any;
-  if (!item) return { title: "Không tìm thấy sản phẩm" };
-  
-  const titleText = item.tieude || item.Tieude || item.title || "Chi tiết bất động sản";
+  const item = data.find((p) => p.slug === slug) as any;
+
+  if (!item) {
+    return { title: "Không tìm thấy sản phẩm - Trần Huy Land" };
+  }
+
+  const titleText = item.tieude || item.Tieude || "Chi tiết bất động sản";
   const priceText = item.gia || item.Gia || "Liên hệ";
-  const areaText = item.dienTich || item.DienTich || item.dientich || "Chưa rõ";
-  const locationText = item.khuVucFull || item.khuvucFull || item.diachi || "";
+  const areaText = item.dienTich || item.DienTich || "Chưa rõ";
+  const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
+  const anhGoc = item.anh || item.Anh || "";
+  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()) : [];
+  const imageSeo = danhSachAnh.find((a: string) => a.startsWith("http")) || "/icon.png";
 
   return {
-    title: `${titleText} | Trần Huy Land`,
-    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. Vị trí: ${locationText}.`,
+    title: `${titleText} - Giá tốt: ${priceText} | Trần Huy Land`,
+    description: `Bán bất động sản chính chủ tại ${locationText}. Diện tích thực tế: ${areaText}, giá bán công khai: ${priceText}. Sổ hồng chính chủ, hỗ trợ tư vấn pháp lý nhanh chóng.`,
+    openGraph: {
+      title: titleText,
+      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại khu vực ${locationText}.`,
+      images: [{ url: imageSeo }],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titleText,
+      images: [imageSeo],
+    },
   };
 }
 
+// 🏢 2. KHUNG TRANG RENDER THỜI GIAN THỰC TỪ SERVER (Tải tức thì dưới 0.1 giây)
 export default async function NhaDatDetail({ params }: Props) {
-  // Giải nén slug an toàn bằng await theo đúng chuẩn Next.js 15
   const { slug } = await params;
   const data = await getBdsData();
-  const item = data.find(p => p.slug === slug) as any;
+  const item = data.find((p) => p.slug === slug) as any;
+
   if (!item) notFound();
-  
-  // Thu thập danh sách ảnh chính từ cột 'anh' trong Google Sheet
+
+  // Khai báo cấu trúc dữ liệu Schema tự động báo cáo lên Google Bot (Thúc đẩy lên Top nhanh hơn)
+  const titleText = item.tieude || item.Tieude || "";
+  const priceText = item.gia || item.Gia || "";
+  const locationText = item.khuVucFull || item.khuvucFull || "";
   const anhGoc = item.anh || item.Anh || "";
-  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
+  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()) : [];
+  const imageSeo = danhSachAnh.find((a: string) => a.startsWith("http")) || "";
 
-  // Gom thêm ảnh sổ đỏ/bản vẽ vào chung danh sách slide nếu có để khách tiện vuốt xem một lượt
-  const anhSoDoGoc = item.anhSoDo || item.AnhSoDo || "";
-  const tatCaAnhGallery = [...danhSachAnh];
-  if (anhSoDoGoc && anhSoDoGoc.startsWith("http") && !tatCaAnhGallery.includes(anhSoDoGoc)) {
-    tatCaAnhGallery.push(anhSoDoGoc);
-  }
-
-  // Khắc phục lỗi lệch chữ hoa/thường để bảo đảm luôn lấy được văn bản mô tả từ Google Sheet
-  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": titleText,
+    "description": `${titleText} tại khu vực ${locationText} với mức giá ${priceText}`,
+    "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString(),
+    "image": imageSeo,
+    "offers": {
+      "@type": "Offer",
+      "price": priceText,
+      "priceCurrency": "VND",
+    },
+  };
 
   return (
     <>
+      {/* Tích hợp trực tiếp cấu trúc JSON-LD ẩn giúp gia tăng sức mạnh SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1 w-full max-w-full overflow-hidden">
-        <Link href="/" scroll={false} className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors">
+        <Link
+          href="/"
+          scroll={false}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors"
+        >
           <ChevronLeft className="w-4 h-4" /> QUAY LẠI TRANG CHỦ
         </Link>
-        
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden w-full max-w-full">
-          
-          {/* KHU VỰC TRÌNH CHIẾU MEDIA */}
-          <div className="relative aspect-[16/10] bg-slate-100 w-full max-w-full overflow-hidden group-gallery">
-            {item.videoUrl ? (
-              <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar max-w-full">
-                <div className="w-full h-full flex-shrink-0 snap-start relative max-w-full">
-                  <iframe className="w-full h-full" src={item.videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                </div>
-                <div className="w-full h-full flex-shrink-0 snap-start relative max-w-full">
-                  <PropertyGallery images={tatCaAnhGallery} alt={item.tieude || item.Title} />
-                </div>
-              </div>
-            ) : (
-              <PropertyGallery images={tatCaAnhGallery} alt={item.tieude || item.Title} />
-            )}
 
-            <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow pointer-events-none">
-              <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{tatCaAnhGallery.length} Hình Ảnh
-            </div>
-          </div>
-
-          <div className="p-6 sm:p-8 w-full max-w-full">
-            <div className="flex items-center justify-between">
-              <span className="bg-amber-500 text-slate-900 font-extrabold text-base px-3 py-1 rounded-xl shadow-sm">{item.gia || item.Gia}</span>
-              <span className="text-xs text-slate-400 font-bold uppercase bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || item.PhapLy || 'Sổ hồng riêng'}
-              </span>
-            </div>
-
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 leading-snug">{item.tieude || item.Tieude}</h1>
-            
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-400 text-xs mt-2 border-b border-slate-100 pb-4 font-semibold w-full">
-              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-amber-500" />{item.khuVucFull || item.khuvucFull}</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang || item.NgayDang}</span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 my-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 text-center font-semibold w-full">
-              <div>
-                <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Diện tích</div>
-                <strong className="text-slate-900 text-sm sm:text-base">{item.dienTich || item.DienTich || '---'}</strong>
-              </div>
-              <div>
-                <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Cấu trúc</div>
-                <strong className="text-slate-900 text-sm sm:text-base">{item.phongNgu || item.PhongNgu || 'Đất ở'}</strong>
-              </div>
-              <div>
-                <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Hướng</div>
-                <strong className="text-slate-900 text-sm sm:text-base">{item.huong || item.Huong || 'Chưa rõ'}</strong>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-6 w-full">
-              {(item.linkMap || item.LinkMap) && <a href={item.linkMap || item.LinkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><Map className="w-4 h-4" /> Vị Trí Bản Đồ</a>}
-              {anhSoDoGoc && <a href={anhSoDoGoc} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
-            </div>
-
-            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
-            
-            {/* HỆ THỐNG HIỂN THỊ CHỮ SINH ĐỘNG CHỐNG CHỮ NHỎ, HỖ TRỢ ĐỊNH DẠNG TO/NHỎ/IN ĐẬM TỪ GOOGLE SHEET */}
-            <div className="text-slate-700 text-base sm:text-lg leading-relaxed text-justify w-full prose max-w-none">
-              <ReactMarkdown
-                components={{
-                  // Chữ tiêu đề lớn nổi bật màu hổ phách (Gõ 1 dấu # trên Excel)
-                  h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-black text-amber-600 mt-5 mb-2 border-b border-amber-100 pb-1" {...props} />,
-                  // Chữ tiêu đề vừa (Gõ 2 dấu ## trên Excel)
-                  h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-extrabold text-slate-800 mt-4 mb-1.5" {...props} />,
-                  // Chữ tiêu đề nhỏ (Gõ 3 dấu ### trên Excel)
-                  h3: ({node, ...props}) => <h3 className="text-base sm:text-md font-bold text-slate-800 mt-3 mb-1" {...props} />,
-                  // Đoạn văn bản thường (Cỡ chữ được phóng to rõ ràng, giữ nguyên xuống dòng mượt mà)
-                  p: ({node, ...props}) => <p className="mb-3.5 whitespace-pre-wrap text-slate-600 font-medium" {...props} />,
-                  // Định dạng dấu cộng hoặc gạch đầu dòng (Gõ dấu * hoặc dấu - trên Excel)
-                  ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3.5 space-y-1" {...props} />,
-                  li: ({node, ...props}) => <li className="text-slate-600 font-medium" {...props} />,
-                  // Chữ điểm nhấn được bọc in đậm đậm nét (Gõ 2 dấu sao ** bọc chữ trên Excel)
-                  strong: ({node, ...props}) => <strong className="font-black text-slate-900 bg-amber-50 px-1 rounded text-amber-700" {...props} />,
-                }}
-              >
-                {noiDungMoTa}
-              </ReactMarkdown>
-            </div>
-          </div>
-        </div>
+        {/* Bàn giao gói dữ liệu gốc siêu sạch sang cho Client xử lý hiệu ứng tương tác */}
+        <PropertyClient item={item} />
       </main>
       <Footer />
-      <FloatingWidgets /> 
+      <FloatingWidgets />
     </>
   );
 }
