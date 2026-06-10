@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X } from "lucide-react";
+import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check } from "lucide-react";
 
 interface ListingSectionProps {
   allBdsItems: any[];
@@ -199,7 +199,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     <>
       {/* 1. HỆ THỐNG BỘ LỌC TÌM KIẾM CHI TIẾT */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
-        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-5">
           
           {/* HÀNG TAB CHỌN NHANH LOẠI HÌNH */}
           <div className="flex border-b border-gray-100 pb-3 items-center justify-between gap-4">
@@ -239,22 +239,34 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             <FilterFields />
           </div>
 
-          {/* THANH THẺ TAG DƯỚI ĐÁY BỘ LỌC */}
-          <div className="hidden md:flex flex-wrap gap-2 pt-1 items-center">
-            <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Tất Cả Tin</button>
-            <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>🏢 Mặt Tiền Kinh Doanh</button>
-            <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>✓ Hàng Chính Chủ</button>
+          {/* 🔥 ĐÃ CẢI TIẾN BIẾN ĐỔI: HÀNG THẺ TAG VÀ NÚT ÁP DỤNG TÁCH BIỆT TRÊN DESKTOP */}
+          <div className="hidden md:flex items-center justify-between border-t border-gray-100/80 pt-4 mt-2">
+            <div className="flex wrap gap-2 items-center">
+              <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Tất Cả Tin</button>
+              <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>🏢 Mặt Tiền Kinh Doanh</button>
+              <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>✓ Hàng Chính Chủ</button>
+            </div>
+            
+            {/* Nút bấm độc lập, đổ bóng mờ gradient cực sang trọng ở góc phải PC */}
+            <button 
+              onClick={() => {
+                const element = document.getElementById("listing-section");
+                if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-orange-500/10 hover:shadow-lg hover:shadow-orange-500/20 active:scale-[0.98] transition-all"
+            >
+              <Check size={14} /> Áp dụng bộ lọc
+            </button>
           </div>
 
         </div>
       </section>
 
-      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - ĐÃ TỐI ƯU KHOẢNG TRỐNG TRÁNH THANH ĐIỀU HƯỚNG */}
+      {/* 📱 KHU VỰC MOBILE DRAWER MODAL */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
           
-          {/* Tăng chiều cao lên 80vh để không gian rộng rãi hơn */}
           <div className="relative bg-white rounded-t-3xl shadow-2xl h-[80vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
             
             {/* Header Tĩnh */}
@@ -281,7 +293,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </div>
             </div>
 
-            {/* 🔥 ĐÃ FIX CHÍ MẠNG: THÊM PB-10 (PADDING BOTTOM) VÀ ĐỔ SHADOW ĐỂ NÚT LUÔN NỔI LÊN TRÊN THANH ĐIỀU HƯỚNG */}
+            {/* Đáy cố định bảo vệ Safe Area Mobile */}
             <div className="sticky bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shrink-0 pb-10 shadow-[0_-8px_24px_rgba(0,0,0,0.05)] z-20">
               <button 
                 onClick={() => setIsDrawerOpen(false)}
