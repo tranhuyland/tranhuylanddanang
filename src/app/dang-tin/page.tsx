@@ -16,9 +16,9 @@ export default function DangTinPage() {
     huong: '', // Có thể để trống
     loaiHinh: 'Nhà phố',
     anh: '', // Chuỗi danh sách link ảnh thực tế
-    soDo: '', // Chuỗi danh sách link ảnh Sổ đỏ (MỚI)
-    linkMap: '', // Đường dẫn link Google Map (MỚI)
-    mota: '',
+    anhSoDo: '', // 🛠️ ĐÃ ĐỒNG BỘ: Đổi từ soDo thành anhSoDo khớp Google Sheet
+    linkMap: '', // Đường dẫn link Google Map
+    moTa: '', // 🛠️ ĐÃ ĐỒNG BỘ: Đổi từ mota thành moTa khớp hệ thống hiển thị
     tag: 'all',
     isMatTien: false,
     ngayDang: ''
@@ -80,7 +80,7 @@ export default function DangTinPage() {
     }
   };
 
-  // HÀM XỬ LÝ ÚP ẢNH SỔ ĐỎ LÊN CLOUDINARY (MỚI)
+  // HÀM XỬ LÝ ÚP ẢNH SỔ ĐỎ LÊN CLOUDINARY
   const handleSoDoChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -116,7 +116,7 @@ export default function DangTinPage() {
       }
 
       setSoDoImagesPreview(previewUrls);
-      setFormData(prev => ({ ...prev, soDo: uploadedUrls.join(', ') }));
+      setFormData(prev => ({ ...prev, anhSoDo: uploadedUrls.join(', ') }));
       setMessage({ type: 'success', content: `📑 Đã tải thành công ${uploadedUrls.length} ảnh sơ đồ/sổ đỏ lên Cloudinary!` });
     } catch (error) {
       setMessage({ type: 'error', content: '❌ Gặp lỗi khi úp ảnh sổ đỏ lên Cloudinary.' });
@@ -169,9 +169,9 @@ export default function DangTinPage() {
         huong: '',
         loaiHinh: 'Nhà phố',
         anh: '',
-        soDo: '',
+        anhSoDo: '',
         linkMap: '',
-        mota: '',
+        moTa: '',
         tag: 'all',
         isMatTien: false,
         ngayDang: ''
@@ -300,7 +300,7 @@ export default function DangTinPage() {
             )}
           </div>
 
-          {/* KHU VỰC ÚP HÌNH SỔ ĐỎ / SỔ HỒNG (MỚI) */}
+          {/* KHU VỰC ÚP HÌNH SỔ ĐỎ / SỔ HỒNG */}
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center">
             <label className="block text-xs font-black text-slate-700 uppercase mb-2 tracking-wide cursor-pointer">
               {uploadingSoDo ? `📑 Đang tải ảnh sơ đồ: ${uploadProgressSoDo}%` : '📑 Bấm vào đây để úp hình Sổ đỏ / Sơ đồ (Không bắt buộc)'}
@@ -324,7 +324,7 @@ export default function DangTinPage() {
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Mô tả chi tiết (Hỗ trợ xuống dòng tự do)</label>
-            <textarea required rows={5} value={formData.mota} onChange={(e) => setFormData({ ...formData, mota: e.target.value })} placeholder="Nhập thông tin mô tả chi tiết bất động sản..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line" />
+            <textarea required rows={5} value={formData.moTa} onChange={(e) => setFormData({ ...formData, moTa: e.target.value })} placeholder="Nhập thông tin mô tả chi tiết bất động sản..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line" />
           </div>
 
           <div className="flex items-center gap-2 pt-2">
