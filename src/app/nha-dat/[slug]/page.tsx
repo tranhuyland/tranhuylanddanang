@@ -12,28 +12,44 @@ interface Props { params: Promise<{ slug: string }>; }
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
-  const item = data.find(p => p.slug === slug);
+  const item = data.find(p => p.slug === slug) as any;
   if (!item) return { title: "Không tìm thấy sản phẩm" };
+  
+  const titleText = item.tieude || item.Tieude || item.title || "Chi tiết bất động sản";
+  const priceText = item.gia || item.Gia || "Liên hệ";
+  const areaText = item.dienTich || item.DienTich || item.dientich || "Chưa rõ";
+  const locationText = item.khuVucFull || item.khuvucFull || item.diachi || "";
+
   return {
-    title: `${item.tieude} | Trần Huy Land`,
-    description: `Giá bán: ${item.gia}. Diện tích: ${item.dienTich}. Vị trí: ${item.khuVucFull}.`,
+    title: `${titleText} | Trần Huy Land`,
+    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. Vị trí: ${locationText}.`,
   };
 }
 
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
-  const item = data.find(p => p.slug === slug);
+  const item = data.find(p => p.slug === slug) as any;
   if (!item) notFound();
   
   // Thu thập danh sách ảnh chính từ cột 'anh' trong Google Sheet
-  const danhSachAnh = item.anh ? item.anh.split(",").map((a: string) => a.trim()).filter(a => a !== "" && a.startsWith("http")) : [];
+  const anhGoc = item.anh || item.Anh || "";
+  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
 
   // Gom thêm ảnh sổ đỏ/bản vẽ vào chung danh sách slide nếu có để khách tiện vuốt xem một lượt
+  const anhSoDoGoc = item.anhSoDo || item.AnhSoDo || "";
   const tatCaAnhGallery = [...danhSachAnh];
-  if (item.anhSoDo && item.anhSoDo.startsWith("http") && !tatCaAnhGallery.includes(item.anhSoDo)) {
-    tatCaAnhGallery.push(item.anhSoDo);
+  if (anhSoDoGoc && anhSoDoGoc.startsWith("http") && !tatCaAnhGallery.includes(anhSoDoGoc)) {
+    tatCaAnhGallery.push(anhSoDoGoc);
   }
+
+  // 1. Kiểm tra chính xác dữ liệu thô của cột Mô tả từ Google Sheet (chấp nhận mọi kiểu đặt tên cột)
+  const vanBanGoc = item.mota || item.moTa || item.Mota || item.description || item.Description || "";
+
+  // 2. XỬ LÝ KHOẢNG TRẮNG ENTER: Tách chuỗi theo mọi ký tự xuống dòng và loại bỏ dòng trống thừa
+  const danhSachDongMoTa = vanBanGoc 
+    ? vanBanGoc.split(/\r?\n/).map((dong: string) => dong.trim()).filter((dong: string) => dong !== "") 
+    : ["Thông tin đang được cập nhật..."];
 
   return (
     <>
@@ -45,24 +61,21 @@ export default async function NhaDatDetail({ params }: Props) {
         
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden w-full max-w-full">
           
-          {/* KHU VỰC ĐÃ CẬP NHẬT: ÉP CHẶT TỶ LỆ VÀ SỬA LỖI TRÀN MÀN HÌNH (RESPONSIVE THÀNH CÔNG) */}
+          {/* KHU VỰC TRÌNH CHIẾU MEDIA */}
           <div className="relative aspect-[16/10] bg-slate-100 w-full max-w-full overflow-hidden group-gallery">
             {item.videoUrl ? (
-              // Nếu có cả Video, dùng thanh trượt ngang chia khối thông minh, khống chế cứng kích thước không cho bung màn hình
               <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar max-w-full">
                 <div className="w-full h-full flex-shrink-0 snap-start relative max-w-full">
                   <iframe className="w-full h-full" src={item.videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                 </div>
                 <div className="w-full h-full flex-shrink-0 snap-start relative max-w-full">
-                  <PropertyGallery images={tatCaAnhGallery} alt={item.tieude} />
+                  <PropertyGallery images={tatCaAnhGallery} alt={item.tieude || item.Title} />
                 </div>
               </div>
             ) : (
-              // Nếu chỉ có ảnh, chạy full tràn viền 100% khung chứa an toàn
-              <PropertyGallery images={tatCaAnhGallery} alt={item.tieude} />
+              <PropertyGallery images={tatCaAnhGallery} alt={item.tieude || item.Title} />
             )}
 
-            {/* Badge thông báo tổng số lượng hình ảnh */}
             <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow pointer-events-none">
               <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{tatCaAnhGallery.length} Hình Ảnh
             </div>
@@ -70,41 +83,47 @@ export default async function NhaDatDetail({ params }: Props) {
 
           <div className="p-6 sm:p-8 w-full max-w-full">
             <div className="flex items-center justify-between">
-              <span className="bg-amber-500 text-slate-900 font-extrabold text-base px-3 py-1 rounded-xl shadow-sm">{item.gia}</span>
+              <span className="bg-amber-500 text-slate-900 font-extrabold text-base px-3 py-1 rounded-xl shadow-sm">{item.gia || item.Gia}</span>
               <span className="text-xs text-slate-400 font-bold uppercase bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || 'Sổ hồng riêng'}
+                <ShieldCheck className="w-4 h-4 text-emerald-500" /> {item.phapLy || item.PhapLy || 'Sổ hồng riêng'}
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 leading-snug">{item.tieude}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-4 leading-snug">{item.tieude || item.Tieude}</h1>
             
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-400 text-xs mt-2 border-b border-slate-100 pb-4 font-semibold w-full">
-              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-amber-500" />{item.khuVucFull}</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang}</span>
+              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-amber-500" />{item.khuVucFull || item.khuvucFull}</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang || item.NgayDang}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 my-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 text-center font-semibold w-full">
               <div>
                 <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Diện tích</div>
-                <strong className="text-slate-900 text-sm sm:text-base">{item.dienTich || '---'}</strong>
+                <strong className="text-slate-900 text-sm sm:text-base">{item.dienTich || item.DienTich || '---'}</strong>
               </div>
               <div>
                 <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Cấu trúc</div>
-                <strong className="text-slate-900 text-sm sm:text-base">{item.phongNgu || 'Đất ở'}</strong>
+                <strong className="text-slate-900 text-sm sm:text-base">{item.phongNgu || item.PhongNgu || 'Đất ở'}</strong>
               </div>
               <div>
                 <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Hướng</div>
-                <strong className="text-slate-900 text-sm sm:text-base">{item.huong || 'Chưa rõ'}</strong>
+                <strong className="text-slate-900 text-sm sm:text-base">{item.huong || item.Huong || 'Chưa rõ'}</strong>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-6 w-full">
-              {item.linkMap && <a href={item.linkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><Map className="w-4 h-4" /> Vị Trí Bản Đồ</a>}
-              {item.anhSoDo && <a href={item.anhSoDo} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
+              {(item.linkMap || item.LinkMap) && <a href={item.linkMap || item.LinkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><Map className="w-4 h-4" /> Vị Trí Bản Đồ</a>}
+              {anhSoDoGoc && <a href={anhSoDoGoc} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
             </div>
 
-            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-2">Mô tả chi tiết:</h4>
-            <p className="text-slate-700 text-sm leading-relaxed text-justify whitespace-pre-line mb-8 w-full">{item.moTa}</p>
+            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
+            
+            {/* THÀNH PHẦN ĐÃ SỬA ĐỔI: Sử dụng map mảng để ép từng hàng văn bản xuống dòng tuyệt đối */}
+            <div className="text-slate-700 text-sm leading-relaxed text-justify space-y-3 mb-8 w-full">
+              {danhSachDongMoTa.map((dong, index) => (
+                <p key={index} className="w-full m-0">{dong}</p>
+              ))}
+            </div>
 
             <div className="flex gap-3 border-t border-slate-100 pt-6 w-full">
               <a href="tel:0931555551" className="flex-1 bg-slate-900 text-white font-extrabold rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-sm shadow-md transition-transform active:scale-95"><Phone className="w-4 h-4 text-amber-400 fill-amber-400" /> Gọi Thương Lượng</a>
