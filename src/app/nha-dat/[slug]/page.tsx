@@ -108,14 +108,12 @@ export default function NhaDatDetail({ params }: Props) {
   // Thao tác vuốt ngón tay (Mobile cảm ứng)
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
-      // Nhận diện sự kiện 2 ngón tay Pinch to Zoom
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
       touchStartDist.current = dist;
     } else if (e.touches.length === 1 && scale > 1) {
-      // Nhận diện 1 ngón tay vuốt di chuyển ảnh đã zoom
       isDragging.current = true;
       dragStart.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
     }
@@ -143,6 +141,10 @@ export default function NhaDatDetail({ params }: Props) {
     isDragging.current = false;
     touchStartDist.current = 0;
   };
+
+  // Kiểm tra trạng thái tồn tại độc lập của từng nút dữ liệu
+  const coLinkMap = !!(item.linkMap || item.LinkMap);
+  const coAnhSoDo = !!anhSoDoGoc;
 
   return (
     <>
@@ -204,21 +206,29 @@ export default function NhaDatDetail({ params }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6 w-full">
-              {(item.linkMap || item.LinkMap) && (
-                <a href={item.linkMap || item.LinkMap} target="_blank" rel="noopener noreferrer" className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors">
-                  <Map className="w-4 h-4" /> Vị Trí Bản Đồ
-                </a>
-              )}
-              {anhSoDoGoc && (
-                <button 
-                  onClick={() => setIsPopupOpen(true)} 
-                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ
-                </button>
-              )}
-            </div>
+            {/* KHU VỰC HIỂN THỊ NÚT ĐỘC LẬP TỰ ĐỘNG CÂN BẰNG TỶ LỆ KHUNG */}
+            {(coLinkMap || coAnhSoDo) && (
+              <div className={`grid gap-3 mb-6 w-full ${coLinkMap && coAnhSoDo ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {coLinkMap && (
+                  <a 
+                    href={item.linkMap || item.LinkMap} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold border border-emerald-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Map className="w-4 h-4" /> Vị Trí Bản Đồ
+                  </a>
+                )}
+                {coAnhSoDo && (
+                  <button 
+                    onClick={() => setIsPopupOpen(true)} 
+                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full"
+                  >
+                    <FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ
+                  </button>
+                )}
+              </div>
+            )}
 
             <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
             
