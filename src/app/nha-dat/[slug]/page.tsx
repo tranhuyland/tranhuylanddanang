@@ -6,6 +6,7 @@ import PropertyGallery from "@/components/SlideBds";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, Phone } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Props { params: Promise<{ slug: string }>; }
 
@@ -111,12 +112,30 @@ export default async function NhaDatDetail({ params }: Props) {
               {anhSoDoGoc && <a href={anhSoDoGoc} target="_blank" rel="noopener noreferrer" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 rounded-xl py-2.5 px-3 text-center text-xs flex items-center justify-center gap-1.5 transition-colors"><FileText className="w-4 h-4" /> Sổ Hồng Bản Vẽ</a>}
             </div>
 
-            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-2">Mô tả chi tiết:</h4>
+            <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
             
-            {/* BẢN SỬA ĐỔI HOÀN HẢO: Sử dụng trực tiếp dữ liệu chuỗi kết hợp CSS wrap khoảng trắng cao cấp */}
-            <p className="text-slate-700 text-sm leading-relaxed text-justify whitespace-pre-wrap mb-8 w-full">
-              {noiDungMoTa}
-            </p>
+            {/* HỆ THỐNG HIỂN THỊ CHỮ SINH ĐỘNG CHỐNG CHỮ NHỎ, HỖ TRỢ ĐỊNH DẠNG TO/NHỎ/IN ĐẬM TỪ GOOGLE SHEET */}
+            <div className="text-slate-700 text-base sm:text-lg leading-relaxed text-justify mb-8 w-full prose max-w-none">
+              <ReactMarkdown
+                components={{
+                  // Chữ tiêu đề lớn nổi bật màu hổ phách (Gõ 1 dấu # trên Excel)
+                  h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-black text-amber-600 mt-5 mb-2 border-b border-amber-100 pb-1" {...props} />,
+                  // Chữ tiêu đề vừa (Gõ 2 dấu ## trên Excel)
+                  h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-extrabold text-slate-800 mt-4 mb-1.5" {...props} />,
+                  // Chữ tiêu đề nhỏ (Gõ 3 dấu ### trên Excel)
+                  h3: ({node, ...props}) => <h3 className="text-base sm:text-md font-bold text-slate-800 mt-3 mb-1" {...props} />,
+                  // Đoạn văn bản thường (Cỡ chữ được phóng to rõ ràng, giữ nguyên xuống dòng mượt mà)
+                  p: ({node, ...props}) => <p className="mb-3.5 whitespace-pre-wrap text-slate-600 font-medium" {...props} />,
+                  // Định dạng dấu cộng hoặc gạch đầu dòng (Gõ dấu * hoặc dấu - trên Excel)
+                  ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3.5 space-y-1" {...props} />,
+                  li: ({node, ...props}) => <li className="text-slate-600 font-medium" {...props} />,
+                  // Chữ điểm nhấn được bọc in đậm đậm nét (Gõ 2 dấu sao ** bọc chữ trên Excel)
+                  strong: ({node, ...props}) => <strong className="font-black text-slate-900 bg-amber-50 px-1 rounded text-amber-700" {...props} />,
+                }}
+              >
+                {noiDungMoTa}
+              </ReactMarkdown>
+            </div>
 
             <div className="flex gap-3 border-t border-slate-100 pt-6 w-full">
               <a href="tel:0931555551" className="flex-1 bg-slate-900 text-white font-extrabold rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-sm shadow-md transition-transform active:scale-95"><Phone className="w-4 h-4 text-amber-400 fill-amber-400" /> Gọi Thương Lượng</a>
