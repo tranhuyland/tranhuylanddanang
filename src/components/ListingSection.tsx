@@ -197,11 +197,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
-      {/* 1. HỆ THỐNG BỘ LỌC TÌM KIẾM CHI TIẾT CHUYÊN NGHIỆP */}
+      {/* 1. HỆ THỐNG BỘ LỌC TÌM KIẾM CHI TIẾT */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
           
-          {/* HÀNG TAB CHỌN NHANH LOẠI HÌNH - ĐÃ SỬA CÂN ĐỐI FULL CHIỀU RỘNG */}
+          {/* HÀNG TAB CHỌN NHANH LOẠI HÌNH */}
           <div className="flex border-b border-gray-100 pb-3 items-center justify-between gap-4">
             <div className="flex-1 max-w-xl flex gap-1 bg-gray-100 p-1 rounded-xl">
               <button 
@@ -249,12 +249,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* MOBILE DRAWER MODAL */}
+      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - ĐÃ FIX NÚT CỐ ĐỊNH CHỐNG CHE KHUẤT */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl p-5 space-y-5 shadow-2xl max-h-[85vh] overflow-y-auto z-10">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
+          
+          {/* Container tổng kiểm soát chiều cao cứng và đổ bố cục Flex */}
+          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[75vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
+            
+            {/* 1. Phần Đầu Bảng (Header tĩnh) */}
+            <div className="flex items-center justify-between border-b border-gray-100 p-4 shrink-0">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={16} className="text-orange-500" />
                 <h4 className="font-bold text-gray-800 text-sm">Bộ lọc nâng cao</h4>
@@ -264,26 +268,29 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </button>
             </div>
 
-            <div className="space-y-4">
+            {/* 2. Thân Bảng (Cho phép cuộn nội dung thoải mái nếu bị dài) */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-8">
               <FilterFields />
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nhóm đặc quyền</label>
                 <div className="flex flex-col gap-2">
-                  <button onClick={() => { handleFilterChange("tag", "all"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border ${selectedTag === "all" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white text-slate-600"}`}>Tất Cả Sản Phẩm</button>
-                  <button onClick={() => { handleFilterChange("tag", "mattien"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border ${selectedTag === "mattien" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white text-slate-600"}`}>🏢 Mặt Tiền Kinh Doanh</button>
-                  <button onClick={() => { handleFilterChange("tag", "chinhchu"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border ${selectedTag === "chinhchu" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white text-slate-600"}`}>✓ Hàng Chính Chủ</button>
+                  <button onClick={() => { handleFilterChange("tag", "all"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border transition-colors ${selectedTag === "all" ? "bg-orange-50 border-orange-300 text-orange-600 font-extrabold" : "bg-white text-slate-600 border-gray-100"}`}>Tất Cả Sản Phẩm</button>
+                  <button onClick={() => { handleFilterChange("tag", "mattien"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border transition-colors ${selectedTag === "mattien" ? "bg-orange-50 border-orange-300 text-orange-600 font-extrabold" : "bg-white text-slate-600 border-gray-100"}`}>🏢 Mặt Tiền Kinh Doanh</button>
+                  <button onClick={() => { handleFilterChange("tag", "chinhchu"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border transition-colors ${selectedTag === "chinhchu" ? "bg-orange-50 border-orange-300 text-orange-600 font-extrabold" : "bg-white text-slate-600 border-gray-100"}`}>✓ Hàng Chính Chủ</button>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2">
+            {/* 3. Đáy Bảng (Nút Tĩnh Cố Định - Không bao giờ bị trượt che lấp) */}
+            <div className="p-4 bg-white border-t border-gray-100 shrink-0 pb-6">
               <button 
                 onClick={() => setIsDrawerOpen(false)}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm py-3 rounded-xl text-center shadow-lg"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm py-3.5 rounded-xl text-center shadow-xl active:scale-[0.99] transition-transform"
               >
                 Áp dụng bộ lọc {activeFiltersCount > 0 && `(${activeFiltersCount})`}
               </button>
             </div>
+
           </div>
         </div>
       )}
@@ -302,7 +309,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               const isMatTien = textLower.includes("mat tien");
               const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
 
-              // 🔥 SỬA TRIỆT ĐỂ: THUẬT TOÁN QUÉT SỐ PHÒNG/TẦNG KHÔNG BỊ LỖI CHỮ THÔ
               let cauTrucPhong = "---";
               const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
               
