@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import PropertyClient from "./PropertyClient";
+import Script from "next/script"; // 🌟 Import thêm Script của Next.js
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE (Robot đọc được ngay)
+// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-// 🏢 2. KHUNG TRANG RENDER THỜI GIAN THỰC TỪ SERVER (Tải tức thì dưới 0.1 giây)
+// 🏢 2. KHUNG TRANG RENDER THỜI GIAN THỰC TỪ SERVER
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
@@ -57,32 +58,47 @@ export default async function NhaDatDetail({ params }: Props) {
 
   if (!item) notFound();
 
-  // Khai báo cấu trúc dữ liệu Schema tự động báo cáo lên Google Bot (Thúc đẩy lên Top nhanh hơn)
   const titleText = item.tieude || item.Tieude || "";
-  const priceText = item.gia || item.Gia || "";
-  const locationText = item.khuVucFull || item.khuvucFull || "";
+  
+  // Xử lý giá: Schema yêu cầu giá dạng số thuần (Ví dụ từ "3.5 tỷ" hoặc "3500000000" chuyển về dạng số)
+  // Nếu dữ liệu trong Google Sheet của bạn đã là số thuần thì giữ nguyên, nếu có chữ bạn nên clean nó.
+  const rawPrice = item.gia || item.Gia || "0";
+  const priceNumber = parseFloat(rawPrice.replace(/[^0-9]/g, "")) || 0; 
+
+  const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   const anhGoc = item.anh || item.Anh || "";
   const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()) : [];
   const imageSeo = danhSachAnh.find((a: string) => a.startsWith("http")) || "";
 
+  // 🛠️ CẬP NHẬT CẤU TRÚC SCHEMA LỒNG NHAU ĐỦ 3 PHẦN: RealEstateListing -> Residence -> Place
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     "name": titleText,
-    "description": `${titleText} tại khu vực ${locationText} với mức giá ${priceText}`,
-    "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString(),
+    "description": `${titleText} tại khu vực ${locationText}.`,
+    "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString().split('T')[0],
     "image": imageSeo,
-    "offers": {
-      "@type": "Offer",
-      "price": priceText,
-      "priceCurrency": "VND",
-    },
+    "priceCurrency": "VND",
+    "price": priceNumber > 0 ? priceNumber : rawPrice, 
+    "about": {
+      "@type": "Residence", // 🏠 TẦNG 2: Định nghĩa đây là một nơi cư trú/bất động sản
+      "name": titleText,
+      "description": `Bất động sản diện tích ${item.dienTich || item.DienTich || "Chưa rõ"}`,
+      "address": {
+        "@type": "PostalAddress", // 📍 TẦNG 3: Chi tiết địa điểm (Place) thuộc Residence
+        "streetAddress": locationText,
+        "addressLocality": "Đà Nẵng", // Bạn có thể tách quận huyện từ Google Sheet nếu có
+        "addressRegion": "Đà Nẵng",
+        "addressCountry": "VN"
+      }
+    }
   };
 
   return (
     <>
-      {/* Tích hợp trực tiếp cấu trúc JSON-LD ẩn giúp gia tăng sức mạnh SEO */}
-      <script
+      {/* ⚡ Sử dụng component Script của Next.js để tối ưu hóa việc load script ngầm */}
+      <Script
+        id="bds-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
