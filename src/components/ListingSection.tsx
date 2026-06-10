@@ -83,7 +83,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
-  // Đổi tab Loại hình nhanh nhanh
+  // Đổi tab Loại hình nhanh
   const handleSelectLoaiHinh = (type: string) => {
     setActiveLoaiHinh(type);
     setCurrentPage(1);
@@ -179,6 +179,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
+  // Khối các trường nhập liệu - Đã tích hợp Đặc Quyền thành ô select thứ 4
   const FilterFields = () => (
     <>
       <div>
@@ -240,6 +241,19 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <option value="Bắc">Hướng Bắc</option>
         </select>
       </div>
+      {/* 🔥 MỚI CẢI TIẾN: Nhóm đặc quyền đã được đưa vào select dropdown đồng bộ, rất gọn gàng */}
+      <div>
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nhóm Đặc Quyền</label>
+        <select 
+          value={tempTag} 
+          onChange={(e) => setTempTag(e.target.value)} 
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all"
+        >
+          <option value="all">Tất cả phân nhóm</option>
+          <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
+          <option value="chinhchu">✓ Hàng Chính Chủ</option>
+        </select>
+      </div>
     </>
   );
 
@@ -288,32 +302,15 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             </button>
           </div>
 
-          {/* GIAO DIỆN BỘ LỌC TRÊN MÁY TÍNH */}
-          <div className="hidden md:grid md:grid-cols-3 md:gap-4">
+          {/* GIAO DIỆN BỘ LỌC TRÊN MÁY TÍNH: Chia 4 cột hoàn hảo, cực kỳ thoáng đãng */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
             <FilterFields />
           </div>
 
-          {/* THANH THẺ TAG VÀ NÚT ÁP DỤNG TRÊN DESKTOP */}
+          {/* 🔥 KHU VỰC ĐƯỢC CHUẨN HÓA THẨM MỸ: Không còn các nút đặc quyền rườm rà, tạo không gian trắng vô cùng sang trọng */}
           <div className="hidden md:flex items-center justify-between border-t border-gray-100/80 pt-4 mt-2">
-            <div className="flex wrap gap-2 items-center">
-              <button 
-                onClick={() => setTempTag("all")} 
-                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${tempTag === "all" ? "bg-slate-900 text-white border-slate-900 shadow-sm" : "bg-white border-gray-200 text-slate-600 hover:bg-slate-50"}`}
-              >
-                Tất Cả Tin
-              </button>
-              <button 
-                onClick={() => setTempTag("mattien")} 
-                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${tempTag === "mattien" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white border-gray-200 text-slate-600 hover:bg-slate-50"}`}
-              >
-                🏢 Mặt Tiền Kinh Doanh
-              </button>
-              <button 
-                onClick={() => setTempTag("chinhchu")} 
-                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${tempTag === "chinhchu" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white border-gray-200 text-slate-600 hover:bg-slate-50"}`}
-              >
-                ✓ Hàng Chính Chủ
-              </button>
+            <div className="text-xs text-slate-400 font-medium italic">
+              * Vui lòng chọn các tiêu chí trên và bấm nút tìm kiếm để cập nhật dữ liệu.
             </div>
             
             <div className="flex items-center gap-2">
@@ -327,7 +324,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               )}
               <button 
                 onClick={handleApplyFilters}
-                className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs px-6 py-3 rounded-xl flex items-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 active:scale-[0.97] transition-all"
+                className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs px-7 py-3 rounded-xl flex items-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 active:scale-[0.97] transition-all tracking-wide"
               >
                 <Check size={14} /> Tìm kiếm ngay
               </button>
@@ -337,12 +334,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - ĐÃ TẠO KHOẢNG TRẮNG CÁCH LY THÀNH CÔNG */}
+      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - CÁCH LY CHỐNG DÍNH NÚT GỌI ĐIỆN */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
           
-          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[82vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
+          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[75vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
             
             {/* Header Drawer */}
             <div className="flex items-center justify-between border-b border-gray-100 p-4 shrink-0">
@@ -355,20 +352,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </button>
             </div>
 
-            {/* Thân cuộn chứa trường lọc dữ liệu */}
+            {/* Thân cuộn chứa trường lọc dữ liệu trên Mobile */}
             <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-36">
               <FilterFields />
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nhóm đặc quyền</label>
-                <div className="grid grid-cols-1 gap-2">
-                  <button onClick={() => setTempTag("all")} className={`text-left text-xs font-bold p-3.5 rounded-xl border transition-all ${tempTag === "all" ? "bg-orange-50 border-orange-400 text-orange-600 font-extrabold shadow-xs" : "bg-white text-slate-600 border-gray-200"}`}>Tất Cả Sản Phẩm</button>
-                  <button onClick={() => setTempTag("mattien")} className={`text-left text-xs font-bold p-3.5 rounded-xl border transition-all ${tempTag === "mattien" ? "bg-orange-50 border-orange-400 text-orange-600 font-extrabold shadow-xs" : "bg-white text-slate-600 border-gray-200"}`}>🏢 Mặt Tiền Kinh Doanh</button>
-                  <button onClick={() => setTempTag("chinhchu")} className={`text-left text-xs font-bold p-3.5 rounded-xl border transition-all ${tempTag === "chinhchu" ? "bg-orange-50 border-orange-400 text-orange-600 font-extrabold shadow-xs" : "bg-white text-slate-600 border-gray-200"}`}>✓ Hàng Chính Chủ</button>
-                </div>
-              </div>
             </div>
 
-            {/* 🔥 ĐÂY LÀ KHU VỰC CẢI TIẾN: Đã tăng pb-24 và thêm khoảng đệm trống mb-16 để đẩy 2 nút lên trên cao, hoàn toàn tách biệt khỏi thanh 3 nút cuộc gọi/zalo dưới đáy */}
+            {/* Đáy cố định chứa 2 nút của Bộ lọc - Giữ khoảng cách an toàn mb-16 chống dính */}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/95 to-transparent shrink-0 pb-24 shadow-[0_-12px_30px_rgba(0,0,0,0.04)] z-20">
               <div className="bg-white p-1 rounded-2xl border border-gray-100 shadow-lg flex gap-2 mb-16">
                 <button 
