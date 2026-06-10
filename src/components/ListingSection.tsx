@@ -249,15 +249,15 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - ĐÃ FIX NÚT CỐ ĐỊNH CHỐNG CHE KHUẤT */}
+      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - ĐÃ TỐI ƯU KHOẢNG TRỐNG TRÁNH THANH ĐIỀU HƯỚNG */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
           
-          {/* Container tổng kiểm soát chiều cao cứng và đổ bố cục Flex */}
-          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[75vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
+          {/* Tăng chiều cao lên 80vh để không gian rộng rãi hơn */}
+          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[80vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
             
-            {/* 1. Phần Đầu Bảng (Header tĩnh) */}
+            {/* Header Tĩnh */}
             <div className="flex items-center justify-between border-b border-gray-100 p-4 shrink-0">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={16} className="text-orange-500" />
@@ -268,8 +268,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </button>
             </div>
 
-            {/* 2. Thân Bảng (Cho phép cuộn nội dung thoải mái nếu bị dài) */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-8">
+            {/* Thân cuộn chọn trường lọc */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-6">
               <FilterFields />
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nhóm đặc quyền</label>
@@ -281,11 +281,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </div>
             </div>
 
-            {/* 3. Đáy Bảng (Nút Tĩnh Cố Định - Không bao giờ bị trượt che lấp) */}
-            <div className="p-4 bg-white border-t border-gray-100 shrink-0 pb-6">
+            {/* 🔥 ĐÃ FIX CHÍ MẠNG: THÊM PB-10 (PADDING BOTTOM) VÀ ĐỔ SHADOW ĐỂ NÚT LUÔN NỔI LÊN TRÊN THANH ĐIỀU HƯỚNG */}
+            <div className="sticky bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shrink-0 pb-10 shadow-[0_-8px_24px_rgba(0,0,0,0.05)] z-20">
               <button 
                 onClick={() => setIsDrawerOpen(false)}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm py-3.5 rounded-xl text-center shadow-xl active:scale-[0.99] transition-transform"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm py-3.5 rounded-xl text-center shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform"
               >
                 Áp dụng bộ lọc {activeFiltersCount > 0 && `(${activeFiltersCount})`}
               </button>
