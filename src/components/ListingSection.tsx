@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, ChevronRight, PenTool } from "lucide-react";
+import { MapPin, Compass, Clock, Square, ChevronRight, PenTool, BedDouble } from "lucide-react";
 import { Modals } from "./Modals";
 
 interface ListingSectionProps {
@@ -162,7 +162,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
                 <option value="all">Tất cả Vị trí</option>
                 
-                {/* DANH SÁCH 16 PHƯỜNG CHUẨN CỦA ANH */}
+                {/* DANH SÁCH PHƯỜNG / XÃ ĐÀ NẴNG */}
                 <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
                 <option value="Hải Châu">Hải Châu</option>
                 <option value="Hòa Cường">Hòa Cường</option>
@@ -181,7 +181,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 <option value="Hòa Tiến">Hòa Tiến</option>
                 <option value="Hòa Phước">Hòa Phước</option>
 
-                {/* DANH SÁCH 3 XÃ CHUẨN CỦA ANH */}
                 <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Xã --</option>
                 <option value="Hòa Bắc">Hòa Bắc</option>
                 <option value="Hòa Liên">Hòa Liên</option>
@@ -230,10 +229,35 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               const displayTime = item.ngayDang || item.ngay || "";
 
               // Tự động phân tích chuỗi văn bản nhận diện Badge đặc quyền
-              const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || ""));
+              const rawText = (item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || "");
+              const textLower = cleanVietnameseText(rawText);
               const isChinhChu = textLower.includes("chinh chu");
               const isMatTien = textLower.includes("mat tien");
               const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+
+              // 🔥 THUẬT TOÁN ĐỌC TIN TRÍCH XUẤT CẤU TRÚC PHÒNG/TẦNG TỰ ĐỘNG
+              let cauTrucPhong = "---";
+              
+              // 1. Kiểm tra xem có phải Đất nền không
+              const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
+              if (cleanVietnameseText(currentLoaiHinh).includes("dat")) {
+                cauTrucPhong = "Đất trống";
+              } else {
+                // 2. Tìm kiếm thông số tầng hoặc phòng ngủ bằng Regex
+                const matchTang = rawText.match(/(\d+)\s*(tầng|tang)/i);
+                const matchPhong = rawText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
+                
+                if (matchTang && matchPhong) {
+                  cauTrucPhong = `${matchTang[1]} Tầng - ${matchPhong[1]} PN`;
+                } else if (matchTang) {
+                  cauTrucPhong = `${matchTang[1]} Tầng`;
+                } else if (matchPhong) {
+                  cauTrucPhong = `${matchPhong[1]} PN`;
+                } else {
+                  // Dự phòng nếu không quét được số cụ thể mà là nhà
+                  cauTrucPhong = "Có nhà ở";
+                }
+              }
 
               return (
                 <a 
@@ -251,30 +275,30 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                       sizes="(max-w-7xl) 100vw" 
                       priority 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     
                     {/* Hệ thống Badge góc trên bên trái */}
                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
                       {isSapHam && (
-                        <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider animate-pulse">
+                        <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">
                           🔥 Sập Hầm
                         </span>
                       )}
                       {isChinhChu && (
-                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider">
+                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">
                           ✓ Chính Chủ
                         </span>
                       )}
                       {isMatTien && (
-                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider">
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">
                           🏢 Mặt Tiền
                         </span>
                       )}
                     </div>
 
-                    {/* Tag Loại hình BDS góc dưới bên trái */}
-                    <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2.5 py-1 rounded-md font-medium">
-                      {item.phân_loại || item.loaiHinh || 'Nhà Đất'}
+                    {/* TAG GIÁ BÁN NỔI BẬT GÓC TRÊN BÊN PHẢI ĐÈ LÊN ẢNH */}
+                    <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 transition-transform duration-300">
+                      {item.gia}
                     </div>
                   </div>
 
@@ -293,24 +317,26 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                       </h3>
                     </div>
 
-                    {/* KHU VỰC THÔNG SỐ GRID 3 Ô SANG TRỌNG */}
+                    {/* KHU VỰC THÔNG SỐ GRID 3 Ô ĐỒNG BỘ MỚI */}
                     <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-gray-50 text-gray-600 text-xs">
-                      {/* Diện tích */}
+                      {/* Ô 1: Diện tích */}
                       <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
                         <Square className="w-3.5 h-3.5 text-orange-500 mb-0.5" />
                         <span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
                       </div>
 
-                      {/* Hướng */}
+                      {/* Ô 2: Hướng */}
                       <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
                         <Compass className="w-3.5 h-3.5 text-orange-500 mb-0.5" />
                         <span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.huong || "---"}</span>
                       </div>
 
-                      {/* Giá tiền */}
-                      <div className="flex flex-col items-center justify-center bg-orange-50/40 rounded-lg py-1.5 border border-orange-100/30">
-                        <span className="text-[10px] text-orange-600 uppercase font-bold mb-0.5">Giá Bán</span>
-                        <span className="font-bold text-orange-600 text-xs sm:text-sm truncate max-w-full px-0.5">{item.gia}</span>
+                      {/* Ô 3: Cấu trúc số phòng ngủ / Số tầng thông minh */}
+                      <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
+                        <BedDouble className="w-3.5 h-3.5 text-orange-500 mb-0.5" />
+                        <span className="font-semibold text-gray-700 truncate max-w-full px-1">
+                          {cauTrucPhong}
+                        </span>
                       </div>
                     </div>
 
