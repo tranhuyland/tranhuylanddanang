@@ -179,7 +179,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
-  // Khối các trường nhập liệu - Đã tích hợp Đặc Quyền thành ô select thứ 4
+  // Khối ô Select tiêu chí
   const FilterFields = () => (
     <>
       <div>
@@ -241,7 +241,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <option value="Bắc">Hướng Bắc</option>
         </select>
       </div>
-      {/* 🔥 MỚI CẢI TIẾN: Nhóm đặc quyền đã được đưa vào select dropdown đồng bộ, rất gọn gàng */}
       <div>
         <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nhóm Đặc Quyền</label>
         <select 
@@ -302,12 +301,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             </button>
           </div>
 
-          {/* GIAO DIỆN BỘ LỌC TRÊN MÁY TÍNH: Chia 4 cột hoàn hảo, cực kỳ thoáng đãng */}
+          {/* GIAO DIỆN BỘ LỌC TRÊN MÁY TÍNH */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
             <FilterFields />
           </div>
 
-          {/* 🔥 KHU VỰC ĐƯỢC CHUẨN HÓA THẨM MỸ: Không còn các nút đặc quyền rườm rà, tạo không gian trắng vô cùng sang trọng */}
+          {/* THANH NÚT ÁP DỤNG TRÊN DESKTOP */}
           <div className="hidden md:flex items-center justify-between border-t border-gray-100/80 pt-4 mt-2">
             <div className="text-xs text-slate-400 font-medium italic">
               * Vui lòng chọn các tiêu chí trên và bấm nút tìm kiếm để cập nhật dữ liệu.
@@ -334,7 +333,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - CÁCH LY CHỐNG DÍNH NÚT GỌI ĐIỆN */}
+      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - SỬA LỖI TRÀN NỘI DUNG VÀ DÍNH NÚT GIỮA CÁC KHỐI LỌC */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
@@ -352,17 +351,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </button>
             </div>
 
-            {/* Thân cuộn chứa trường lọc dữ liệu trên Mobile */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-36">
+            {/* Thân cuộn: Đã tăng pb-40 để khi cuộn xuống cùng, ô Nhóm đặc quyền hoàn toàn hiển thị trọn vẹn, không bao giờ dính nút bấm bên dưới */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-40">
               <FilterFields />
             </div>
 
-            {/* Đáy cố định chứa 2 nút của Bộ lọc - Giữ khoảng cách an toàn mb-16 chống dính */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white/95 to-transparent shrink-0 pb-24 shadow-[0_-12px_30px_rgba(0,0,0,0.04)] z-20">
-              <div className="bg-white p-1 rounded-2xl border border-gray-100 shadow-lg flex gap-2 mb-16">
+            {/* Khối chứa nút hành động cố định sát đáy: Đã căn lề chuẩn mb-20 để tạo khoảng trắng cách ly hoàn toàn với 3 nút cuộc gọi/Zalo hệ thống */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent shrink-0 pb-20 shadow-[0_-12px_30px_rgba(0,0,0,0.04)] z-20">
+              <div className="bg-white p-1 rounded-2xl border border-gray-100 shadow-md flex gap-2 mb-4">
                 <button 
                   onClick={handleResetFilters}
-                  className="w-1/3 border border-gray-200 text-slate-600 font-bold text-xs py-3.5 rounded-xl text-center active:scale-[0.98] transition-transform bg-slate-50"
+                  className="w-1/3 border border-gray-200 text-slate-600 font-bold text-xs py-3.5 rounded-xl text-center bg-slate-50 active:scale-[0.98] transition-transform"
                 >
                   Đặt lại
                 </button>
