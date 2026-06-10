@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check } from "lucide-react";
+import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check, RotateCcw } from "lucide-react";
 
 interface ListingSectionProps {
   allBdsItems: any[];
@@ -22,11 +22,19 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
-  const [khuVuc, setKhuVuc] = useState(forceDistrict || "all");
-  const [loaiHinh, setLoaiHinh] = useState("all");
-  const [khoangGia, setKhoangGia] = useState("all");
-  const [huong, setHuong] = useState("all");
-  const [selectedTag, setSelectedTag] = useState("all");
+  
+  // State chính thức dùng để map dữ liệu ra giao diện
+  const [activeKhuVuc, setActiveKhuVuc] = useState(forceDistrict || "all");
+  const [activeLoaiHinh, setActiveLoaiHinh] = useState("all");
+  const [activeKhoangGia, setActiveKhoangGia] = useState("all");
+  const [activeHuong, setActiveHuong] = useState("all");
+  const [activeTag, setActiveTag] = useState("all");
+
+  // State tạm thời khi người dùng đang bấm lựa chọn trên thanh công cụ
+  const [tempKhuVuc, setTempKhuVuc] = useState(forceDistrict || "all");
+  const [tempKhoangGia, setTempKhoangGia] = useState("all");
+  const [tempHuong, setTempHuong] = useState("all");
+  const [tempTag, setTempTag] = useState("all");
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -45,9 +53,47 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
+  // Hàm xử lý kích hoạt bộ lọc khi bấm nút Áp dụng
+  const handleApplyFilters = () => {
+    setActiveKhuVuc(tempKhuVuc);
+    setActiveKhoangGia(tempKhoangGia);
+    setActiveHuong(tempHuong);
+    setActiveTag(tempTag);
+    setCurrentPage(1);
+    setIsDrawerOpen(false);
+
+    // Cuộn mượt xuống danh sách sản phẩm để khách xem kết quả
+    setTimeout(() => {
+      const element = document.getElementById("listing-section");
+      if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  // Hàm đặt lại toàn bộ bộ lọc về mặc định ban đầu
+  const handleResetFilters = () => {
+    setTempKhuVuc(forceDistrict || "all");
+    setTempKhoangGia("all");
+    setTempHuong("all");
+    setTempTag("all");
+    
+    setActiveKhuVuc(forceDistrict || "all");
+    setActiveKhoangGia("all");
+    setActiveHuong("all");
+    setActiveTag("all");
+    setActiveLoaiHinh("all");
+    setCurrentPage(1);
+  };
+
+  // Hàm đổi Tab nhanh Loại hình (Đất nền / Nhà phố) - Bấm phát ăn ngay cho tiện lợi
+  const handleSelectLoaiHinh = (type: string) => {
+    setActiveLoaiHinh(type);
+    setCurrentPage(1);
+  };
+
   useEffect(() => {
     let result = [...safeBdsItems];
 
+    // Thuật toán đảo sản phẩm mới đăng lên đầu tiên
     result.sort((a: any, b: any) => {
       const dateStrA = a.ngayDang || a.ngay || "";
       const dateStrB = b.ngayDang || b.ngay || "";
@@ -71,23 +117,28 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    if (khuVuc !== "all") {
+    // Lọc theo Phường / Xã
+    if (activeKhuVuc !== "all") {
       result = result.filter((i: any) => {
         const checkDiaChi = cleanVietnameseText(i.diaChi || i.diaChiFull || i.diChi || i.dia_chi || "");
         const checkKhuVuc = cleanVietnameseText(i.khuVucFull || i.khuVuc || "");
-        const targetKhuVuc = cleanVietnameseText(khuVuc);
+        const targetKhuVuc = cleanVietnameseText(activeKhuVuc);
         return checkDiaChi.includes(targetKhuVuc) || checkKhuVuc.includes(targetKhuVuc);
       });
     }
-    if (loaiHinh !== "all") {
+
+    // Lọc theo Loại hình
+    if (activeLoaiHinh !== "all") {
       result = result.filter((i: any) => {
         const checkPhanLoai = cleanVietnameseText(i.phân_loại || i.phanLoai || i.loaiHinh || "");
         const checkTieude = cleanVietnameseText(i.tieude || i.tieuDe || "");
-        const targetLoaiHinh = cleanVietnameseText(loaiHinh);
+        const targetLoaiHinh = cleanVietnameseText(activeLoaiHinh);
         return checkPhanLoai.includes(targetLoaiHinh) || checkTieude.includes(targetLoaiHinh);
       });
     }
-    if (khoangGia !== "all") {
+
+    // Lọc theo Khoảng giá
+    if (activeKhoangGia !== "all") {
       const parseGia = (giaStr: string) => {
         if (!giaStr) return 0;
         const num = parseFloat(giaStr.replace(/[^0-9.]/g, ""));
@@ -95,21 +146,25 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       };
       const getGiaNumber = (item: any) => Number(item.soGia) || parseGia(item.gia);
 
-      if (khoangGia === "duoi3") result = result.filter(i => getGiaNumber(i) < 3.0);
-      else if (khoangGia === "3to5") result = result.filter(i => getGiaNumber(i) >= 3.0 && getGiaNumber(i) <= 5.0);
-      else if (khoangGia === "tren5") result = result.filter(i => getGiaNumber(i) > 5.0);
+      if (activeKhoangGia === "duoi3") result = result.filter(i => getGiaNumber(i) < 3.0);
+      else if (activeKhoangGia === "3to5") result = result.filter(i => getGiaNumber(i) >= 3.0 && getGiaNumber(i) <= 5.0);
+      else if (activeKhoangGia === "tren5") result = result.filter(i => getGiaNumber(i) > 5.0);
     }
-    if (huong !== "all") {
-      result = result.filter((i: any) => cleanVietnameseText(i.huong || "").includes(cleanVietnameseText(huong)));
+
+    // Lọc theo Hướng nhà
+    if (activeHuong !== "all") {
+      result = result.filter((i: any) => cleanVietnameseText(i.huong || "").includes(cleanVietnameseText(activeHuong)));
     }
-    if (selectedTag === "mattien") {
+
+    // Lọc theo Thẻ đặc quyền
+    if (activeTag === "mattien") {
       result = result.filter((i: any) => i.isMatTien === true || cleanVietnameseText(i.tieude || "").includes("mat tien") || cleanVietnameseText(i.tag || "").includes("mat tien") || cleanVietnameseText(i.mota || i.moTa || "").includes("mat tien"));
-    } else if (selectedTag === "chinhchu") {
+    } else if (activeTag === "chinhchu") {
       result = result.filter((i: any) => cleanVietnameseText(i.tag || "").includes("chinh chu") || cleanVietnameseText(i.mota || i.moTa || "").includes("chinh chu") || cleanVietnameseText(i.tieude || "").includes("chinh chu"));
     }
     
     setFilteredItems(result);
-  }, [khuVuc, loaiHinh, khoangGia, huong, selectedTag, safeBdsItems]);
+  }, [activeKhuVuc, activeLoaiHinh, activeKhoangGia, activeHuong, activeTag, safeBdsItems]);
 
   const formatTimeAgo = (dateStr: string) => {
     if (!dateStr) return "Tin mới";
@@ -126,29 +181,26 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return danhSach.length > 0 ? danhSach[0] : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
   };
 
-  const handleFilterChange = (filterType: string, value: string) => {
-    if (filterType === "khuVuc") setKhuVuc(value);
-    if (filterType === "loaiHinh") setLoaiHinh(value);
-    if (filterType === "khoangGia") setKhoangGia(value);
-    if (filterType === "huong") setHuong(value);
-    if (filterType === "tag") setSelectedTag(value);
-    setCurrentPage(1);
-  };
-
   const activeFiltersCount = 
-    (khuVuc !== "all" ? 1 : 0) + 
-    (khoangGia !== "all" ? 1 : 0) + 
-    (huong !== "all" ? 1 : 0) + 
-    (selectedTag !== "all" ? 1 : 0);
+    (activeKhuVuc !== "all" ? 1 : 0) + 
+    (activeKhoangGia !== "all" ? 1 : 0) + 
+    (activeHuong !== "all" ? 1 : 0) + 
+    (activeTag !== "all" ? 1 : 0);
 
   const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
-  const FilterFields = () => (
+  // Component các ô Select chọn tiêu chí
+  const FilterFields = ({ isMobile = false }: { isMobile?: boolean }) => (
     <>
       <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Phường / Xã</label>
-        <select disabled={!!forceDistrict} value={khuVuc} onChange={(e) => handleFilterChange("khuVuc", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Phường / Vã</label>
+        <select 
+          disabled={!!forceDistrict} 
+          value={tempKhuVuc} 
+          onChange={(e) => setTempKhuVuc(e.target.value)} 
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all"
+        >
           <option value="all">Tất cả Vị trí</option>
           <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
           <option value="Hải Châu">Hải Châu</option>
@@ -174,8 +226,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </select>
       </div>
       <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Khoảng Giá</label>
-        <select value={khoangGia} onChange={(e) => handleFilterChange("khoangGia", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Khoảng Giá</label>
+        <select 
+          value={tempKhoangGia} 
+          onChange={(e) => setTempKhoangGia(e.target.value)} 
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all"
+        >
           <option value="all">Tất cả mức giá</option>
           <option value="duoi3">Dưới 3 Tỷ</option>
           <option value="3to5">Từ 3 - 5 Tỷ</option>
@@ -183,8 +239,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </select>
       </div>
       <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1 tracking-wider">Hướng Nhà</label>
-        <select value={huong} onChange={(e) => handleFilterChange("huong", e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 text-slate-700">
+        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hướng Nhà</label>
+        <select 
+          value={tempHuong} 
+          onChange={(e) => setTempHuong(e.target.value)} 
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all"
+        >
           <option value="all">Tất cả các hướng</option>
           <option value="Đông">Hướng Đông</option>
           <option value="Tây">Hướng Tây</option>
@@ -205,20 +265,20 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <div className="flex border-b border-gray-100 pb-3 items-center justify-between gap-4">
             <div className="flex-1 max-w-xl flex gap-1 bg-gray-100 p-1 rounded-xl">
               <button 
-                onClick={() => handleFilterChange("loaiHinh", "all")}
-                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "all" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                onClick={() => handleSelectLoaiHinh("all")}
+                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${activeLoaiHinh === "all" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
               >
                 Tất Cả BDS
               </button>
               <button 
-                onClick={() => handleFilterChange("loaiHinh", "Đất nền")}
-                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "Đất nền" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                onClick={() => handleSelectLoaiHinh("Đất nền")}
+                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${activeLoaiHinh === "Đất nền" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
               >
                 ⛳ Đất Nền
               </button>
               <button 
-                onClick={() => handleFilterChange("loaiHinh", "Nhà phố")}
-                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "Nhà phố" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                onClick={() => handleSelectLoaiHinh("Nhà phố")}
+                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${activeLoaiHinh === "Nhà phố" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
               >
                 🏠 Nhà Phố
               </button>
@@ -226,7 +286,13 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
             {/* NÚT BẤM MỞ ĐIỀU KHIỂN BỘ LỌC TRÊN MOBILE */}
             <button 
-              onClick={() => setIsDrawerOpen(true)}
+              onClick={() => {
+                setTempKhuVuc(activeKhuVuc);
+                setTempKhoangGia(activeKhoangGia);
+                setTempHuong(activeHuong);
+                setTempTag(activeTag);
+                setIsDrawerOpen(true);
+              }}
               className="md:hidden flex items-center gap-1.5 bg-orange-50 text-orange-600 px-4 py-2.5 rounded-xl text-xs font-bold border border-orange-100 shrink-0"
             >
               <SlidersHorizontal size={14} />
@@ -239,37 +305,62 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             <FilterFields />
           </div>
 
-          {/* 🔥 ĐÃ CẢI TIẾN BIẾN ĐỔI: HÀNG THẺ TAG VÀ NÚT ÁP DỤNG TÁCH BIỆT TRÊN DESKTOP */}
+          {/* 🔥 KHU VỰC ĐƯỢC THAY ĐỔI CÁCH TÂN TOÀN DIỆN: TÁCH BẠCH THANH NÚT BẤM DƯỚI CÙNG (DESKTOP) */}
           <div className="hidden md:flex items-center justify-between border-t border-gray-100/80 pt-4 mt-2">
+            
+            {/* Nhóm thẻ Tag lọc nhanh bên trái */}
             <div className="flex wrap gap-2 items-center">
-              <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Tất Cả Tin</button>
-              <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>🏢 Mặt Tiền Kinh Doanh</button>
-              <button onClick={() => handleFilterChange("tag", "chinhchu")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "chinhchu" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>✓ Hàng Chính Chủ</button>
+              <button 
+                onClick={() => setTempTag("all")} 
+                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${tempTag === "all" ? "bg-slate-900 text-white border-slate-900 shadow-sm" : "bg-white border-gray-200 text-slate-600 hover:bg-slate-50"}`}
+              >
+                Tất Cả Tin
+              </button>
+              <button 
+                onClick={() => setTempTag("mattien")} 
+                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${tempTag === "mattien" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white border-gray-200 text-slate-600 hover:bg-slate-50"}`}
+              >
+                🏢 Mặt Tiền Kinh Doanh
+              </button>
+              <button 
+                onClick={() => setTempTag("chinhchu")} 
+                className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all ${tempTag === "chinhchu" ? "bg-orange-50 border-orange-300 text-orange-600" : "bg-white border-gray-200 text-slate-600 hover:bg-slate-50"}`}
+              >
+                ✓ Hàng Chính Chủ
+              </button>
             </div>
             
-            {/* Nút bấm độc lập, đổ bóng mờ gradient cực sang trọng ở góc phải PC */}
-            <button 
-              onClick={() => {
-                const element = document.getElementById("listing-section");
-                if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-orange-500/10 hover:shadow-lg hover:shadow-orange-500/20 active:scale-[0.98] transition-all"
-            >
-              <Check size={14} /> Áp dụng bộ lọc
-            </button>
+            {/* Cặp nút hành động bên phải: Tách biệt hẳn xuống góc dưới, cực kỳ sang và bề thế */}
+            <div className="flex items-center gap-2">
+              {activeFiltersCount > 0 && (
+                <button 
+                  onClick={handleResetFilters}
+                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-red-500 px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors"
+                >
+                  <RotateCcw size={14} /> Xóa bộ lọc
+                </button>
+              )}
+              
+              <button 
+                onClick={handleApplyFilters}
+                className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs px-6 py-3 rounded-xl flex items-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:from-orange-600 hover:to-red-700 active:scale-[0.97] transition-all"
+              >
+                <Check size={14} /> Tìm kiếm ngay
+              </button>
+            </div>
           </div>
 
         </div>
       </section>
 
-      {/* 📱 KHU VỰC MOBILE DRAWER MODAL */}
+      {/* 📱 KHU VỰC MOBILE DRAWER MODAL - TỐI ƯU SÁT ĐÁY */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
           
           <div className="relative bg-white rounded-t-3xl shadow-2xl h-[80vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
             
-            {/* Header Tĩnh */}
+            {/* Header Drawer */}
             <div className="flex items-center justify-between border-b border-gray-100 p-4 shrink-0">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={16} className="text-orange-500" />
@@ -285,21 +376,27 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <FilterFields />
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nhóm đặc quyền</label>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => { handleFilterChange("tag", "all"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border transition-colors ${selectedTag === "all" ? "bg-orange-50 border-orange-300 text-orange-600 font-extrabold" : "bg-white text-slate-600 border-gray-100"}`}>Tất Cả Sản Phẩm</button>
-                  <button onClick={() => { handleFilterChange("tag", "mattien"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border transition-colors ${selectedTag === "mattien" ? "bg-orange-50 border-orange-300 text-orange-600 font-extrabold" : "bg-white text-slate-600 border-gray-100"}`}>🏢 Mặt Tiền Kinh Doanh</button>
-                  <button onClick={() => { handleFilterChange("tag", "chinhchu"); setIsDrawerOpen(false); }} className={`text-left text-xs font-bold p-3 rounded-xl border transition-colors ${selectedTag === "chinhchu" ? "bg-orange-50 border-orange-300 text-orange-600 font-extrabold" : "bg-white text-slate-600 border-gray-100"}`}>✓ Hàng Chính Chủ</button>
+                <div className="grid grid-cols-1 gap-2">
+                  <button onClick={() => setTempTag("all")} className={`text-left text-xs font-bold p-3.5 rounded-xl border transition-all ${tempTag === "all" ? "bg-orange-50 border-orange-400 text-orange-600 font-extrabold shadow-xs" : "bg-white text-slate-600 border-gray-200"}`}>Tất Cả Sản Phẩm</button>
+                  <button onClick={() => setTempTag("mattien")} className={`text-left text-xs font-bold p-3.5 rounded-xl border transition-all ${tempTag === "mattien" ? "bg-orange-50 border-orange-400 text-orange-600 font-extrabold shadow-xs" : "bg-white text-slate-600 border-gray-200"}`}>🏢 Mặt Tiền Kinh Doanh</button>
+                  <button onClick={() => setTempTag("chinhchu")} className={`text-left text-xs font-bold p-3.5 rounded-xl border transition-all ${tempTag === "chinhchu" ? "bg-orange-50 border-orange-400 text-orange-600 font-extrabold shadow-xs" : "bg-white text-slate-600 border-gray-200"}`}>✓ Hàng Chính Chủ</button>
                 </div>
               </div>
             </div>
 
-            {/* Đáy cố định bảo vệ Safe Area Mobile */}
-            <div className="sticky bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shrink-0 pb-10 shadow-[0_-8px_24px_rgba(0,0,0,0.05)] z-20">
+            {/* Đáy cố định thanh nút bấm trên điện thoại (Full chiều ngang) */}
+            <div className="sticky bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shrink-0 pb-10 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-20 flex gap-2">
               <button 
-                onClick={() => setIsDrawerOpen(false)}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm py-3.5 rounded-xl text-center shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform"
+                onClick={handleResetFilters}
+                className="w-1/3 border border-gray-200 text-slate-600 font-bold text-xs py-3.5 rounded-xl text-center active:scale-[0.98] transition-transform bg-slate-50"
               >
-                Áp dụng bộ lọc {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+                Đặt lại
+              </button>
+              <button 
+                onClick={handleApplyFilters}
+                className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs py-3.5 rounded-xl text-center shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"
+              >
+                <Check size={14} /> Áp dụng ngay
               </button>
             </div>
 
