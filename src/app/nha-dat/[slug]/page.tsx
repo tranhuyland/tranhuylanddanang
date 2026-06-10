@@ -7,9 +7,9 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 import PropertyGallery from "@/components/SlideBds"; 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, X } from "lucide-react";
+import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // Cấu trúc Type chuẩn của Next.js 15 dành cho Params dạng Promise
 interface Props { 
@@ -23,6 +23,13 @@ export default function NhaDatDetail({ params }: Props) {
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  // Các State xử lý Phóng to / Kéo di chuyển ảnh sổ đỏ chuyên nghiệp
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const touchStartDist = useRef(0);
 
   // Fetch dữ liệu phía Client để đồng bộ trạng thái Popup tương tác
   useEffect(() => {
@@ -41,6 +48,14 @@ export default function NhaDatDetail({ params }: Props) {
     }
     loadData();
   }, [slug]);
+
+  // Reset lại ảnh về kích thước gốc mỗi khi đóng/mở popup
+  useEffect(() => {
+    if (!isPopupOpen) {
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+    }
+  }, [isPopupOpen]);
 
   if (loading) {
     return (
@@ -65,6 +80,69 @@ export default function NhaDatDetail({ params }: Props) {
 
   // Khắc phục lỗi lệch chữ hoa/thường để bảo đảm luôn lấy được văn bản mô tả từ Google Sheet
   const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
+
+  // ---- LOGIC XỬ LÝ PHÓNG TO & KÉO DI CHUYỂN BẰNG TAY (MOBILE & MÁY TÍNH) ----
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 1));
+  const handleResetZoom = () => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  // Bắt đầu kéo (Chuột)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale === 1) return; // Chỉ cho kéo khi đã phóng to
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX - position.x, y: e.clientY - position.y };
+  };
+
+  // Đang di chuyển (Chuột)
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    setPosition({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y
+    });
+  };
+
+  // Thao tác vuốt ngón tay (Mobile cảm ứng)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Nhận diện sự kiện 2 ngón tay Pinch to Zoom
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartDist.current = dist;
+    } else if (e.touches.length === 1 && scale > 1) {
+      // Nhận diện 1 ngón tay vuốt di chuyển ảnh đã zoom
+      isDragging.current = true;
+      dragStart.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStartDist.current > 0) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = dist / touchStartDist.current;
+      setScale(prev => Math.min(Math.max(prev * factor, 1), 4));
+      touchStartDist.current = dist;
+    } else if (e.touches.length === 1 && isDragging.current) {
+      setPosition({
+        x: e.touches[0].clientX - dragStart.current.x,
+        y: e.touches[0].clientY - dragStart.current.y
+      });
+    }
+  };
+
+  const handleMouseUpOrLeave = () => { isDragging.current = false; };
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    touchStartDist.current = 0;
+  };
 
   return (
     <>
@@ -165,35 +243,68 @@ export default function NhaDatDetail({ params }: Props) {
       <Footer />
       <FloatingWidgets /> 
 
-      {/* POPUP SỔ HỒNG THÔNG MINH - BẤM X HOẶC VUỐT RA NGOÀI ĐỂ ĐÓNG */}
+      {/* POPUP SỔ HỒNG THÔNG MINH - HỖ TRỢ PHÓNG TO, THU NHỎ VÀ KÉO DI CHUYỂN */}
       {isPopupOpen && (
         <div 
-          className="fixed inset-0 bg-black/90 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fade-in touch-none"
+          className="fixed inset-0 bg-black/95 backdrop-blur-md z-[99999] flex flex-col items-center justify-center animate-fade-in touch-none select-none"
           onClick={() => setIsPopupOpen(false)}
         >
+          {/* THANH ĐIỀU KHIỂN ZOOM CẬP NHẬT TRÊN ĐẦU POPUP */}
+          <div className="absolute top-4 left-4 z-50 flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 p-1.5 rounded-xl">
+            <button onClick={(e) => { e.stopPropagation(); handleZoomIn(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer" title="Phóng to">
+              <ZoomIn className="w-5 h-5" />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); handleZoomOut(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer" title="Thu nhỏ">
+              <ZoomOut className="w-5 h-5" />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); handleResetZoom(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer" title="Đặt lại gốc">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <span className="text-white text-[11px] font-bold px-2 tracking-wide bg-white/10 rounded-md py-1">Zoom: {Math.round(scale * 100)}%</span>
+          </div>
+
           {/* Nút đóng hình tròn góc trên bên phải */}
           <button 
             onClick={(e) => {
               e.stopPropagation();
               setIsPopupOpen(false);
             }}
-            className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-all z-50 cursor-pointer border border-white/10"
+            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-all z-50 cursor-pointer border border-white/10 shadow-lg"
           >
             <X className="w-6 h-6" />
           </button>
 
-          {/* Vùng chứa hình ảnh thực tế */}
+          {/* Vùng tương tác hình ảnh thực tế */}
           <div 
-            className="relative max-w-3xl max-h-[85vh] w-full h-full flex items-center justify-center select-none"
-            onClick={(e) => e.stopPropagation()} // Chống tắt khi click trúng ảnh
+            className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
+            onClick={(e) => e.stopPropagation()} 
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={handleMouseUpOrLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={anhSoDoGoc} 
               alt="Sổ hồng bản vẽ chi tiết" 
-              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl pointer-events-auto cursor-zoom-in"
+              draggable={false}
+              style={{
+                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                transition: isDragging.current ? "none" : "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+              className="max-w-[95vw] max-h-[80vh] object-contain rounded-lg shadow-2xl origin-center pointer-events-auto select-none"
             />
           </div>
+
+          {/* Hướng dẫn nhỏ ẩn hiện tinh tế dưới đáy */}
+          {scale === 1 && (
+            <div className="absolute bottom-6 text-white/50 text-xs font-medium bg-black/40 px-4 py-1.5 rounded-full pointer-events-none tracking-wider uppercase text-center">
+              Dùng 2 ngón tay hoặc bấm nút để phóng to bản vẽ
+            </div>
+          )}
         </div>
       )}
     </>
