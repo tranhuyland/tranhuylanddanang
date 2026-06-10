@@ -6,28 +6,32 @@ const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzrb1ocMD9pZY
 const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
 const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland';
 
-export default function DangTinPage() {
-  const [formData, setFormData] = useState({
-    id: '',
-    tieude: '',
-    gia: '',
-    dienTich: '',
-    khuVuc: '', 
-    huong: '', // Có thể để trống
-    loaiHinh: 'Nhà phố',
-    anh: '', // Chuỗi danh sách link ảnh thực tế
-    anhSoDo: '', // 🛠️ ĐÃ ĐỒNG BỘ: Đổi từ soDo thành anhSoDo khớp Google Sheet
-    linkMap: '', // Đường dẫn link Google Map
-    moTa: '', // 🛠️ ĐÃ ĐỒNG BỘ: Đổi từ mota thành moTa khớp hệ thống hiển thị
-    tag: 'all',
-    isMatTien: false,
-    ngayDang: ''
-  });
+const INITIAL_FORM_STATE = {
+  id: '',
+  tieude: '',
+  gia: '',
+  dienTich: '',
+  khuVuc: '', 
+  huong: '',
+  loaiHinh: 'Nhà phố',
+  anh: '', 
+  anhSoDo: '', 
+  linkMap: '', 
+  moTa: '', 
+  tag: 'all',
+  isMatTien: false,
+  ngayDang: ''
+};
 
+export default function DangTinPage() {
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+
+  // Trạng thái tải ảnh thực tế
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedImagesPreview, setSelectedImagesPreview] = useState<string[]>([]);
   
+  // Trạng thái tải ảnh sổ đỏ
   const [uploadingSoDo, setUploadingSoDo] = useState(false);
   const [uploadProgressSoDo, setUploadProgressSoDo] = useState(0);
   const [soDoImagesPreview, setSoDoImagesPreview] = useState<string[]>([]);
@@ -35,13 +39,20 @@ export default function DangTinPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
 
-  // HÀM XỬ LÝ ÚP LOẠT ẢNH THỰC TẾ LÊN CLOUDINARY
-  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  // 🛠️ HÀM TỐI ƯU DÙNG CHUNG: Tải loạt ảnh lên Cloudinary & Giải phóng bộ nhớ RAM
+  const uploadImagesToCloudinary = async (
+    files: FileList | null,
+    setUploadStatus: (status: boolean) => void,
+    setProgress: (progress: number) => void,
+    setPreviews: (urls: string[]) => void,
+    formField: 'anh' | 'anhSoDo',
+    successMsg: string,
+    errorMsg: string
+  ) => {
     if (!files || files.length === 0) return;
 
-    setUploading(true);
-    setUploadProgress(0);
+    setUploadStatus(true);
+    setProgress(0);
     setMessage({ type: '', content: '' });
 
     const uploadedUrls: string[] = [];
@@ -51,7 +62,8 @@ export default function DangTinPage() {
     try {
       for (let i = 0; i < totalFiles; i++) {
         const file = files[i];
-        previewUrls.push(URL.createObjectURL(file));
+        const blobUrl = URL.createObjectURL(file);
+        previewUrls.push(blobUrl);
 
         const data = new FormData();
         data.append('file', file);
@@ -66,63 +78,45 @@ export default function DangTinPage() {
           const fileData = await res.json();
           uploadedUrls.push(fileData.secure_url);
         }
-        const progress = Math.round(((i + 1) / totalFiles) * 100);
-        setUploadProgress(progress);
+        setProgress(Math.round(((i + 1) / totalFiles) * 100));
       }
 
-      setSelectedImagesPreview(previewUrls);
-      setFormData(prev => ({ ...prev, anh: uploadedUrls.join(', ') }));
-      setMessage({ type: 'success', content: `📸 Đã tải thành công ${uploadedUrls.length} ảnh thực tế lên Cloudinary!` });
+      setPreviews(previewUrls);
+      setFormData(prev => ({ ...prev, [formField]: uploadedUrls.join(', ') }));
+      setMessage({ type: 'success', content: successMsg });
     } catch (error) {
-      setMessage({ type: 'error', content: '❌ Gặp lỗi khi úp ảnh thực tế lên Cloudinary.' });
+      setMessage({ type: 'error', content: errorMsg });
     } finally {
-      setUploading(false);
+      setUploadStatus(false);
     }
   };
 
-  // HÀM XỬ LÝ ÚP ẢNH SỔ ĐỎ LÊN CLOUDINARY
-  const handleSoDoChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  // Kích hoạt hàm xử lý tải ảnh thực tế
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    selectedImagesPreview.forEach(url => URL.revokeObjectURL(url)); // Xóa bộ nhớ ảnh cũ
+    uploadImagesToCloudinary(
+      e.target.files,
+      setUploading,
+      setUploadProgress,
+      setSelectedImagesPreview,
+      'anh',
+      `📸 Đã tải thành công ${e.target.files?.length} ảnh thực tế lên Cloudinary!`,
+      '❌ Gặp lỗi khi úp ảnh thực tế lên Cloudinary.'
+    );
+  };
 
-    setUploadingSoDo(true);
-    setUploadProgressSoDo(0);
-    setMessage({ type: '', content: '' });
-
-    const uploadedUrls: string[] = [];
-    const previewUrls: string[] = [];
-    const totalFiles = files.length;
-
-    try {
-      for (let i = 0; i < totalFiles; i++) {
-        const file = files[i];
-        previewUrls.push(URL.createObjectURL(file));
-
-        const data = new FormData();
-        data.append('file', file);
-        data.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: data
-        });
-
-        if (res.ok) {
-          const fileData = await res.json();
-          uploadedUrls.push(fileData.secure_url);
-        }
-        const progress = Math.round(((i + 1) / totalFiles) * 100);
-        setUploadProgressSoDo(progress);
-      }
-
-      setSoDoImagesPreview(previewUrls);
-      setFormData(prev => ({ ...prev, anhSoDo: uploadedUrls.join(', ') }));
-      setMessage({ type: 'success', content: `📑 Đã tải thành công ${uploadedUrls.length} ảnh sơ đồ/sổ đỏ lên Cloudinary!` });
-    } catch (error) {
-      setMessage({ type: 'error', content: '❌ Gặp lỗi khi úp ảnh sổ đỏ lên Cloudinary.' });
-    } finally {
-      setUploadingSoDo(false);
-    }
+  // Kích hoạt hàm xử lý tải ảnh sơ đồ / sổ đỏ
+  const handleSoDoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    soDoImagesPreview.forEach(url => URL.revokeObjectURL(url)); // Xóa bộ nhớ ảnh cũ
+    uploadImagesToCloudinary(
+      e.target.files,
+      setUploadingSoDo,
+      setUploadProgressSoDo,
+      setSoDoImagesPreview,
+      'anhSoDo',
+      `📑 Đã tải thành công ${e.target.files?.length} ảnh sơ đồ/sổ đỏ lên Cloudinary!`,
+      '❌ Gặp lỗi khi úp ảnh sổ đỏ lên Cloudinary.'
+    );
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -160,22 +154,9 @@ export default function DangTinPage() {
       });
 
       setMessage({ type: 'success', content: '🎉 Thêm sản phẩm bất động sản đồng bộ lên Google Sheet thành công!' });
-      setFormData({
-        id: '',
-        tieude: '',
-        gia: '',
-        dienTich: '',
-        khuVuc: '',
-        huong: '',
-        loaiHinh: 'Nhà phố',
-        anh: '',
-        anhSoDo: '',
-        linkMap: '',
-        moTa: '',
-        tag: 'all',
-        isMatTien: false,
-        ngayDang: ''
-      });
+      
+      // Khôi phục trạng thái form sạch sẽ
+      setFormData(INITIAL_FORM_STATE);
       setSelectedImagesPreview([]);
       setSoDoImagesPreview([]);
     } catch (error) {
