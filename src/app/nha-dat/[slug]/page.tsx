@@ -8,7 +8,10 @@ import Link from "next/link";
 import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-interface Props { params: Promise<{ slug: string }>; }
+// Cấu trúc Type chuẩn của Next.js 15 dành cho Params dạng Promise
+interface Props { 
+  params: Promise<{ slug: string }>; 
+}
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
@@ -28,6 +31,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function NhaDatDetail({ params }: Props) {
+  // Giải nén slug an toàn bằng await theo đúng chuẩn Next.js 15
   const { slug } = await params;
   const data = await getBdsData();
   const item = data.find(p => p.slug === slug) as any;
@@ -142,5 +146,5 @@ export default async function NhaDatDetail({ params }: Props) {
       <Footer />
       <FloatingWidgets /> 
     </>
-  ); 
+  );
 }
