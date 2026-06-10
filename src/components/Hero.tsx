@@ -11,8 +11,8 @@ export default function Hero() {
           <h2 className="text-4xl sm:text-6xl font-extrabold leading-tight mb-6">Nhà Thật • Giá Thật • Giao Dịch Minh Bạch</h2>
           <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8">Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh và nhà kiệt ô tô tại Hải Châu, Cẩm Lệ, Sơn Trà... Hình ảnh khảo sát thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp từ chủ nhà.</p>
           <div className="flex flex-wrap gap-4">
-            <a href="tel:0931555551" className="bg-amber-500 hover:bg-amber-400 text-slate-900 px-6 py-3.5 rounded-2xl font-extrabold shadow-lg transition-all">Liên Hệ Tư Vấn</a>
-            <a href="https://zalo.me/0931555551" target="_blank" rel="noopener noreferrer" className="border border-white/20 hover:bg-white/10 px-6 py-3.5 rounded-2xl font-bold transition-all flex items-center gap-2">Xem Giỏ Hàng Zalo</a>
+            <a href="tel:0905778852" className="bg-amber-500 hover:bg-amber-400 text-slate-900 px-6 py-3.5 rounded-2xl font-extrabold shadow-lg transition-all">Liên Hệ Tư Vấn</a>
+            <a href="https://zalo.me/0905778852" target="_blank" rel="noopener noreferrer" className="border border-white/20 hover:bg-white/10 px-6 py-3.5 rounded-2xl font-bold transition-all flex items-center gap-2">Xem Giỏ Hàng Zalo</a>
           </div>
         </div>
       </div>
