@@ -9,6 +9,17 @@ interface ListingSectionProps {
   forceDistrict?: string;
 }
 
+// Thuật toán dọn dẹp bảng mã Unicode và loại bỏ dấu tiếng Việt để so sánh ngầm dứt điểm lỗi kẹt chữ
+const cleanVietnameseText = (str: string) => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .normalize("NFD")                  // Phân tách ký tự dấu ra khỏi nguyên âm gốc
+    .replace(/[\u0300-\u036f]/g, "")  // Xóa sạch toàn bộ các ký tự dấu (huyền, sắc, hỏi, ngã, nặng)
+    .replace(/đ/g, "d")                // Đồng bộ chữ đ thành d
+    .trim();
+};
+
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
@@ -70,19 +81,23 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       return (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // Hệ thống các bộ lọc nâng cao
+    // Hệ thống các bộ lọc nâng cao kết hợp hàm xóa dấu thông minh chống lệch Unikey
     if (khuVuc !== "all") {
       result = result.filter((i: any) => {
-        const checkDiaChi = i.diaChi || i.diChi || i.dia_chi || "";
-        const checkKhuVuc = i.khuVucFull || i.khuVuc || "";
-        return checkDiaChi.toLowerCase().includes(khuVuc.toLowerCase()) || checkKhuVuc.toLowerCase().includes(khuVuc.toLowerCase());
+        const checkDiaChi = cleanVietnameseText(i.diaChi || i.diChi || i.dia_chi || "");
+        const checkKhuVuc = cleanVietnameseText(i.khuVucFull || i.khuVuc || "");
+        const targetKhuVuc = cleanVietnameseText(khuVuc);
+        
+        return checkDiaChi.includes(targetKhuVuc) || checkKhuVuc.includes(targetKhuVuc);
       });
     }
     if (loaiHinh !== "all") {
       result = result.filter((i: any) => {
-        const checkPhanLoai = i.phân_loại || i.phanLoai || i.loaiHinh || "";
-        const checkTieude = i.tieude || i.tieuDe || "";
-        return checkPhanLoai.toLowerCase().includes(loaiHinh.toLowerCase()) || checkTieude.toLowerCase().includes(loaiHinh.toLowerCase());
+        const checkPhanLoai = cleanVietnameseText(i.phân_loại || i.phanLoai || i.loaiHinh || "");
+        const checkTieude = cleanVietnameseText(i.tieude || i.tieuDe || "");
+        const targetLoaiHinh = cleanVietnameseText(loaiHinh);
+        
+        return checkPhanLoai.includes(targetLoaiHinh) || checkTieude.includes(targetLoaiHinh);
       });
     }
     if (khoangGia !== "all") {
@@ -98,12 +113,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       else if (khoangGia === "tren5") result = result.filter(i => getGiaNumber(i) > 5.0);
     }
     if (huong !== "all") {
-      result = result.filter((i: any) => (i.huong || "").toLowerCase().includes(huong.toLowerCase()));
+      result = result.filter((i: any) => cleanVietnameseText(i.huong || "").includes(cleanVietnameseText(huong)));
     }
     if (selectedTag === "mattien") {
-      result = result.filter((i: any) => i.isMatTien === true || (i.tieude || "").toLowerCase().includes("mặt tiền") || (i.tag || "").toLowerCase().includes("mặt tiền"));
+      result = result.filter((i: any) => i.isMatTien === true || cleanVietnameseText(i.tieude || "").includes("mat tien") || cleanVietnameseText(i.tag || "").includes("mat tien"));
     } else if (selectedTag === "chinhchu") {
-      result = result.filter((i: any) => (i.tag || "").toLowerCase().includes("chính chủ") || (i.mota || i.moTa || "").toLowerCase().includes("chính chủ"));
+      result = result.filter((i: any) => cleanVietnameseText(i.tag || "").includes("chinh chu") || cleanVietnameseText(i.mota || i.moTa || "").includes("chinh chu"));
     }
     
     setFilteredItems(result);
@@ -125,7 +140,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
-    if (filterType === "khuVuc") setKhuVuc(value);
+    if (filterType === "khuVuc") setKucVuc(value);
     if (filterType === "loaiHinh") setLoaiHinh(value);
     if (filterType === "khoangGia") setKhoangGia(value);
     if (filterType === "huong") setHuong(value);
@@ -294,6 +309,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         <Modals 
           type="kygui" 
           isOpen={true} 
+          /nha-dat/			
           onClose={() => setModalType(null)} 
         />
       )}
