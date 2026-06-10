@@ -11,18 +11,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const data = await getBdsData();
 
     // 1. URL Sản phẩm Nhà Đất
-    const bdsUrls = data.map((item: any) => ({
-      url: `${baseUrl}/nha-dat/${item.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    }));
+    const bdsUrls = data.map((item: any) => {
+      // Thử lấy ngày đăng thực tế từ Google Sheet, nếu không có mới dùng ngày hôm nay làm mặc định
+      const rawDate = item.ngayDang || item.NgayDang;
+      const parsedDate = rawDate ? new Date(rawDate) : new Date();
+      // Đảm bảo nếu ngày lỗi/không hợp lệ thì vẫn fallback về thời gian hiện tại
+      const finalDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
 
-    // 2. URL Danh mục Vị trí (Đã sửa từ 'quan' thành 'vi-tri')
+      return {
+        url: `${baseUrl}/nha-dat/${item.slug}`,
+        lastModified: finalDate,
+        changeFrequency: 'daily' as const, // Thêm as const để ép kiểu dữ liệu chuẩn cho Next.js
+        priority: 0.8,
+      };
+    });
+
+    // 2. URL Danh mục Vị trí
     const locations = ['hai-chau', 'cam-le', 'thanh-khe', 'lien-chieu', 'son-tra', 'ngu-hanh-son'];
     const locationUrls = locations.map((slug) => ({
       url: `${baseUrl}/vi-tri/${slug}`,
-      lastModified: new Date(),
+      lastModified: new Date(), // Các trang bộ lọc vị trí giữ ngày hiện tại vì dữ liệu thay đổi liên tục
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
@@ -32,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { 
         url: baseUrl, 
         lastModified: new Date(), 
-        changeFrequency: 'daily', 
+        changeFrequency: 'daily' as const, // 🌟 Sửa lỗi thiếu 'as const' ở đây
         priority: 1.0 
       },
       ...bdsUrls,
@@ -42,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Lỗi sitemap:', error);
     // Trả về mặc định trang chủ nếu Google Sheets lỗi để web không bị sập
     return [
-      { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 }
+      { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 1.0 }
     ];
   }
 }

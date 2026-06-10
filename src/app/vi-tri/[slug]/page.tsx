@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { getBdsData } from "@/lib/googleSheets"; // Hàm fetch data từ Google Sheet của anh
 import ListingSection from "@/components/ListingSection";
 
+// 🌟 Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -30,12 +33,7 @@ const LOCATION_MAP: Record<string, string> = {
   "hoa-ninh": "Hòa Ninh"
 };
 
-// 2. Tự động sinh sẵn các đường link tĩnh (Static Paths) phục vụ Bots SEO Google quét thần tốc
-export async function generateStaticParams() {
-  return Object.keys(LOCATION_MAP).map((slug) => ({ slug }));
-}
-
-// 3. Cấu hình tiêu đề SEO Metadata động chuẩn thuật toán Google cho từng Phường / Xã
+// 2. Cấu hình tiêu đề SEO Metadata động chuẩn thuật toán Google cho từng Phường / Xã
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const locationName = LOCATION_MAP[slug];
@@ -51,7 +49,7 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-// 4. Hàm render giao diện trang lọc theo vị trí Phường / Xã cụ thể
+// 3. Hàm render giao diện trang lọc theo vị trí Phường / Xã cụ thể
 export default async function PhuongLocationPage({ params }: PageProps) {
   const { slug } = await params;
   
