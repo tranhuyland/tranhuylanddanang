@@ -43,10 +43,10 @@ export default async function NhaDatDetail({ params }: Props) {
     tatCaAnhGallery.push(anhSoDoGoc);
   }
 
-  // 1. Kiểm tra chính xác dữ liệu thô của cột Mô tả từ Google Sheet (chấp nhận mọi kiểu đặt tên cột)
+  // Kiểm tra dữ liệu thô của cột Mô tả từ Google Sheet (chấp nhận mọi kiểu viết hoa/thường)
   const vanBanGoc = item.mota || item.moTa || item.Mota || item.description || item.Description || "";
 
-  // 2. XỬ LÝ KHOẢNG TRẮNG ENTER: Tách chuỗi theo mọi ký tự xuống dòng và loại bỏ dòng trống thừa
+  // XỬ LÝ KHOẢNG TRẮNG ENTER: Tách chuỗi theo ký tự xuống dòng
   const danhSachDongMoTa = vanBanGoc 
     ? vanBanGoc.split(/\r?\n/).map((dong: string) => dong.trim()).filter((dong: string) => dong !== "") 
     : ["Thông tin đang được cập nhật..."];
@@ -118,9 +118,9 @@ export default async function NhaDatDetail({ params }: Props) {
 
             <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
             
-            {/* THÀNH PHẦN ĐÃ SỬA ĐỔI: Sử dụng map mảng để ép từng hàng văn bản xuống dòng tuyệt đối */}
+            {/* ĐÃ SỬA ĐỒI LOẠI BỎ LỖI ANY TYPE: Thêm định nghĩa (dong: string) tường minh */}
             <div className="text-slate-700 text-sm leading-relaxed text-justify space-y-3 mb-8 w-full">
-              {danhSachDongMoTa.map((dong, index) => (
+              {danhSachDongMoTa.map((dong: string, index: number) => (
                 <p key={index} className="w-full m-0">{dong}</p>
               ))}
             </div>
