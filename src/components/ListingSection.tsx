@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X } from "lucide-react";
-import { Modals } from "./Modals";
 
 interface ListingSectionProps {
   allBdsItems: any[];
@@ -29,7 +28,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [huong, setHuong] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
 
-  // State điều khiển bảng bộ lọc trượt (Mobile Drawer)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
@@ -203,33 +201,33 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-4">
           
-          {/* HÀNG TAB CHỌN NHANH LOẠI HÌNH */}
-          <div className="flex border-b border-gray-100 pb-2.5 items-center justify-between">
-            <div className="flex gap-2 bg-gray-100/70 p-1 rounded-xl">
+          {/* HÀNG TAB CHỌN NHANH LOẠI HÌNH - ĐÃ SỬA CÂN ĐỐI FULL CHIỀU RỘNG */}
+          <div className="flex border-b border-gray-100 pb-3 items-center justify-between gap-4">
+            <div className="flex-1 max-w-xl flex gap-1 bg-gray-100 p-1 rounded-xl">
               <button 
                 onClick={() => handleFilterChange("loaiHinh", "all")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "all" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "all" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
               >
                 Tất Cả BDS
               </button>
               <button 
                 onClick={() => handleFilterChange("loaiHinh", "Đất nền")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "Đất nền" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "Đất nền" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
               >
-                ⛳ Mua Bán Đất
+                ⛳ Đất Nền
               </button>
               <button 
                 onClick={() => handleFilterChange("loaiHinh", "Nhà phố")}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "Nhà phố" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${loaiHinh === "Nhà phố" ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
               >
-                🏠 Mua Bán Nhà
+                🏠 Nhà Phố
               </button>
             </div>
 
             {/* NÚT BẤM MỞ ĐIỀU KHIỂN BỘ LỌC TRÊN MOBILE */}
             <button 
               onClick={() => setIsDrawerOpen(true)}
-              className="md:hidden flex items-center gap-1.5 bg-orange-50 text-orange-600 px-3.5 py-2 rounded-xl text-xs font-bold border border-orange-100"
+              className="md:hidden flex items-center gap-1.5 bg-orange-50 text-orange-600 px-4 py-2.5 rounded-xl text-xs font-bold border border-orange-100 shrink-0"
             >
               <SlidersHorizontal size={14} />
               Lọc nâng cao {activeFiltersCount > 0 && `(${activeFiltersCount})`}
@@ -241,7 +239,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             <FilterFields />
           </div>
 
-          {/* THANH THẺ TAG DƯỚI ĐÁY BỘ LỌC (ĐÃ XÓA NÚT KÝ GỬI) */}
+          {/* THANH THẺ TAG DƯỚI ĐÁY BỘ LỌC */}
           <div className="hidden md:flex flex-wrap gap-2 pt-1 items-center">
             <button onClick={() => handleFilterChange("tag", "all")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "all" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>Tất Cả Tin</button>
             <button onClick={() => handleFilterChange("tag", "mattien")} className={`text-xs font-bold px-4 py-2 rounded-xl transition-colors ${selectedTag === "mattien" ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`}>🏢 Mặt Tiền Kinh Doanh</button>
@@ -304,12 +302,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               const isMatTien = textLower.includes("mat tien");
               const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
 
+              // 🔥 SỬA TRIỆT ĐỂ: THUẬT TOÁN QUÉT SỐ PHÒNG/TẦNG KHÔNG BỊ LỖI CHỮ THÔ
               let cauTrucPhong = "---";
               const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
+              
               if (cleanVietnameseText(currentLoaiHinh).includes("dat")) {
                 cauTrucPhong = "Đất trống";
               } else {
-                const combinedText = (item.tieude || "") + " " + (item.mota || item.moTa || "");
+                const combinedText = ((item.tieude || "") + " " + (item.mota || item.moTa || "")).toLowerCase();
                 const matchTangResult = combinedText.match(/(\d+)\s*(tầng|tang)/i);
                 const matchPhongResult = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
                 
@@ -320,7 +320,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 } else if (matchPhongResult) {
                   cauTrucPhong = `${matchPhongResult[1]} PN`;
                 } else {
-                  cauTrucPhong = "Có nhà ở";
+                  cauTrucPhong = "Nhà ở";
                 }
               }
 
