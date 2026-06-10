@@ -5,17 +5,76 @@ import { Modals } from "./Modals";
 
 export default function FloatingWidgets() {
   const [isOpenKyGui, setIsOpenKyGui] = useState(false);
+  
   return (
     <>
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 px-4 py-3 flex gap-3 z-30 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-        <button onClick={() => setIsOpenKyGui(true)} className="flex-[2] bg-amber-500 text-slate-900 font-extrabold rounded-xl py-3 px-4 flex items-center justify-center gap-1.5 text-sm"><FilePlus2 className="w-4 h-4" /> Ký Gửi Nhanh</button>
-        <a href="tel:0905778852" className="flex-[1.5] bg-slate-900 text-white font-bold rounded-xl py-3 px-4 flex items-center justify-center gap-1.5 text-sm"><Phone className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Gọi Ngay</a>
-        <a href="https://zalo.me/0905778852" target="_blank" rel="noopener noreferrer" className="flex-[1.5] bg-[#0068ff] text-white font-bold rounded-xl py-3 px-4 flex items-center justify-center text-sm text-center">Zalo</a>
+      {/* 1. THANH TIỆN ÍCH DƯỚI ĐÁY MÀN HÌNH - BẢN SIÊU NHỎ GỌN (Chỉ hiện trên Điện thoại) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-[52px] bg-white border-t border-slate-200 grid grid-cols-3 z-50 shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
+        
+        {/* Nút 1: Gọi điện ngay (Tối ưu nhỏ gọn, màu đen sang trọng phối icon vàng) */}
+        <a 
+          href="tel:0905778852" 
+          className="flex flex-col items-center justify-center bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950 transition-colors duration-150"
+        >
+          <div className="relative flex items-center justify-center mb-0.5">
+            {/* Sóng rung mini */}
+            <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-amber-400 opacity-40"></span>
+            <Phone className="w-3.5 h-3.5 relative z-10 text-amber-400 fill-amber-400" />
+          </div>
+          <span className="text-[10px] font-medium tracking-wide">Gọi điện</span>
+        </a>
+
+        {/* Nút 2: Nhắn tin Zalo (Nền màu Zalo phẳng, thiết kế tối giản) */}
+        <a 
+          href="https://zalo.me/0905778852" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="flex flex-col items-center justify-center bg-[#0068ff] text-white hover:bg-[#0056d6] active:bg-[#004bb8] transition-colors duration-150 border-x border-white/10"
+        >
+          <span className="font-black text-sm tracking-tighter mb-0.5">Zalo</span>
+          <span className="text-[10px] font-medium tracking-wide">Chat Zalo</span>
+        </a>
+
+        {/* Nút 3: Ký Gửi Nhanh (Kích hoạt mở Popup Form) */}
+        <button 
+          onClick={() => setIsOpenKyGui(true)} 
+          className="flex flex-col items-center justify-center bg-amber-500 text-slate-900 hover:bg-amber-600 active:bg-amber-700 transition-colors duration-150"
+        >
+          <FilePlus2 className="w-3.5 h-3.5 mb-0.5" />
+          <span className="text-[10px] font-bold tracking-wide">Ký gửi nhanh</span>
+        </button>
+
       </div>
+
+      {/* 2. NÚT TRÒN NỔI TIỆN ÍCH (Chỉ hiển thị trên Máy tính / PC) */}
       <div className="hidden md:flex fixed bottom-6 right-6 z-40 flex-col gap-3">
-        <a href="https://zalo.me/0905778852" target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-full bg-[#0068ff] text-white flex items-center justify-center shadow-2xl font-bold text-sm hover:scale-105 transition-transform">Zalo</a>
-        <a href="tel:0905778852" className="w-14 h-14 rounded-full bg-amber-500 text-slate-900 flex items-center justify-center shadow-2xl floating"><Phone className="w-5 h-5 text-slate-900 fill-slate-900/10" /></a>
+        {/* Nút Zalo PC */}
+        <a 
+          href="https://zalo.me/0905778852" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="w-14 h-14 rounded-full bg-[#0068ff] text-white flex items-center justify-center shadow-2xl font-bold text-sm hover:scale-110 active:scale-95 transition-transform group relative"
+        >
+          Zalo
+          <span className="absolute right-16 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-md">
+            Nhắn Zalo ngay
+          </span>
+        </a>
+        
+        {/* Nút Gọi PC */}
+        <a 
+          href="tel:0905778852" 
+          className="w-14 h-14 rounded-full bg-amber-500 text-slate-900 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform group relative"
+        >
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-25"></span>
+          <Phone className="w-5 h-5 relative z-10 text-slate-900 fill-slate-900/10" />
+          <span className="absolute right-16 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-md">
+            Gọi: 0905.778.852
+          </span>
+        </a>
       </div>
+
+      {/* Cửa sổ Popup Form đăng ký ký gửi */}
       <Modals type="kygui" isOpen={isOpenKyGui} onClose={() => setIsOpenKyGui(false)} />
     </>
   );
