@@ -41,7 +41,8 @@ export function convertToSlug(text: string): string {
 export async function getBdsData(): Promise<RealEstateItem[]> {
   const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv";
   try {
-    const response = await fetch(sheetUrl, { next: { revalidate: 0 } });
+    // TỐI ƯU SEO & TỐC ĐỘ: Đổi sang cấu hình revalidate sau 60 giây giúp trang tải cực nhanh
+    const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
     const csvText = await response.text();
     
     // Thuật toán bóc tách dữ liệu cao cấp: Duyệt từng ký tự để giữ nguyên dấu phẩy và dấu Enter trong dấu ngoặc kép ""

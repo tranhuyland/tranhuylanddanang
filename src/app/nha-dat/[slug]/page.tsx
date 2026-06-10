@@ -5,10 +5,13 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 import PropertyGallery from "@/components/SlideBds"; 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText, Phone } from "lucide-react";
+import { ChevronLeft, MapPin, Calendar, ShieldCheck, Layers, Map, FileText } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-interface Props { params: Promise<{ slug: string }>; }
+// Cấu trúc Type chuẩn của Next.js 15 dành cho Params dạng Promise
+interface Props { 
+  params: Promise<{ slug: string }>; 
+}
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
@@ -23,11 +26,12 @@ export async function generateMetadata({ params }: Props) {
 
   return {
     title: `${titleText} | Trần Huy Land`,
-    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. V vị trí: ${locationText}.`,
+    description: `Giá bán: ${priceText}. Diện tích: ${areaText}. Vị trí: ${locationText}.`,
   };
 }
 
 export default async function NhaDatDetail({ params }: Props) {
+  // Giải nén slug an toàn bằng await theo đúng chuẩn Next.js 15
   const { slug } = await params;
   const data = await getBdsData();
   const item = data.find(p => p.slug === slug) as any;
@@ -115,7 +119,7 @@ export default async function NhaDatDetail({ params }: Props) {
             <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
             
             {/* HỆ THỐNG HIỂN THỊ CHỮ SINH ĐỘNG CHỐNG CHỮ NHỎ, HỖ TRỢ ĐỊNH DẠNG TO/NHỎ/IN ĐẬM TỪ GOOGLE SHEET */}
-            <div className="text-slate-700 text-base sm:text-lg leading-relaxed text-justify mb-8 w-full prose max-w-none">
+            <div className="text-slate-700 text-base sm:text-lg leading-relaxed text-justify w-full prose max-w-none">
               <ReactMarkdown
                 components={{
                   // Chữ tiêu đề lớn nổi bật màu hổ phách (Gõ 1 dấu # trên Excel)
@@ -135,11 +139,6 @@ export default async function NhaDatDetail({ params }: Props) {
               >
                 {noiDungMoTa}
               </ReactMarkdown>
-            </div>
-
-            <div className="flex gap-3 border-t border-slate-100 pt-6 w-full">
-              <a href="tel:0931555551" className="flex-1 bg-slate-900 text-white font-extrabold rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-sm shadow-md transition-transform active:scale-95"><Phone className="w-4 h-4 text-amber-400 fill-amber-400" /> Gọi Thương Lượng</a>
-              <a href="https://zalo.me/0931555551" target="_blank" rel="noopener noreferrer" className="flex-1 bg-[#0068ff] text-white font-extrabold rounded-xl py-3 px-4 flex items-center justify-center text-sm shadow-md text-center transition-transform active:scale-95">Kết Nối Zalo</a>
             </div>
           </div>
         </div>
