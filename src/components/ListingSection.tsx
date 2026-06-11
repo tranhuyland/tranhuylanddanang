@@ -322,10 +322,12 @@ function BdsCard({ item }: { item: any }) {
   const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || ""));
+  // 💡 NÂNG CẤP: Nhận diện tự động các trạng thái đặc biệt
+  const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || "") + " " + (item.loaiHinh || ""));
   const isChinhChu = textLower.includes("chinh chu");
   const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+  const isChoThue = textLower.includes("cho thue"); // <--- Quét tìm sản phẩm Cho Thuê
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
@@ -344,11 +346,13 @@ function BdsCard({ item }: { item: any }) {
   return (
     <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" sizes="(max-w-7xl) 100vw" priority />
+        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* 🏷️ KHU VỰC HIỂN THỊ NHÃN TAG (BADGES) CHUẨN MỚI */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
+          {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
           {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
         </div>
