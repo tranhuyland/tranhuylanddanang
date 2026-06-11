@@ -39,14 +39,12 @@ const layUrlAnhChuan = (chuoiAnh: string) => {
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
 
-  // State chính thức dùng để render dữ liệu ra giao diện bds
   const [activeKhuVuc, setActiveKhuVuc] = useState(forceDistrict || "all");
   const [activeLoaiHinh, setActiveLoaiHinh] = useState("all");
   const [activeKhoangGia, setActiveKhoangGia] = useState("all");
   const [activeHuong, setActiveHuong] = useState("all");
   const [activeTag, setActiveTag] = useState("all");
 
-  // State tạm thời phục vụ thao tác chọn trên thanh công cụ
   const [tempKhuVuc, setTempKhuVuc] = useState(forceDistrict || "all");
   const [tempKhoangGia, setTempKhoangGia] = useState("all");
   const [tempHuong, setTempHuong] = useState("all");
@@ -56,7 +54,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
-  // Quản lý Phân trang thông qua SessionStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedPage = sessionStorage.getItem("bds_page");
@@ -70,11 +67,35 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  // 🔥 TỐI ƯU HÓA LỚN: Dùng useMemo thay thế hoàn toàn useEffect gom toàn bộ logic lọc & sắp xếp bất động sản
+  // 🚀 TÍNH NĂNG MỚI: BẮT SỰ KIỆN VUỐT BACK TRÊN ĐIỆN THOẠI ĐỂ TẮT BỘ LỌC
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isDrawerOpen) {
+        setIsDrawerOpen(false);
+      }
+    };
+
+    if (isDrawerOpen) {
+      window.history.pushState({ drawer: 'open' }, '');
+      window.addEventListener('popstate', handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isDrawerOpen]);
+
+  const closeDrawer = () => {
+    if (window.history.state && window.history.state.drawer === 'open') {
+      window.history.back(); 
+    } else {
+      setIsDrawerOpen(false);
+    }
+  };
+
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems];
 
-    // Sắp xếp tin mới lên đầu
     result.sort((a: any, b: any) => {
       const dateStrA = a.ngayDang || a.ngay || "";
       const dateStrB = b.ngayDang || b.ngay || "";
@@ -89,7 +110,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       return timeDiff !== 0 ? timeDiff : (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // Thực hiện chuỗi bộ lọc lồng nhau
     if (activeKhuVuc !== "all") {
       const target = cleanVietnameseText(activeKhuVuc);
       result = result.filter(i => 
@@ -121,7 +141,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => cleanVietnameseText(i.huong || "").includes(target));
     }
 
-    // 💡 NÂNG CẤP VÀ SỬA LỖI: Nhận diện chính xác bộ lọc Tag
     if (activeTag !== "all") {
       result = result.filter(i => {
         const text = cleanVietnameseText((i.tieude || "") + " " + (i.mota || i.moTa || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
@@ -129,7 +148,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         if (activeTag === "mattien") return (i.isMatTien || text.includes("mat tien"));
         if (activeTag === "chinhchu") return text.includes("chinh chu");
         
-        // 🚨 KHẮC PHỤC LỖI TÌM KIẾM NHẦM: Chỉ quét "cho thue" trong Tiêu đề, Tag, Loại hình (Tuyệt đối bỏ qua phần Mô tả để tránh nhầm với nhà đang bán mà ghi có dòng tiền cho thuê)
         if (activeTag === "chothue") {
           const strictTextChoThue = cleanVietnameseText((i.tieude || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
           return strictTextChoThue.includes("cho thue");
@@ -157,7 +175,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setActiveHuong(tempHuong);
     setActiveTag(tempTag);
     setCurrentPage(1);
-    setIsDrawerOpen(false);
+    closeDrawer();
 
     setTimeout(() => {
       document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -173,9 +191,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const FilterFields = () => (
     <>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Phường / Xã</label>
-        <select disabled={!!forceDistrict} value={tempKhuVuc} onChange={(e) => setTempKhuVuc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
+      <div className="space-y-2">
+        <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Phường / Xã</label>
+        <select disabled={!!forceDistrict} value={tempKhuVuc} onChange={(e) => setTempKhuVuc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
           <option value="all">Tất cả Vị trí</option>
           <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
           {["Hải Châu", "Hòa Cường", "Thanh Khê", "An Khê", "An Hải", "Sơn Trà", "Ngũ Hành Sơn", "Hòa Khánh", "Hải Vân", "Liên Chiểu", "Cẩm Lệ", "Hòa Xuân", "Hòa Vang", "Bà Nà", "Hòa Tiến", "Hòa Phước"].map(p => <option key={p} value={p}>{p}</option>)}
@@ -183,25 +201,25 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           {["Hòa Bắc", "Hòa Liên", "Hòa Ninh"].map(x => <option key={x} value={x}>{x}</option>)}
         </select>
       </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Khoảng Giá</label>
-        <select value={tempKhoangGia} onChange={(e) => setTempKhoangGia(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
+      <div className="space-y-2">
+        <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Khoảng Giá</label>
+        <select value={tempKhoangGia} onChange={(e) => setTempKhoangGia(e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
           <option value="all">Tất cả mức giá</option>
           <option value="duoi3">Dưới 3 Tỷ</option>
           <option value="3to5">Từ 3 - 5 Tỷ</option>
           <option value="tren5">Trên 5 Tỷ</option>
         </select>
       </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hướng Nhà</label>
-        <select value={tempHuong} onChange={(e) => setTempHuong(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
+      <div className="space-y-2">
+        <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Hướng Nhà</label>
+        <select value={tempHuong} onChange={(e) => setTempHuong(e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
           <option value="all">Tất cả các hướng</option>
           {["Đông", "Tây", "Nam", "Bắc"].map(h => <option key={h} value={h}>Hướng {h}</option>)}
         </select>
       </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nhóm Đặc Quyền</label>
-        <select value={tempTag} onChange={(e) => setTempTag(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
+      <div className="space-y-2">
+        <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Nhóm Đặc Quyền</label>
+        <select value={tempTag} onChange={(e) => setTempTag(e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
           <option value="all">Tất cả phân nhóm</option>
           <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
           <option value="chinhchu">✓ Hàng Chính Chủ</option>
@@ -213,76 +231,89 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
-      {/* 1. HỆ THỐNG BỘ LỌC TÌM KIẾM CHI TIẾT */}
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
-        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-5">
+        <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
           
-          {/* TAB CHỌN LOẠI HÌNH TRÊN PC */}
-          <div className="flex border-b border-gray-100 pb-3 items-center justify-between gap-4">
-            <div className="flex-1 max-w-xl flex gap-1 bg-gray-100 p-1 rounded-xl">
-              {[
-                { id: "all", label: "Tất Cả BDS" },
-                { id: "Đất nền", label: "⛳ Đất Nền" },
-                { id: "Nhà phố", label: "🏠 Nhà Phố" },
-                { id: "Cho thuê", label: "🔑 Cho Thuê" }
-              ].map(tab => (
-                <button 
-                  key={tab.id}
-                  onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
-                  className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${activeLoaiHinh === tab.id ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <button 
-              onClick={() => { setTempKhuVuc(activeKhuVuc); setTempKhoangGia(activeKhoangGia); setTempHuong(activeHuong); setTempTag(activeTag); setIsDrawerOpen(true); }}
-              className="md:hidden flex items-center gap-1.5 bg-orange-50 text-orange-600 px-4 py-2.5 rounded-xl text-xs font-bold border border-orange-100 shrink-0"
-            >
-              <SlidersHorizontal size={14} />
-              Lọc nâng cao {activeFiltersCount > 0 && `(${activeFiltersCount})`}
-            </button>
+          {/* TAB ĐIỀU HƯỚNG TÁCH BIỆT - NGĂN NẮP & CHỮ TO RÕ */}
+          <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
+            {[
+              { id: "all", label: "Tất cả" },
+              { id: "Đất nền", label: "⛳ Đất nền" },
+              { id: "Nhà phố", label: "🏠 Nhà phố" },
+              { id: "Cho thuê", label: "🔑 Cho thuê" }
+            ].map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
+                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 px-0.5 text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold transition-all relative rounded-t-xl ${
+                  activeLoaiHinh === tab.id 
+                    ? "text-orange-600 bg-orange-50/50" 
+                    : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {tab.label}
+                {/* Thanh gạch chân phẳng siêu nét, thu ngắn lại 80% để tạo rãnh ngăn cách */}
+                {activeLoaiHinh === tab.id && (
+                  <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
+                )}
+              </button>
+            ))}
           </div>
 
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
+          {/* NÚT MỞ BỘ LỌC TRÊN MOBILE TO RÕ */}
+          <button 
+            onClick={() => { setTempKhuVuc(activeKhuVuc); setTempKhoangGia(activeKhoangGia); setTempHuong(activeHuong); setTempTag(activeTag); setIsDrawerOpen(true); }}
+            className="md:hidden w-full mb-2 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 hover:bg-orange-50 active:scale-[0.98] transition-all"
+          >
+            <SlidersHorizontal size={18} />
+            Mở bộ lọc chi tiết {activeFiltersCount > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-sm shadow-red-500/30">{activeFiltersCount}</span>}
+          </button>
+
+          {/* LƯỚI BỘ LỌC TRÊN PC */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FilterFields />
           </div>
 
-          <div className="hidden md:flex items-center justify-between border-t border-gray-100/80 pt-4 mt-2">
+          <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
             <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và bấm nút tìm kiếm để cập nhật dữ liệu.</div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {activeFiltersCount > 0 && (
-                <button onClick={handleResetFilters} className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-red-500 px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors">
-                  <RotateCcw size={14} /> Xóa bộ lọc
+                <button onClick={handleResetFilters} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50 transition-colors">
+                  <RotateCcw size={16} /> Xóa lọc
                 </button>
               )}
-              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs px-7 py-3 rounded-xl flex items-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 active:scale-[0.97] transition-all tracking-wide">
-                <Check size={14} /> Tìm kiếm ngay
+              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all tracking-wide">
+                <Check size={16} /> Tìm kiếm ngay
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 📱 MOBILE DRAWER */}
+      {/* 📱 MOBILE DRAWER (Bộ lọc trượt lên) */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[75vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-between border-b border-gray-100 p-4 shrink-0">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDrawer} />
+          <div className="relative bg-white rounded-t-[2rem] shadow-2xl h-[85vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 p-5 shrink-0">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal size={16} className="text-orange-500" /><h4 className="font-bold text-gray-800 text-sm">Bộ lọc nâng cao</h4>
+                <SlidersHorizontal size={18} className="text-orange-500" />
+                <h4 className="font-extrabold text-slate-800 text-base">Bộ lọc nâng cao</h4>
               </div>
-              <button onClick={() => setIsDrawerOpen(false)} className="text-gray-400 p-1 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={closeDrawer} className="text-slate-400 p-2 hover:bg-slate-100 rounded-xl transition-colors"><X size={22} /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-40"><FilterFields /></div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-48">
+              <FilterFields />
+            </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent shrink-0 pb-20 shadow-[0_-12px_30px_rgba(0,0,0,0.04)] z-20">
-              <div className="bg-white p-1 rounded-2xl border border-gray-100 shadow-md flex gap-2 mb-4">
-                <button onClick={handleResetFilters} className="w-1/3 border border-gray-200 text-slate-600 font-bold text-xs py-3.5 rounded-xl text-center bg-slate-50 active:scale-[0.98] transition-transform">Đặt lại</button>
-                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs py-3.5 rounded-xl text-center shadow-md shadow-orange-500/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"><Check size={14} /> Áp dụng ngay</button>
+            {/* KHU VỰC NÚT BẤM DƯỚI CÙNG */}
+            <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/90 to-transparent shrink-0 pt-12 pb-28 z-20 pointer-events-none">
+              <div className="flex gap-3 bg-white p-2 rounded-[1.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 pointer-events-auto">
+                <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-bold text-sm py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all">Đặt lại</button>
+                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm py-3.5 rounded-xl shadow-md shadow-orange-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                  <Check size={18} /> Áp dụng ngay
+                </button>
               </div>
             </div>
           </div>
@@ -290,7 +321,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       )}
 
       {/* 2. DANH SÁCH BẤT ĐỘNG SẢN */}
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-12 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentItems.map((item) => (
@@ -298,12 +329,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 text-slate-400 font-medium bg-slate-50 rounded-3xl border border-dashed">Không tìm thấy sản phẩm bất động sản nào phù hợp với bộ lọc.</div>
+          <div className="text-center py-24 flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+             <Image src="https://images.unsplash.com/photo-1584824486509-11459466a200?w=120&q=80" width={80} height={80} alt="Empty" className="mb-4 opacity-50 grayscale rounded-full" />
+             <p className="text-slate-500 font-bold text-lg">Không tìm thấy sản phẩm phù hợp</p>
+             <p className="text-slate-400 text-sm mt-1">Vui lòng điều chỉnh lại bộ lọc để xem các kết quả khác.</p>
+          </div>
         )}
 
         {/* PHÂN TRANG */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-12">
+          <div className="flex justify-center items-center gap-2 mt-16">
             {Array.from({ length: totalPages }, (_, idx) => (
               <button 
                 key={idx} 
@@ -311,7 +346,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   e.preventDefault(); setCurrentPage(idx + 1); 
                   document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }} 
-                className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-orange-500 text-white scale-105 shadow-md shadow-orange-500/20" : "bg-white border text-slate-600 hover:bg-slate-50"}`}
+                className={`w-10 h-10 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-gradient-to-tr from-orange-500 to-red-500 text-white scale-110 shadow-lg shadow-orange-500/30" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
               >
                 {idx + 1}
               </button>
@@ -323,19 +358,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
-// 🔥 SUB-COMPONENT CARD BẤT ĐỘNG SẢN TÁCH BIỆT (GIÚP CODE GỌN GÀNG, SẠCH SẼ)
+// 🔥 SUB-COMPONENT CARD BẤT ĐỘNG SẢN TÁCH BIỆT
 function BdsCard({ item }: { item: any }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  // Nhận diện chung cho các nhãn khác (vẫn quét cả mô tả)
   const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || "") + " " + (item.loaiHinh || ""));
   const isChinhChu = textLower.includes("chinh chu");
   const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
   
-  // 🚨 SỬA LỖI BUG: Nhãn "Cho thuê" chỉ được hiện khi Tiêu đề, Tag hoặc Loại hình là cho thuê. (Tuyệt đối bỏ qua mô tả để tránh nhận nhầm nhà bán)
   const textChoThue = cleanVietnameseText((item.tieude || "") + " " + (item.tag || "") + " " + (item.loaiHinh || item.phân_loại || ""));
   const isChoThue = textChoThue.includes("cho thue");
 
@@ -354,45 +387,44 @@ function BdsCard({ item }: { item: any }) {
   }, [item]);
 
   return (
-    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* 🏷️ KHU VỰC HIỂN THỊ NHÃN TAG (BADGES) CHUẨN MỚI */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
-          {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
-          {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
-          {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
+          {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
+          {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
+          {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
+          {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
         </div>
 
-        <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 transition-transform duration-300">{item.gia}</div>
+        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm text-orange-600 font-extrabold text-sm px-4 py-2 rounded-xl shadow-lg z-10 tracking-wide transform group-hover:scale-105 transition-transform duration-300">{item.gia}</div>
       </div>
 
-      <div className="p-4 flex flex-col flex-grow justify-between">
+      <div className="p-5 flex flex-col flex-grow justify-between">
         <div>
-          <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
+          <div className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" /><span className="truncate">{displayLocation}</span>
           </div>
-          <h3 className="text-gray-800 font-bold text-base line-clamp-2 group-hover:text-orange-500 transition-colors duration-200 mb-3 min-h-[3rem] leading-snug">{item.tieude}</h3>
+          <h3 className="text-slate-800 font-extrabold text-[15px] sm:text-base line-clamp-2 group-hover:text-orange-600 transition-colors duration-200 mb-4 min-h-[3rem] leading-snug">{item.tieude}</h3>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-gray-50 text-gray-600 text-xs">
-          <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
-            <Square className="w-3.5 h-3.5 text-orange-500 mb-0.5" /><span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
+        <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 text-slate-600 text-xs">
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+            <Square className="w-4 h-4 text-slate-400 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
-            <Compass className="w-3.5 h-3.5 text-orange-500 mb-0.5" /><span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.huong || "---"}</span>
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+            <Compass className="w-4 h-4 text-slate-400 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{item.huong || "---"}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
-            <BedDouble className="w-3.5 h-3.5 text-orange-500 mb-0.5" /><span className="font-semibold text-gray-700 truncate max-w-full px-1">{cauTrucPhong}</span>
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+            <BedDouble className="w-4 h-4 text-slate-400 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{cauTrucPhong}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-3 pt-2">
-          <span className="text-[11px] text-gray-400 italic flex items-center gap-1"><Clock className="w-3 h-3 text-gray-300" /> {formatTimeAgo(displayTime)}</span>
-          <span className="text-orange-500 text-xs font-bold inline-flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-200">Xem chi tiết <ChevronRight className="w-3.5 h-3.5" /></span>
+        <div className="flex items-center justify-between mt-4 pt-1">
+          <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-300" /> {formatTimeAgo(displayTime)}</span>
+          <span className="text-orange-500 text-xs font-extrabold inline-flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-200">Chi tiết <ChevronRight className="w-4 h-4" /></span>
         </div>
       </div>
     </a>
