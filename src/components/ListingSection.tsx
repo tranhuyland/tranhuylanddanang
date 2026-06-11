@@ -67,7 +67,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  // 🚀 TÍNH NĂNG MỚI: BẮT SỰ KIỆN VUỐT BACK TRÊN ĐIỆN THOẠI ĐỂ TẮT BỘ LỌC
   useEffect(() => {
     const handlePopState = () => {
       if (isDrawerOpen) {
@@ -233,8 +232,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     <>
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
-          
-          {/* TAB ĐIỀU HƯỚNG TÁCH BIỆT - NGĂN NẮP & CHỮ TO RÕ */}
           <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
             {[
               { id: "all", label: "Tất cả" },
@@ -252,7 +249,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 }`}
               >
                 {tab.label}
-                {/* Thanh gạch chân phẳng siêu nét, thu ngắn lại 80% để tạo rãnh ngăn cách */}
                 {activeLoaiHinh === tab.id && (
                   <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
                 )}
@@ -260,7 +256,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
 
-          {/* NÚT MỞ BỘ LỌC TRÊN MOBILE TO RÕ */}
           <button 
             onClick={() => { setTempKhuVuc(activeKhuVuc); setTempKhoangGia(activeKhoangGia); setTempHuong(activeHuong); setTempTag(activeTag); setIsDrawerOpen(true); }}
             className="md:hidden w-full mb-2 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 hover:bg-orange-50 active:scale-[0.98] transition-all"
@@ -269,7 +264,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             Mở bộ lọc chi tiết {activeFiltersCount > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-sm shadow-red-500/30">{activeFiltersCount}</span>}
           </button>
 
-          {/* LƯỚI BỘ LỌC TRÊN PC */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FilterFields />
           </div>
@@ -290,7 +284,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 📱 MOBILE DRAWER (Bộ lọc trượt lên) */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDrawer} />
@@ -307,7 +300,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <FilterFields />
             </div>
 
-            {/* KHU VỰC NÚT BẤM DƯỚI CÙNG */}
             <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/90 to-transparent shrink-0 pt-12 pb-28 z-20 pointer-events-none">
               <div className="flex gap-3 bg-white p-2 rounded-[1.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 pointer-events-auto">
                 <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-bold text-sm py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all">Đặt lại</button>
@@ -320,7 +312,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       )}
 
-      {/* 2. DANH SÁCH BẤT ĐỘNG SẢN */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-12 mb-20 scroll-mt-28">
         {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -336,7 +327,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
 
-        {/* PHÂN TRANG */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-16">
             {Array.from({ length: totalPages }, (_, idx) => (
@@ -358,7 +348,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
-// 🔥 SUB-COMPONENT CARD BẤT ĐỘNG SẢN TÁCH BIỆT
+// 🔥 SUB-COMPONENT CARD BẤT ĐỘNG SẢN TÁCH BIỆT (ĐÃ THÊM HIỆU ỨNG PHÓNG TO & MÀU CAM)
 function BdsCard({ item }: { item: any }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
@@ -388,8 +378,15 @@ function BdsCard({ item }: { item: any }) {
 
   return (
     <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block">
+      {/* ẢNH PHÓNG TO KHI HOVER: group-hover:scale-105 */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
+        <Image 
+            src={thumbnail} 
+            alt={item.tieude || "Trần Huy Land"} 
+            fill 
+            className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+            sizes="(max-width: 1280px) 100vw" 
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
@@ -407,7 +404,10 @@ function BdsCard({ item }: { item: any }) {
           <div className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" /><span className="truncate">{displayLocation}</span>
           </div>
-          <h3 className="text-slate-800 font-extrabold text-[15px] sm:text-base line-clamp-2 group-hover:text-orange-600 transition-colors duration-200 mb-4 min-h-[3rem] leading-snug">{item.tieude}</h3>
+          {/* TIÊU ĐỀ MÀU CAM: text-orange-600 */}
+          <h3 className="text-orange-600 font-extrabold text-[15px] sm:text-base line-clamp-2 group-hover:text-orange-700 transition-colors duration-200 mb-4 min-h-[3rem] leading-snug">
+            {item.tieude}
+          </h3>
         </div>
 
         <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 text-slate-600 text-xs">
