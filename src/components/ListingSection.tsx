@@ -234,8 +234,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
           
-          {/* TAB ĐIỀU HƯỚNG TÁCH BIỆT - NGĂN NẮP & CHỮ TO RÕ */}
-          <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
+          {/* TAB ĐIỀU HƯỚNG: TO, RÕ RÀNG VÀ NỔI BẬT NHẤT */}
+          <div className="flex w-full justify-between items-center border-b-2 border-slate-100 mb-6 pb-0">
             {[
               { id: "all", label: "Tất cả" },
               { id: "Đất nền", label: "⛳ Đất nền" },
@@ -245,16 +245,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <button 
                 key={tab.id}
                 onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
-                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 px-0.5 text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold transition-all relative rounded-t-xl ${
+                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 px-0.5 text-[14px] min-[390px]:text-[15px] md:text-[17px] font-extrabold transition-all relative ${
                   activeLoaiHinh === tab.id 
-                    ? "text-orange-600 bg-orange-50/50" 
-                    : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
+                    ? "text-orange-600" 
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50/50"
                 }`}
               >
                 {tab.label}
-                {/* Thanh gạch chân phẳng siêu nét, thu ngắn lại 80% để tạo rãnh ngăn cách */}
+                {/* Thanh gạch chân phẳng siêu nét, dày hơn để gây chú ý */}
                 {activeLoaiHinh === tab.id && (
-                  <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
+                  <span className="absolute bottom-[-2px] left-0 w-full h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
                 )}
               </button>
             ))}
