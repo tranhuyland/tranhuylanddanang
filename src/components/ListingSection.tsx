@@ -273,7 +273,7 @@ function BdsCard({ item }: { item: any }) {
   
   const strictTextChoThue = cleanVietnameseText(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
-  
+
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
     if (cleanVietnameseText(currentLoaiHinh).includes("dat")) return "Đất trống";
