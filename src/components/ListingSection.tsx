@@ -121,13 +121,20 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => cleanVietnameseText(i.huong || "").includes(target));
     }
 
-    // 💡 NÂNG CẤP: Xử lý logic Tag lọc thêm phần "cho thue"
+    // 💡 NÂNG CẤP VÀ SỬA LỖI: Nhận diện chính xác bộ lọc Tag
     if (activeTag !== "all") {
       result = result.filter(i => {
         const text = cleanVietnameseText((i.tieude || "") + " " + (i.mota || i.moTa || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
+        
         if (activeTag === "mattien") return (i.isMatTien || text.includes("mat tien"));
         if (activeTag === "chinhchu") return text.includes("chinh chu");
-        if (activeTag === "chothue") return text.includes("cho thue"); // <--- Thêm nhận diện Nhà cho thuê
+        
+        // 🚨 KHẮC PHỤC LỖI TÌM KIẾM NHẦM: Chỉ quét "cho thue" trong Tiêu đề, Tag, Loại hình (Tuyệt đối bỏ qua phần Mô tả để tránh nhầm với nhà đang bán mà ghi có dòng tiền cho thuê)
+        if (activeTag === "chothue") {
+          const strictTextChoThue = cleanVietnameseText((i.tieude || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
+          return strictTextChoThue.includes("cho thue");
+        }
+        
         return true;
       });
     }
@@ -198,7 +205,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <option value="all">Tất cả phân nhóm</option>
           <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
           <option value="chinhchu">✓ Hàng Chính Chủ</option>
-          <option value="chothue">🔑 Nhà Cho Thuê</option> {/* <--- Bổ sung thẻ đặc quyền */}
+          <option value="chothue">🔑 Nhà Cho Thuê</option>
         </select>
       </div>
     </>
@@ -217,7 +224,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 { id: "all", label: "Tất Cả BDS" },
                 { id: "Đất nền", label: "⛳ Đất Nền" },
                 { id: "Nhà phố", label: "🏠 Nhà Phố" },
-                { id: "Cho thuê", label: "🔑 Cho Thuê" } // <--- Bổ sung Tab mới
+                { id: "Cho thuê", label: "🔑 Cho Thuê" }
               ].map(tab => (
                 <button 
                   key={tab.id}
@@ -322,12 +329,15 @@ function BdsCard({ item }: { item: any }) {
   const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  // 💡 NÂNG CẤP: Nhận diện tự động các trạng thái đặc biệt
+  // Nhận diện chung cho các nhãn khác (vẫn quét cả mô tả)
   const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || "") + " " + (item.loaiHinh || ""));
   const isChinhChu = textLower.includes("chinh chu");
   const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
-  const isChoThue = textLower.includes("cho thue"); // <--- Quét tìm sản phẩm Cho Thuê
+  
+  // 🚨 SỬA LỖI BUG: Nhãn "Cho thuê" chỉ được hiện khi Tiêu đề, Tag hoặc Loại hình là cho thuê. (Tuyệt đối bỏ qua mô tả để tránh nhận nhầm nhà bán)
+  const textChoThue = cleanVietnameseText((item.tieude || "") + " " + (item.tag || "") + " " + (item.loaiHinh || item.phân_loại || ""));
+  const isChoThue = textChoThue.includes("cho thue");
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
