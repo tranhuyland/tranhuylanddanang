@@ -18,7 +18,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const dragStart = useRef({ x: 0, y: 0 });
   const touchStartDist = useRef(0);
 
-  // Khôi phục kích thước ảnh gốc mỗi lần đóng/mở cửa sổ tránh bị lỗi méo ảnh
   useEffect(() => {
     if (!isPopupOpen) {
       setScale(1);
@@ -26,7 +25,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     }
   }, [isPopupOpen]);
 
-  // Xử lý và phân tách chuỗi hình ảnh động nạp từ Google Sheet
   const anhGoc = item.anh || item.Anh || "";
   const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
   const anhSoDoGoc = item.anhSoDo || item.AnhSoDo || "";
@@ -38,7 +36,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
 
   const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
 
-  // Logic điều khiển Phóng to / Thu nhỏ chuyên nghiệp
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 1));
   const handleResetZoom = () => {
@@ -46,7 +43,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     setPosition({ x: 0, y: 0 });
   };
 
-  // Các hàm bắt sự kiện Kéo chuột & Vuốt cảm ứng trên điện thoại di động
   const handleMouseDown = (e: React.MouseEvent) => {
     if (scale === 1) return;
     isDragging.current = true;
@@ -93,8 +89,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
 
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden w-full max-w-full">
-      
-      {/* KHU VỰC HIỂN THỊ MEDIA HÌNH ẢNH / VIDEO */}
       <div className="relative aspect-[16/10] bg-slate-100 w-full max-w-full overflow-hidden group-gallery">
         {item.videoUrl ? (
           <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar max-w-full">
@@ -129,7 +123,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Ngày đăng: {item.ngayDang || item.NgayDang}</span>
         </div>
 
-        {/* THÔNG SỐ KỸ THUẬT */}
         <div className="grid grid-cols-3 gap-2 my-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 text-center font-semibold w-full">
           <div>
             <div className="text-slate-400 text-[11px] font-bold uppercase mb-0.5 tracking-wider">Diện tích</div>
@@ -145,7 +138,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </div>
 
-        {/* KHU VỰC HIỂN THỊ CÁC NÚT TƯƠNG TÁC TỰ CO GIÃN THẨM MỸ CHUYÊN NGHIỆP */}
         {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
           <div className={`grid gap-3 mb-6 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
@@ -171,7 +163,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
 
         <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Mô tả chi tiết:</h4>
         
-        {/* NỘI DUNG MÔ TẢ ĐỊNH DẠNG MARKDOWN SẠCH SẼ */}
         <div className="text-slate-700 text-base sm:text-lg leading-relaxed text-justify w-full prose max-w-none">
           <ReactMarkdown
             components={{
@@ -181,7 +172,8 @@ export default function PropertyClient({ item }: PropertyClientProps) {
               p: ({node, ...props}) => <p className="mb-3.5 whitespace-pre-wrap text-slate-600 font-medium" {...props} />,
               ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3.5 space-y-1" {...props} />,
               li: ({node, ...props}) => <li className="text-slate-600 font-medium" {...props} />,
-              strong: ({node, ...props}) => <strong className="font-black text-slate-900 bg-amber-50 px-1 rounded text-amber-700" {...props} />,
+              // Sửa lại strong: bỏ bg-amber-50 và text-amber-700
+              strong: ({node, ...props}) => <strong className="font-black text-slate-900" {...props} />,
             }}
           >
             {noiDungMoTa}
@@ -189,13 +181,11 @@ export default function PropertyClient({ item }: PropertyClientProps) {
         </div>
       </div>
 
-      {/* POPUP SỔ HỒNG BẢN VẼ - PHÓNG TO THU NHỎ VUỐT CẢM ỨNG CỰC ĐỈNH */}
       {isPopupOpen && (
         <div 
           className="fixed inset-0 bg-black/95 backdrop-blur-md z-[99999] flex flex-col items-center justify-center animate-fade-in touch-none select-none"
           onClick={() => setIsPopupOpen(false)}
         >
-          {/* THANH ĐIỀU KHIỂN ĐỘ ZOOM TRÊN ĐẦU POPUP */}
           <div className="absolute top-4 left-4 z-50 flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 p-1.5 rounded-xl">
             <button onClick={(e) => { e.stopPropagation(); handleZoomIn(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer" title="Phóng to">
               <ZoomIn className="w-5 h-5" />
@@ -209,7 +199,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             <span className="text-white text-[11px] font-bold px-2 tracking-wide bg-white/10 rounded-md py-1">Zoom: {Math.round(scale * 100)}%</span>
           </div>
 
-          {/* Nút đóng tròn góc trên bên phải */}
           <button 
             onClick={(e) => { e.stopPropagation(); setIsPopupOpen(false); }}
             className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-all z-50 cursor-pointer border border-white/10 shadow-lg"
@@ -217,7 +206,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             <X className="w-6 h-6" />
           </button>
 
-          {/* Vùng tương tác cảm ứng ảnh thực tế */}
           <div 
             className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
             onClick={(e) => e.stopPropagation()} 
@@ -229,7 +217,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             onTouchMove={handleTouchMove}
             onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={anhSoDoGoc} 
               alt="Sổ hồng bản vẽ chi tiết" 
