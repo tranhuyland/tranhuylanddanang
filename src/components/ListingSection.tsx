@@ -121,13 +121,20 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => cleanVietnameseText(i.huong || "").includes(target));
     }
 
-    // 💡 NÂNG CẤP: Xử lý logic Tag lọc thêm phần "cho thue"
+    // 💡 NÂNG CẤP VÀ SỬA LỖI: Nhận diện chính xác bộ lọc Tag
     if (activeTag !== "all") {
       result = result.filter(i => {
         const text = cleanVietnameseText((i.tieude || "") + " " + (i.mota || i.moTa || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
+        
         if (activeTag === "mattien") return (i.isMatTien || text.includes("mat tien"));
         if (activeTag === "chinhchu") return text.includes("chinh chu");
-        if (activeTag === "chothue") return text.includes("cho thue"); // <--- Thêm nhận diện Nhà cho thuê
+        
+        // 🚨 KHẮC PHỤC LỖI TÌM KIẾM NHẦM: Chỉ quét "cho thue" trong Tiêu đề, Tag, Loại hình (Tuyệt đối bỏ qua phần Mô tả để tránh nhầm với nhà đang bán mà ghi có dòng tiền cho thuê)
+        if (activeTag === "chothue") {
+          const strictTextChoThue = cleanVietnameseText((i.tieude || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
+          return strictTextChoThue.includes("cho thue");
+        }
+        
         return true;
       });
     }
@@ -198,7 +205,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <option value="all">Tất cả phân nhóm</option>
           <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
           <option value="chinhchu">✓ Hàng Chính Chủ</option>
-          <option value="chothue">🔑 Nhà Cho Thuê</option> {/* <--- Bổ sung thẻ đặc quyền */}
+          <option value="chothue">🔑 Nhà Cho Thuê</option>
         </select>
       </div>
     </>
@@ -217,7 +224,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 { id: "all", label: "Tất Cả BDS" },
                 { id: "Đất nền", label: "⛳ Đất Nền" },
                 { id: "Nhà phố", label: "🏠 Nhà Phố" },
-                { id: "Cho thuê", label: "🔑 Cho Thuê" } // <--- Bổ sung Tab mới
+                { id: "Cho thuê", label: "🔑 Cho Thuê" }
               ].map(tab => (
                 <button 
                   key={tab.id}
@@ -322,10 +329,15 @@ function BdsCard({ item }: { item: any }) {
   const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || ""));
+  // Nhận diện chung cho các nhãn khác (vẫn quét cả mô tả)
+  const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || "") + " " + (item.loaiHinh || ""));
   const isChinhChu = textLower.includes("chinh chu");
   const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+  
+  // 🚨 SỬA LỖI BUG: Nhãn "Cho thuê" chỉ được hiện khi Tiêu đề, Tag hoặc Loại hình là cho thuê. (Tuyệt đối bỏ qua mô tả để tránh nhận nhầm nhà bán)
+  const textChoThue = cleanVietnameseText((item.tieude || "") + " " + (item.tag || "") + " " + (item.loaiHinh || item.phân_loại || ""));
+  const isChoThue = textChoThue.includes("cho thue");
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
@@ -344,11 +356,13 @@ function BdsCard({ item }: { item: any }) {
   return (
     <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" sizes="(max-w-7xl) 100vw" priority />
+        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* 🏷️ KHU VỰC HIỂN THỊ NHÃN TAG (BADGES) CHUẨN MỚI */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
+          {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
           {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
         </div>
