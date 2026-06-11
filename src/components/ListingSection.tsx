@@ -258,7 +258,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 }
 
 // ==========================================
-// 5. COMPONENT THẺ BĐS (Đã Fix lỗi Badge và Giá tiền)
+// 5. COMPONENT THẺ BĐS (Đã Cập Nhật Hiệu Ứng Hover Cao Cấp)
 // ==========================================
 function BdsCard({ item }: { item: any }) {
   const thumbnail = layUrlAnhChuan(item.anh);
@@ -289,9 +289,9 @@ function BdsCard({ item }: { item: any }) {
   }, [item]);
 
   return (
-    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all flex flex-col h-full relative transform hover:-translate-y-1 block">
+    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-orange-500/10 border border-slate-100 hover:border-orange-200 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1.5 block">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
+        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {/* KHU VỰC NHÃN (BADGES) KHÔI PHỤC BẢN CŨ CỰC ĐẸP */}
@@ -303,37 +303,37 @@ function BdsCard({ item }: { item: any }) {
         </div>
 
         {/* KHU VỰC GIÁ TIỀN GRADIENT KHÔI PHỤC BẢN CŨ CỰC ĐẸP */}
-        <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 transition-transform duration-300">
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 group-hover:shadow-orange-500/40 transition-all duration-300">
           {item.gia}
         </div>
       </div>
 
       <div className="p-5 flex flex-col flex-grow justify-between">
         <div>
-          <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5 group-hover:text-orange-500 transition-colors duration-300">
             <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" /><span className="truncate">{displayLocation}</span>
           </div>
           {/* Tiêu đề cố định 2 dòng, không lồi dòng 3 */}
-          <h3 className="text-slate-800 font-extrabold text-[15px] sm:text-base line-clamp-2 group-hover:text-orange-600 transition-colors duration-200 h-[2.6rem] sm:h-[3rem] overflow-hidden leading-snug mb-4">
+          <h3 className="text-slate-800 font-extrabold text-[15px] sm:text-base line-clamp-2 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[3rem] overflow-hidden leading-snug mb-4">
             {item.tieude}
           </h3>
         </div>
 
         <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-50 text-slate-600 text-xs">
-          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2 group-hover:bg-orange-50 transition-colors duration-300">
             <Square className="w-4 h-4 text-orange-500 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2 group-hover:bg-orange-50 transition-colors duration-300">
             <Compass className="w-4 h-4 text-orange-500 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{item.huong || "---"}</span>
           </div>
-          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2 group-hover:bg-orange-50 transition-colors duration-300">
             <BedDouble className="w-4 h-4 text-orange-500 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{cauTrucPhong}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between mt-4 pt-1">
           <span className="text-[11px] text-slate-400 italic flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-300" /> {formatTimeAgo(displayTime)}</span>
-          <span className="text-orange-500 text-xs font-extrabold inline-flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-200">Chi tiết <ChevronRight className="w-4 h-4" /></span>
+          <span className="text-orange-500 text-xs font-extrabold inline-flex items-center gap-0.5 group-hover:translate-x-1.5 transition-transform duration-300">Chi tiết <ChevronRight className="w-4 h-4" /></span>
         </div>
       </div>
     </a>
