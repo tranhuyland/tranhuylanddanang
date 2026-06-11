@@ -3,60 +3,108 @@ import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check, RotateCcw } from "lucide-react";
 
+// ==========================================
+// 1. CẤU HÌNH INTERFACE & BIẾN TĨNH (CONSTANTS)
+// ==========================================
 interface ListingSectionProps {
   allBdsItems: any[];
   forceDistrict?: string;
 }
 
-// Hàm chuẩn hóa tiếng Việt viết gọn bằng Regex tối ưu hiệu năng
-const cleanVietnameseText = (str: string) => {
-  if (!str) return "";
-  return str
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .trim();
+const TAB_OPTIONS = [
+  { id: "all", label: "Tất cả" },
+  { id: "Đất nền", label: "⛳ Đất nền" },
+  { id: "Nhà phố", label: "🏠 Nhà phố" },
+  { id: "Cho thuê", label: "🔑 Cho thuê" }
+];
+
+const PHUONG_XA = {
+  phuong: ["Hải Châu", "Hòa Cường", "Thanh Khê", "An Khê", "An Hải", "Sơn Trà", "Ngũ Hành Sơn", "Hòa Khánh", "Hải Vân", "Liên Chiểu", "Cẩm Lệ", "Hòa Xuân", "Hòa Vang", "Bà Nà", "Hòa Tiến", "Hòa Phước"],
+  xa: ["Hòa Bắc", "Hòa Liên", "Hòa Ninh"]
 };
 
-// Hàm tính thời gian đăng tin chuẩn xác
+// ==========================================
+// 2. CÁC HÀM TIỆN ÍCH (HELPERS)
+// ==========================================
+const cleanVietnameseText = (str: string) => {
+  if (!str) return "";
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
+};
+
 const formatTimeAgo = (dateStr: string) => {
   if (!dateStr) return "Tin mới";
   const parts = dateStr.split(/[-/]/);
   if (parts.length !== 3) return "Hôm nay";
   const day = parseInt(parts[0], 10), month = parseInt(parts[1], 10) - 1, year = parseInt(parts[2], 10);
-  const diffDays = Math.floor((new Date().setHours(0,0,0,0) - new Date(year, month, day).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
-// Hàm xử lý chuỗi ảnh dự phòng nhanh
 const layUrlAnhChuan = (chuoiAnh: string) => {
   if (!chuoiAnh) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
   const danhSach = chuoiAnh.split(",").map(a => a.trim()).filter(a => a.startsWith("http"));
   return danhSach.length > 0 ? danhSach[0] : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
 };
 
+// ==========================================
+// 3. COMPONENT CON LỌC DỮ LIỆU
+// ==========================================
+const FilterFields = ({ tempFilters, handleFilterChange, forceDistrict }: any) => (
+  <>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Phường / Xã</label>
+      <select disabled={!!forceDistrict} value={tempFilters.khuVuc} onChange={(e) => handleFilterChange('khuVuc', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+        <option value="all">Tất cả Vị trí</option>
+        <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
+        {PHUONG_XA.phuong.map(p => <option key={p} value={p}>{p}</option>)}
+        <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Xã --</option>
+        {PHUONG_XA.xa.map(x => <option key={x} value={x}>{x}</option>)}
+      </select>
+    </div>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Khoảng Giá</label>
+      <select value={tempFilters.khoangGia} onChange={(e) => handleFilterChange('khoangGia', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+        <option value="all">Tất cả mức giá</option>
+        <option value="duoi3">Dưới 3 Tỷ</option>
+        <option value="3to5">Từ 3 - 5 Tỷ</option>
+        <option value="tren5">Trên 5 Tỷ</option>
+      </select>
+    </div>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Hướng Nhà</label>
+      <select value={tempFilters.huong} onChange={(e) => handleFilterChange('huong', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+        <option value="all">Tất cả các hướng</option>
+        {["Đông", "Tây", "Nam", "Bắc"].map(h => <option key={h} value={h}>Hướng {h}</option>)}
+      </select>
+    </div>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Nhóm Đặc Quyền</label>
+      <select value={tempFilters.tag} onChange={(e) => handleFilterChange('tag', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+        <option value="all">Tất cả phân nhóm</option>
+        <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
+        <option value="chinhchu">✓ Hàng Chính Chủ</option>
+        <option value="chothue">🔑 Nhà Cho Thuê</option>
+      </select>
+    </div>
+  </>
+);
+
+// ==========================================
+// 4. COMPONENT CHÍNH
+// ==========================================
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
-
-  // State chính thức dùng để render dữ liệu ra giao diện bds
-  const [activeKhuVuc, setActiveKhuVuc] = useState(forceDistrict || "all");
+  const initialFilters = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
+  
+  const [filters, setFilters] = useState(initialFilters);
+  const [tempFilters, setTempFilters] = useState(initialFilters);
   const [activeLoaiHinh, setActiveLoaiHinh] = useState("all");
-  const [activeKhoangGia, setActiveKhoangGia] = useState("all");
-  const [activeHuong, setActiveHuong] = useState("all");
-  const [activeTag, setActiveTag] = useState("all");
-
-  // State tạm thời phục vụ thao tác chọn trên thanh công cụ
-  const [tempKhuVuc, setTempKhuVuc] = useState(forceDistrict || "all");
-  const [tempKhoangGia, setTempKhoangGia] = useState("all");
-  const [tempHuong, setTempHuong] = useState("all");
-  const [tempTag, setTempTag] = useState("all");
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
-  // Quản lý Phân trang thông qua SessionStorage
+  const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedPage = sessionStorage.getItem("bds_page");
@@ -70,249 +118,176 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  // 🔥 TỐI ƯU HÓA LỚN: Dùng useMemo thay thế hoàn toàn useEffect gom toàn bộ logic lọc & sắp xếp bất động sản
+  // Back button handling
+  useEffect(() => {
+    const handlePopState = () => isDrawerOpen && setIsDrawerOpen(false);
+    if (isDrawerOpen) {
+      window.history.pushState({ drawer: 'open' }, '');
+      window.addEventListener('popstate', handlePopState);
+    }
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isDrawerOpen]);
+
+  const closeDrawer = () => {
+    if (window.history.state?.drawer === 'open') window.history.back();
+    else setIsDrawerOpen(false);
+  };
+
   const filteredItems = useMemo(() => {
-    let result = [...safeBdsItems];
-
-    // Sắp xếp tin mới lên đầu
-    result.sort((a: any, b: any) => {
-      const dateStrA = a.ngayDang || a.ngay || "";
-      const dateStrB = b.ngayDang || b.ngay || "";
-
-      const convertToTimestamp = (dStr: string) => {
-        if (!dStr) return 0;
-        const parts = dStr.split(/[-/]/);
-        return parts.length === 3 ? new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10)).getTime() : 0;
-      };
-
-      const timeDiff = convertToTimestamp(dateStrB) - convertToTimestamp(dateStrA);
+    let result = [...safeBdsItems].sort((a: any, b: any) => {
+      const getTime = (d: string) => d ? new Date(d.split(/[-/]/)[2] as any, Number(d.split(/[-/]/)[1]) - 1, d.split(/[-/]/)[0] as any).getTime() : 0;
+      const timeDiff = getTime(b.ngayDang || b.ngay) - getTime(a.ngayDang || a.ngay);
       return timeDiff !== 0 ? timeDiff : (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    // Thực hiện chuỗi bộ lọc lồng nhau
-    if (activeKhuVuc !== "all") {
-      const target = cleanVietnameseText(activeKhuVuc);
-      result = result.filter(i => 
-        cleanVietnameseText(i.diaChi || i.diaChiFull || i.diChi || i.dia_chi || "").includes(target) || 
-        cleanVietnameseText(i.khuVucFull || i.khuVuc || "").includes(target)
-      );
+    if (filters.khuVuc !== "all") {
+      const target = cleanVietnameseText(filters.khuVuc);
+      result = result.filter(i => cleanVietnameseText(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
     }
-
     if (activeLoaiHinh !== "all") {
       const target = cleanVietnameseText(activeLoaiHinh);
-      result = result.filter(i => 
-        cleanVietnameseText(i.phân_loại || i.phanLoai || i.loaiHinh || "").includes(target) || 
-        cleanVietnameseText(i.tieude || i.tieuDe || "").includes(target)
-      );
+      result = result.filter(i => cleanVietnameseText(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`).includes(target));
     }
-
-    if (activeKhoangGia !== "all") {
-      const parseGia = (str: string) => str ? parseFloat(str.replace(/[^0-9.]/g, "")) || 0 : 0;
+    if (filters.khoangGia !== "all") {
       result = result.filter(i => {
-        const gia = Number(i.soGia) || parseGia(i.gia);
-        if (activeKhoangGia === "duoi3") return gia < 3.0;
-        if (activeKhoangGia === "3to5") return gia >= 3.0 && gia <= 5.0;
-        return gia > 5.0;
+        const gia = Number(i.soGia) || (i.gia ? parseFloat(i.gia.replace(/[^0-9.]/g, "")) : 0);
+        return filters.khoangGia === "duoi3" ? gia < 3.0 : filters.khoangGia === "3to5" ? gia >= 3.0 && gia <= 5.0 : gia > 5.0;
       });
     }
-
-    if (activeHuong !== "all") {
-      const target = cleanVietnameseText(activeHuong);
-      result = result.filter(i => cleanVietnameseText(i.huong || "").includes(target));
-    }
-
-    // 💡 NÂNG CẤP VÀ SỬA LỖI: Nhận diện chính xác bộ lọc Tag
-    if (activeTag !== "all") {
+    if (filters.huong !== "all") result = result.filter(i => cleanVietnameseText(i.huong || "").includes(cleanVietnameseText(filters.huong)));
+    if (filters.tag !== "all") {
       result = result.filter(i => {
-        const text = cleanVietnameseText((i.tieude || "") + " " + (i.mota || i.moTa || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
-        
-        if (activeTag === "mattien") return (i.isMatTien || text.includes("mat tien"));
-        if (activeTag === "chinhchu") return text.includes("chinh chu");
-        
-        // 🚨 KHẮC PHỤC LỖI TÌM KIẾM NHẦM: Chỉ quét "cho thue" trong Tiêu đề, Tag, Loại hình (Tuyệt đối bỏ qua phần Mô tả để tránh nhầm với nhà đang bán mà ghi có dòng tiền cho thuê)
-        if (activeTag === "chothue") {
-          const strictTextChoThue = cleanVietnameseText((i.tieude || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
-          return strictTextChoThue.includes("cho thue");
-        }
-        
+        const text = cleanVietnameseText(`${i.tieude || ""} ${i.mota || ""} ${i.tag || ""} ${i.loaiHinh || ""}`);
+        if (filters.tag === "mattien") return i.isMatTien || text.includes("mat tien");
+        if (filters.tag === "chinhchu") return text.includes("chinh chu");
+        if (filters.tag === "chothue") return cleanVietnameseText(`${i.tieude || ""} ${i.tag || ""} ${i.loaiHinh || ""}`).includes("cho thue");
         return true;
       });
     }
-
     return result;
-  }, [activeKhuVuc, activeLoaiHinh, activeKhoangGia, activeHuong, activeTag, safeBdsItems]);
+  }, [filters, activeLoaiHinh, safeBdsItems]);
 
-  const activeFiltersCount = 
-    (activeKhuVuc !== "all" ? 1 : 0) + 
-    (activeKhoangGia !== "all" ? 1 : 0) + 
-    (activeHuong !== "all" ? 1 : 0) + 
-    (activeTag !== "all" ? 1 : 0);
+  const activeFiltersCount = Object.keys(filters).reduce((acc, key) => 
+    filters[key as keyof typeof filters] !== "all" ? acc + 1 : acc, 0
+  );
 
   const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
   const handleApplyFilters = () => {
-    setActiveKhuVuc(tempKhuVuc);
-    setActiveKhoangGia(tempKhoangGia);
-    setActiveHuong(tempHuong);
-    setActiveTag(tempTag);
+    setFilters(tempFilters);
     setCurrentPage(1);
-    setIsDrawerOpen(false);
-
-    setTimeout(() => {
-      document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    closeDrawer();
+    setTimeout(() => document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
   const handleResetFilters = () => {
-    const defDistrict = forceDistrict || "all";
-    setTempKhuVuc(defDistrict); setTempKhoangGia("all"); setTempHuong("all"); setTempTag("all");
-    setActiveKhuVuc(defDistrict); setActiveKhoangGia("all"); setActiveHuong("all"); setActiveTag("all");
-    setActiveLoaiHinh("all"); setCurrentPage(1);
+    const resetState = { ...initialFilters, khuVuc: forceDistrict || "all" };
+    setTempFilters(resetState); setFilters(resetState); setActiveLoaiHinh("all"); setCurrentPage(1);
   };
-
-  const FilterFields = () => (
-    <>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Phường / Xã</label>
-        <select disabled={!!forceDistrict} value={tempKhuVuc} onChange={(e) => setTempKhuVuc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
-          <option value="all">Tất cả Vị trí</option>
-          <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
-          {["Hải Châu", "Hòa Cường", "Thanh Khê", "An Khê", "An Hải", "Sơn Trà", "Ngũ Hành Sơn", "Hòa Khánh", "Hải Vân", "Liên Chiểu", "Cẩm Lệ", "Hòa Xuân", "Hòa Vang", "Bà Nà", "Hòa Tiến", "Hòa Phước"].map(p => <option key={p} value={p}>{p}</option>)}
-          <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Xã --</option>
-          {["Hòa Bắc", "Hòa Liên", "Hòa Ninh"].map(x => <option key={x} value={x}>{x}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Khoảng Giá</label>
-        <select value={tempKhoangGia} onChange={(e) => setTempKhoangGia(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
-          <option value="all">Tất cả mức giá</option>
-          <option value="duoi3">Dưới 3 Tỷ</option>
-          <option value="3to5">Từ 3 - 5 Tỷ</option>
-          <option value="tren5">Trên 5 Tỷ</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Hướng Nhà</label>
-        <select value={tempHuong} onChange={(e) => setTempHuong(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
-          <option value="all">Tất cả các hướng</option>
-          {["Đông", "Tây", "Nam", "Bắc"].map(h => <option key={h} value={h}>Hướng {h}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1 tracking-wider">Nhóm Đặc Quyền</label>
-        <select value={tempTag} onChange={(e) => setTempTag(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white text-slate-700 shadow-xs transition-all">
-          <option value="all">Tất cả phân nhóm</option>
-          <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
-          <option value="chinhchu">✓ Hàng Chính Chủ</option>
-          <option value="chothue">🔑 Nhà Cho Thuê</option>
-        </select>
-      </div>
-    </>
-  );
 
   return (
     <>
-      {/* 1. HỆ THỐNG BỘ LỌC TÌM KIẾM CHI TIẾT */}
-      <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
-        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-xl space-y-5">
+      <section className="max-w-7xl mx-auto w-full px-4 -mt-8 relative z-10">
+        <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/40">
           
-          {/* TAB CHỌN LOẠI HÌNH TRÊN PC */}
-          <div className="flex border-b border-gray-100 pb-3 items-center justify-between gap-4">
-            <div className="flex-1 max-w-xl flex gap-1 bg-gray-100 p-1 rounded-xl">
-              {[
-                { id: "all", label: "Tất Cả BDS" },
-                { id: "Đất nền", label: "⛳ Đất Nền" },
-                { id: "Nhà phố", label: "🏠 Nhà Phố" },
-                { id: "Cho thuê", label: "🔑 Cho Thuê" }
-              ].map(tab => (
-                <button 
-                  key={tab.id}
-                  onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
-                  className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${activeLoaiHinh === tab.id ? "bg-white text-orange-500 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <button 
-              onClick={() => { setTempKhuVuc(activeKhuVuc); setTempKhoangGia(activeKhoangGia); setTempHuong(activeHuong); setTempTag(activeTag); setIsDrawerOpen(true); }}
-              className="md:hidden flex items-center gap-1.5 bg-orange-50 text-orange-600 px-4 py-2.5 rounded-xl text-xs font-bold border border-orange-100 shrink-0"
-            >
-              <SlidersHorizontal size={14} />
-              Lọc nâng cao {activeFiltersCount > 0 && `(${activeFiltersCount})`}
-            </button>
+          <div className="flex w-full justify-between items-center gap-2 sm:gap-4 border-b-2 border-slate-100 mb-8 pb-0">
+            {TAB_OPTIONS.map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
+                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 sm:py-5 px-1 text-[14px] min-[390px]:text-[15px] md:text-[17px] font-extrabold transition-all duration-300 relative rounded-t-2xl ${
+                  activeLoaiHinh === tab.id 
+                    ? "text-orange-600 bg-orange-50/80" 
+                    : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {tab.label}
+                {activeLoaiHinh === tab.id && (
+                  <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full shadow-sm shadow-orange-500/50" />
+                )}
+              </button>
+            ))}
           </div>
 
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
-            <FilterFields />
+          <button 
+            onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
+            className="md:hidden w-full mb-4 flex items-center justify-center gap-3 bg-orange-50/80 text-orange-600 px-6 py-5 rounded-2xl text-base font-extrabold border border-orange-200 hover:bg-orange-100 active:scale-[0.98] transition-all duration-200 shadow-sm"
+          >
+            <SlidersHorizontal size={20} />
+            Mở bộ lọc chi tiết {activeFiltersCount > 0 && <span className="bg-red-500 text-white w-6 h-6 rounded-full text-[11px] flex items-center justify-center shadow-md shadow-red-500/40">{activeFiltersCount}</span>}
+          </button>
+
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} />
           </div>
 
-          <div className="hidden md:flex items-center justify-between border-t border-gray-100/80 pt-4 mt-2">
-            <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và bấm nút tìm kiếm để cập nhật dữ liệu.</div>
-            <div className="flex items-center gap-2">
-              {activeFiltersCount > 0 && (
-                <button onClick={handleResetFilters} className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-red-500 px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors">
-                  <RotateCcw size={14} /> Xóa bộ lọc
+          <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-8 mt-8">
+            <div className="text-sm text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
+            <div className="flex items-center gap-4">
+              {Object.values(filters).some(v => v !== "all") && (
+                <button onClick={handleResetFilters} className="flex items-center gap-2 text-[15px] font-extrabold text-slate-500 hover:text-red-500 px-6 py-3.5 rounded-xl hover:bg-red-50 transition-colors">
+                  <RotateCcw size={18} />Xóa lọc
                 </button>
               )}
-              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs px-7 py-3 rounded-xl flex items-center gap-2 shadow-md shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 active:scale-[0.97] transition-all tracking-wide">
-                <Check size={14} /> Tìm kiếm ngay
+              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-[15px] px-10 py-4 rounded-2xl shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 flex items-center gap-2">
+                <Check size={20} />Tìm kiếm ngay
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 📱 MOBILE DRAWER */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsDrawerOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl shadow-2xl h-[75vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-between border-b border-gray-100 p-4 shrink-0">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal size={16} className="text-orange-500" /><h4 className="font-bold text-gray-800 text-sm">Bộ lọc nâng cao</h4>
+          <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md transition-opacity duration-300" onClick={closeDrawer} />
+          <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl h-[85vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom-8 duration-400 ease-out">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6 shrink-0 bg-white/80 backdrop-blur-sm z-10">
+              <div className="flex items-center gap-3">
+                <SlidersHorizontal size={22} className="text-orange-500" />
+                <h4 className="font-extrabold text-slate-800 text-lg">Bộ lọc nâng cao</h4>
               </div>
-              <button onClick={() => setIsDrawerOpen(false)} className="text-gray-400 p-1 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+              <button onClick={closeDrawer} className="text-slate-400 p-2.5 hover:bg-slate-100 hover:text-slate-700 rounded-full transition-colors bg-slate-50"><X size={24} /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-5 pb-40"><FilterFields /></div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-52">
+              <FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} />
+            </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent shrink-0 pb-20 shadow-[0_-12px_30px_rgba(0,0,0,0.04)] z-20">
-              <div className="bg-white p-1 rounded-2xl border border-gray-100 shadow-md flex gap-2 mb-4">
-                <button onClick={handleResetFilters} className="w-1/3 border border-gray-200 text-slate-600 font-bold text-xs py-3.5 rounded-xl text-center bg-slate-50 active:scale-[0.98] transition-transform">Đặt lại</button>
-                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-xs py-3.5 rounded-xl text-center shadow-md shadow-orange-500/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"><Check size={14} /> Áp dụng ngay</button>
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent shrink-0 pt-16 pb-28 z-20 pointer-events-none">
+              <div className="flex gap-4 bg-white p-2.5 rounded-[2rem] shadow-[0_15px_50px_rgba(0,0,0,0.12)] border border-slate-100 pointer-events-auto">
+                <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-extrabold text-[15px] py-4 rounded-2xl bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all duration-200">Đặt lại</button>
+                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-[15px] py-4 rounded-2xl shadow-xl shadow-orange-500/30 hover:shadow-orange-500/40 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+                  <Check size={20} /> Áp dụng ngay
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. DANH SÁCH BẤT ĐỘNG SẢN */}
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-20 scroll-mt-28">
-        {currentItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentItems.map((item) => (
-              <BdsCard key={item.id} item={item} />
-            ))}
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-24 scroll-mt-32">
+        {filteredItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => <BdsCard key={item.id} item={item} />)}
           </div>
         ) : (
-          <div className="text-center py-20 text-slate-400 font-medium bg-slate-50 rounded-3xl border border-dashed">Không tìm thấy sản phẩm bất động sản nào phù hợp với bộ lọc.</div>
+          <div className="text-center py-32 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 m-4">
+             <Image src="https://images.unsplash.com/photo-1584824486509-11459466a200?w=120&q=80" width={100} height={100} alt="Empty" className="mb-6 opacity-40 grayscale rounded-full mx-auto" />
+             <p className="text-slate-500 font-extrabold text-xl">Không tìm thấy sản phẩm phù hợp</p>
+             <p className="text-slate-400 text-base mt-2">Vui lòng điều chỉnh lại bộ lọc để xem các kết quả khác.</p>
+          </div>
         )}
-
-        {/* PHÂN TRANG */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-12">
-            {Array.from({ length: totalPages }, (_, idx) => (
-              <button 
-                key={idx} 
-                onClick={(e) => { 
-                  e.preventDefault(); setCurrentPage(idx + 1); 
-                  document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }} 
-                className={`w-9 h-9 rounded-xl text-sm transition-all font-bold ${currentPage === idx + 1 ? "bg-orange-500 text-white scale-105 shadow-md shadow-orange-500/20" : "bg-white border text-slate-600 hover:bg-slate-50"}`}
-              >
+        
+        {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
+          <div className="flex justify-center gap-3 mt-20">
+            {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
+              <button key={idx} onClick={() => { setCurrentPage(idx + 1); document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" }); }}
+                className={`w-12 h-12 rounded-2xl font-extrabold text-base transition-all duration-300 ${
+                  currentPage === idx + 1 
+                    ? "bg-gradient-to-tr from-orange-500 to-red-500 text-white scale-110 shadow-xl shadow-orange-500/30" 
+                    : "bg-white border-2 border-slate-100 text-slate-500 hover:border-orange-200 hover:text-orange-500"
+                }`}>
                 {idx + 1}
               </button>
             ))}
@@ -323,76 +298,47 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
-// 🔥 SUB-COMPONENT CARD BẤT ĐỘNG SẢN TÁCH BIỆT (GIÚP CODE GỌN GÀNG, SẠCH SẼ)
+// ==========================================
+// 5. COMPONENT THẺ BĐS (Đã Fix lỗi dòng thứ 3 lồi ra)
+// ==========================================
 function BdsCard({ item }: { item: any }) {
   const thumbnail = layUrlAnhChuan(item.anh);
-  const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
-  const displayTime = item.ngayDang || item.ngay || "";
-
-  // Nhận diện chung cho các nhãn khác (vẫn quét cả mô tả)
-  const textLower = cleanVietnameseText((item.tieude || "") + " " + (item.mota || item.moTa || "") + " " + (item.tag || "") + " " + (item.loaiHinh || ""));
-  const isChinhChu = textLower.includes("chinh chu");
-  const isMatTien = textLower.includes("mat tien");
-  const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
-  
-  // 🚨 SỬA LỖI BUG: Nhãn "Cho thuê" chỉ được hiện khi Tiêu đề, Tag hoặc Loại hình là cho thuê. (Tuyệt đối bỏ qua mô tả để tránh nhận nhầm nhà bán)
-  const textChoThue = cleanVietnameseText((item.tieude || "") + " " + (item.tag || "") + " " + (item.loaiHinh || item.phân_loại || ""));
-  const isChoThue = textChoThue.includes("cho thue");
-
-  const cauTrucPhong = useMemo(() => {
-    const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
-    if (cleanVietnameseText(currentLoaiHinh).includes("dat")) return "Đất trống";
-
-    const combinedText = ((item.tieude || "") + " " + (item.mota || item.moTa || "")).toLowerCase();
-    const matchTang = combinedText.match(/(\d+)\s*(tầng|tang)/i);
-    const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
-    
-    if (matchTang && matchPhong) return `${matchTang[1]} Tầng - ${matchPhong[1]} PN`;
-    if (matchTang) return `${matchTang[1]} Tầng`;
-    if (matchPhong) return `${matchPhong[1]} PN`;
-    return "Nhà ở";
+  const textLower = cleanVietnameseText(`${item.tieude || ""} ${item.mota || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
+  const cauTruc = useMemo(() => {
+    if (cleanVietnameseText(item.phanLoai || item.loaiHinh || '').includes("dat")) return "Đất trống";
+    const text = (item.tieude + " " + item.mota).toLowerCase();
+    const t = text.match(/(\d+)\s*(tầng|tang)/i), p = text.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
+    return t && p ? `${t[1]} Tầng - ${p[1]} PN` : t ? `${t[1]} Tầng` : p ? `${p[1]} PN` : "Nhà ở";
   }, [item]);
 
   return (
-    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1 block">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* 🏷️ KHU VỰC HIỂN THỊ NHÃN TAG (BADGES) CHUẨN MỚI */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
-          {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
-          {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
-          {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
+    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1.5 block">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+        <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 text-white">
+          {textLower.includes("sap ham") && <span className="bg-red-500 text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg shadow-md animate-pulse uppercase tracking-wider">🔥 SẬP HẦM</span>}
+          {cleanVietnameseText(`${item.tieude} ${item.tag} ${item.loaiHinh}`).includes("cho thue") && <span className="bg-purple-600 text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-md shadow-purple-900/20">🔑 CHO THUÊ</span>}
+          {textLower.includes("chinh chu") && <span className="bg-emerald-600 text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-md shadow-emerald-900/20">✓ CHÍNH CHỦ</span>}
         </div>
-
-        <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 transition-transform duration-300">{item.gia}</div>
+        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-orange-600 font-black text-sm sm:text-[15px] px-5 py-2.5 rounded-xl shadow-xl">{item.gia}</div>
       </div>
 
-      <div className="p-4 flex flex-col flex-grow justify-between">
+      <div className="p-6 flex flex-col flex-grow justify-between">
         <div>
-          <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" /><span className="truncate">{displayLocation}</span>
-          </div>
-          <h3 className="text-gray-800 font-bold text-base line-clamp-2 group-hover:text-orange-500 transition-colors duration-200 mb-3 min-h-[3rem] leading-snug">{item.tieude}</h3>
+          <div className="text-slate-400 text-[11px] font-extrabold uppercase mb-3 flex items-center gap-1.5 tracking-wider"><MapPin className="w-4 h-4 text-orange-500" /><span className="truncate">{item.diaChi || item.khuVucFull || "Đà Nẵng"}</span></div>
+          <h3 className="text-slate-800 font-extrabold text-[16px] sm:text-[17px] group-hover:text-orange-600 transition-colors duration-200 h-[2.8rem] sm:h-[3.2rem] line-clamp-2 overflow-hidden leading-snug mb-5">
+            {item.tieude}
+          </h3>
         </div>
-
-        <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-gray-50 text-gray-600 text-xs">
-          <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
-            <Square className="w-3.5 h-3.5 text-orange-500 mb-0.5" /><span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
-          </div>
-          <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
-            <Compass className="w-3.5 h-3.5 text-orange-500 mb-0.5" /><span className="font-semibold text-gray-700 truncate max-w-full px-1">{item.huong || "---"}</span>
-          </div>
-          <div className="flex flex-col items-center justify-center bg-gray-50/60 rounded-lg py-1.5 border border-gray-100/50">
-            <BedDouble className="w-3.5 h-3.5 text-orange-500 mb-0.5" /><span className="font-semibold text-gray-700 truncate max-w-full px-1">{cauTrucPhong}</span>
-          </div>
+        <div className="grid grid-cols-3 gap-3 py-4 border-y border-slate-100 text-slate-600 text-[13px] text-center">
+          <div className="bg-slate-50/80 rounded-2xl py-2.5"><Square className="w-4 h-4 text-slate-400 mx-auto mb-1.5" /><span className="font-extrabold">{item.dienTich || "---"}</span></div>
+          <div className="bg-slate-50/80 rounded-2xl py-2.5"><Compass className="w-4 h-4 text-slate-400 mx-auto mb-1.5" /><span className="font-extrabold">{item.huong || "---"}</span></div>
+          <div className="bg-slate-50/80 rounded-2xl py-2.5"><BedDouble className="w-4 h-4 text-slate-400 mx-auto mb-1.5" /><span className="font-extrabold">{cauTruc}</span></div>
         </div>
-
-        <div className="flex items-center justify-between mt-3 pt-2">
-          <span className="text-[11px] text-gray-400 italic flex items-center gap-1"><Clock className="w-3 h-3 text-gray-300" /> {formatTimeAgo(displayTime)}</span>
-          <span className="text-orange-500 text-xs font-bold inline-flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-200">Xem chi tiết <ChevronRight className="w-3.5 h-3.5" /></span>
+        <div className="flex items-center justify-between mt-5 pt-1">
+          <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-300" /> {formatTimeAgo(item.ngayDang || item.ngay)}</span>
+          <span className="text-orange-500 text-[13px] font-extrabold flex items-center gap-1 group-hover:translate-x-1.5 transition-transform duration-300">Xem chi tiết <ChevronRight className="w-4 h-4" /></span>
         </div>
       </div>
     </a>
