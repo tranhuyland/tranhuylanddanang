@@ -249,6 +249,7 @@ export default function DangTinPage() {
                 <option value="all">Mặc định</option>
                 <option value="mattien">Mặt Tiền Kinh Doanh</option>
                 <option value="chinhchu">Hàng Chính Chủ</option>
+                <option value="chothue">Nhà Cho Thuê</option> {/* 💡 ĐÃ BỔ SUNG NHÀ CHO THUÊ VÀO ĐÂY */}
               </select>
             </div>
           </div>

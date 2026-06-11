@@ -121,10 +121,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => cleanVietnameseText(i.huong || "").includes(target));
     }
 
+    // 💡 NÂNG CẤP: Xử lý logic Tag lọc thêm phần "cho thue"
     if (activeTag !== "all") {
       result = result.filter(i => {
-        const text = cleanVietnameseText((i.tieude || "") + " " + (i.mota || i.moTa || "") + " " + (i.tag || ""));
-        return activeTag === "mattien" ? (i.isMatTien || text.includes("mat tien")) : text.includes("chinh chu");
+        const text = cleanVietnameseText((i.tieude || "") + " " + (i.mota || i.moTa || "") + " " + (i.tag || "") + " " + (i.loaiHinh || ""));
+        if (activeTag === "mattien") return (i.isMatTien || text.includes("mat tien"));
+        if (activeTag === "chinhchu") return text.includes("chinh chu");
+        if (activeTag === "chothue") return text.includes("cho thue"); // <--- Thêm nhận diện Nhà cho thuê
+        return true;
       });
     }
 
@@ -194,6 +198,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           <option value="all">Tất cả phân nhóm</option>
           <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
           <option value="chinhchu">✓ Hàng Chính Chủ</option>
+          <option value="chothue">🔑 Nhà Cho Thuê</option> {/* <--- Bổ sung thẻ đặc quyền */}
         </select>
       </div>
     </>
@@ -211,7 +216,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               {[
                 { id: "all", label: "Tất Cả BDS" },
                 { id: "Đất nền", label: "⛳ Đất Nền" },
-                { id: "Nhà phố", label: "🏠 Nhà Phố" }
+                { id: "Nhà phố", label: "🏠 Nhà Phố" },
+                { id: "Cho thuê", label: "🔑 Cho Thuê" } // <--- Bổ sung Tab mới
               ].map(tab => (
                 <button 
                   key={tab.id}
