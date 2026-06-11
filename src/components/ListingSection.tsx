@@ -52,8 +52,8 @@ const layUrlAnhChuan = (chuoiAnh: string) => {
 const FilterFields = ({ tempFilters, handleFilterChange, forceDistrict }: any) => (
   <>
     <div className="space-y-2">
-      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Phường / Xã</label>
-      <select disabled={!!forceDistrict} value={tempFilters.khuVuc} onChange={(e) => handleFilterChange('khuVuc', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Phường / Xã</label>
+      <select disabled={!!forceDistrict} value={tempFilters.khuVuc} onChange={(e) => handleFilterChange('khuVuc', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
         <option value="all">Tất cả Vị trí</option>
         <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
         {PHUONG_XA.phuong.map(p => <option key={p} value={p}>{p}</option>)}
@@ -62,8 +62,8 @@ const FilterFields = ({ tempFilters, handleFilterChange, forceDistrict }: any) =
       </select>
     </div>
     <div className="space-y-2">
-      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Khoảng Giá</label>
-      <select value={tempFilters.khoangGia} onChange={(e) => handleFilterChange('khoangGia', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Khoảng Giá</label>
+      <select value={tempFilters.khoangGia} onChange={(e) => handleFilterChange('khoangGia', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
         <option value="all">Tất cả mức giá</option>
         <option value="duoi3">Dưới 3 Tỷ</option>
         <option value="3to5">Từ 3 - 5 Tỷ</option>
@@ -71,15 +71,15 @@ const FilterFields = ({ tempFilters, handleFilterChange, forceDistrict }: any) =
       </select>
     </div>
     <div className="space-y-2">
-      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Hướng Nhà</label>
-      <select value={tempFilters.huong} onChange={(e) => handleFilterChange('huong', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Hướng Nhà</label>
+      <select value={tempFilters.huong} onChange={(e) => handleFilterChange('huong', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
         <option value="all">Tất cả các hướng</option>
         {["Đông", "Tây", "Nam", "Bắc"].map(h => <option key={h} value={h}>Hướng {h}</option>)}
       </select>
     </div>
     <div className="space-y-2">
-      <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest pl-1">Nhóm Đặc Quyền</label>
-      <select value={tempFilters.tag} onChange={(e) => handleFilterChange('tag', e.target.value)} className="w-full bg-slate-50/80 border border-slate-200 hover:border-orange-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none transition-all duration-200 cursor-pointer appearance-none shadow-sm">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Nhóm Đặc Quyền</label>
+      <select value={tempFilters.tag} onChange={(e) => handleFilterChange('tag', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
         <option value="all">Tất cả phân nhóm</option>
         <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
         <option value="chinhchu">✓ Hàng Chính Chủ</option>
@@ -118,7 +118,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  // Back button handling
   useEffect(() => {
     const handlePopState = () => isDrawerOpen && setIsDrawerOpen(false);
     if (isDrawerOpen) {
@@ -188,51 +187,31 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
-      <section className="max-w-7xl mx-auto w-full px-4 -mt-8 relative z-10">
-        <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/40">
-          
-          <div className="flex w-full justify-between items-center gap-2 sm:gap-4 border-b-2 border-slate-100 mb-8 pb-0">
+      <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
+        <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
+          <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
             {TAB_OPTIONS.map(tab => (
-              <button 
-                key={tab.id}
-                onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
-                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 sm:py-5 px-1 text-[14px] min-[390px]:text-[15px] md:text-[17px] font-extrabold transition-all duration-300 relative rounded-t-2xl ${
-                  activeLoaiHinh === tab.id 
-                    ? "text-orange-600 bg-orange-50/80" 
-                    : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
-                }`}
-              >
+              <button key={tab.id} onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
+                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 px-0.5 text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold transition-all relative rounded-t-xl ${activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"}`}>
                 {tab.label}
-                {activeLoaiHinh === tab.id && (
-                  <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full shadow-sm shadow-orange-500/50" />
-                )}
+                {activeLoaiHinh === tab.id && <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />}
               </button>
             ))}
           </div>
 
-          <button 
-            onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
-            className="md:hidden w-full mb-4 flex items-center justify-center gap-3 bg-orange-50/80 text-orange-600 px-6 py-5 rounded-2xl text-base font-extrabold border border-orange-200 hover:bg-orange-100 active:scale-[0.98] transition-all duration-200 shadow-sm"
-          >
-            <SlidersHorizontal size={20} />
-            Mở bộ lọc chi tiết {activeFiltersCount > 0 && <span className="bg-red-500 text-white w-6 h-6 rounded-full text-[11px] flex items-center justify-center shadow-md shadow-red-500/40">{activeFiltersCount}</span>}
+          <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
+            className="md:hidden w-full mb-2 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all">
+            <SlidersHorizontal size={18} />
+            Mở bộ lọc chi tiết {Object.values(filters).filter(v => v !== "all").length > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center">{Object.values(filters).filter(v => v !== "all").length}</span>}
           </button>
 
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} />
-          </div>
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6"><FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} /></div>
 
-          <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-8 mt-8">
-            <div className="text-sm text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
-            <div className="flex items-center gap-4">
-              {Object.values(filters).some(v => v !== "all") && (
-                <button onClick={handleResetFilters} className="flex items-center gap-2 text-[15px] font-extrabold text-slate-500 hover:text-red-500 px-6 py-3.5 rounded-xl hover:bg-red-50 transition-colors">
-                  <RotateCcw size={18} />Xóa lọc
-                </button>
-              )}
-              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-[15px] px-10 py-4 rounded-2xl shadow-xl shadow-orange-500/30 hover:shadow-2xl hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 flex items-center gap-2">
-                <Check size={20} />Tìm kiếm ngay
-              </button>
+          <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
+            <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
+            <div className="flex items-center gap-3">
+              {Object.values(filters).some(v => v !== "all") && <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50"><RotateCcw size={16} className="inline mr-2" />Xóa lọc</button>}
+              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all"><Check size={16} className="inline mr-2" />Tìm kiếm ngay</button>
             </div>
           </div>
         </div>
@@ -240,56 +219,36 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
-          <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md transition-opacity duration-300" onClick={closeDrawer} />
-          <div className="relative bg-white rounded-t-[2.5rem] shadow-2xl h-[85vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom-8 duration-400 ease-out">
-            <div className="flex items-center justify-between border-b border-slate-100 p-6 shrink-0 bg-white/80 backdrop-blur-sm z-10">
-              <div className="flex items-center gap-3">
-                <SlidersHorizontal size={22} className="text-orange-500" />
-                <h4 className="font-extrabold text-slate-800 text-lg">Bộ lọc nâng cao</h4>
-              </div>
-              <button onClick={closeDrawer} className="text-slate-400 p-2.5 hover:bg-slate-100 hover:text-slate-700 rounded-full transition-colors bg-slate-50"><X size={24} /></button>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDrawer} />
+          <div className="relative bg-white rounded-t-[2rem] shadow-2xl h-[80vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 p-5 shrink-0">
+              <div className="flex items-center gap-2"><SlidersHorizontal size={18} className="text-orange-500" /><h4 className="font-extrabold text-slate-800 text-base">Bộ lọc nâng cao</h4></div>
+              <button onClick={closeDrawer} className="text-slate-400 p-2"><X size={22} /></button>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-52">
-              <FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} />
-            </div>
-
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent shrink-0 pt-16 pb-28 z-20 pointer-events-none">
-              <div className="flex gap-4 bg-white p-2.5 rounded-[2rem] shadow-[0_15px_50px_rgba(0,0,0,0.12)] border border-slate-100 pointer-events-auto">
-                <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-extrabold text-[15px] py-4 rounded-2xl bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all duration-200">Đặt lại</button>
-                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-[15px] py-4 rounded-2xl shadow-xl shadow-orange-500/30 hover:shadow-orange-500/40 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
-                  <Check size={20} /> Áp dụng ngay
-                </button>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-48"><FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} /></div>
+            <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-28 z-20 pointer-events-none">
+              <div className="flex gap-3 bg-white p-2 rounded-[1.5rem] shadow-xl border border-slate-100 pointer-events-auto">
+                <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-bold text-sm py-3.5 rounded-xl bg-slate-50">Đặt lại</button>
+                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2"><Check size={18} />Áp dụng ngay</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-16 mb-24 scroll-mt-32">
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-12 mb-20 scroll-mt-28">
         {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => <BdsCard key={item.id} item={item} />)}
           </div>
         ) : (
-          <div className="text-center py-32 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 m-4">
-             <Image src="https://images.unsplash.com/photo-1584824486509-11459466a200?w=120&q=80" width={100} height={100} alt="Empty" className="mb-6 opacity-40 grayscale rounded-full mx-auto" />
-             <p className="text-slate-500 font-extrabold text-xl">Không tìm thấy sản phẩm phù hợp</p>
-             <p className="text-slate-400 text-base mt-2">Vui lòng điều chỉnh lại bộ lọc để xem các kết quả khác.</p>
-          </div>
+          <div className="text-center py-24 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200"><p className="text-slate-500 font-bold text-lg">Không tìm thấy sản phẩm phù hợp</p></div>
         )}
-        
         {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
-          <div className="flex justify-center gap-3 mt-20">
+          <div className="flex justify-center gap-2 mt-16">
             {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
               <button key={idx} onClick={() => { setCurrentPage(idx + 1); document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" }); }}
-                className={`w-12 h-12 rounded-2xl font-extrabold text-base transition-all duration-300 ${
-                  currentPage === idx + 1 
-                    ? "bg-gradient-to-tr from-orange-500 to-red-500 text-white scale-110 shadow-xl shadow-orange-500/30" 
-                    : "bg-white border-2 border-slate-100 text-slate-500 hover:border-orange-200 hover:text-orange-500"
-                }`}>
-                {idx + 1}
-              </button>
+                className={`w-10 h-10 rounded-xl font-bold ${currentPage === idx + 1 ? "bg-orange-500 text-white" : "bg-white border text-slate-600"}`}>{idx + 1}</button>
             ))}
           </div>
         )}
@@ -299,46 +258,82 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 }
 
 // ==========================================
-// 5. COMPONENT THẺ BĐS (Đã Fix lỗi dòng thứ 3 lồi ra)
+// 5. COMPONENT THẺ BĐS (Đã Fix lỗi Badge và Giá tiền)
 // ==========================================
 function BdsCard({ item }: { item: any }) {
   const thumbnail = layUrlAnhChuan(item.anh);
-  const textLower = cleanVietnameseText(`${item.tieude || ""} ${item.mota || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
-  const cauTruc = useMemo(() => {
-    if (cleanVietnameseText(item.phanLoai || item.loaiHinh || '').includes("dat")) return "Đất trống";
-    const text = (item.tieude + " " + item.mota).toLowerCase();
-    const t = text.match(/(\d+)\s*(tầng|tang)/i), p = text.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
-    return t && p ? `${t[1]} Tầng - ${p[1]} PN` : t ? `${t[1]} Tầng` : p ? `${p[1]} PN` : "Nhà ở";
+  const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
+  const displayTime = item.ngayDang || item.ngay || "";
+
+  // Thuật toán nhận diện nhãn chuẩn gốc
+  const textLower = cleanVietnameseText(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
+  const isChinhChu = textLower.includes("chinh chu");
+  const isMatTien = textLower.includes("mat tien");
+  const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+  
+  const strictTextChoThue = cleanVietnameseText(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+  const isChoThue = strictTextChoThue.includes("cho thue");
+
+  const cauTrucPhong = useMemo(() => {
+    const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
+    if (cleanVietnameseText(currentLoaiHinh).includes("dat")) return "Đất trống";
+
+    const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
+    const matchTang = combinedText.match(/(\d+)\s*(tầng|tang)/i);
+    const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
+    
+    if (matchTang && matchPhong) return `${matchTang[1]} Tầng - ${matchPhong[1]} PN`;
+    if (matchTang) return `${matchTang[1]} Tầng`;
+    if (matchPhong) return `${matchPhong[1]} PN`;
+    return "Nhà ở";
   }, [item]);
 
   return (
-    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1.5 block">
+    <a href={`/nha-dat/${item.slug}`} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-slate-100 transition-all flex flex-col h-full relative transform hover:-translate-y-1 block">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-        <Image src={thumbnail} alt={item.tieude} fill className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" />
+        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 text-white">
-          {textLower.includes("sap ham") && <span className="bg-red-500 text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg shadow-md animate-pulse uppercase tracking-wider">🔥 SẬP HẦM</span>}
-          {cleanVietnameseText(`${item.tieude} ${item.tag} ${item.loaiHinh}`).includes("cho thue") && <span className="bg-purple-600 text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-md shadow-purple-900/20">🔑 CHO THUÊ</span>}
-          {textLower.includes("chinh chu") && <span className="bg-emerald-600 text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-md shadow-emerald-900/20">✓ CHÍNH CHỦ</span>}
+        
+        {/* KHU VỰC NHÃN (BADGES) KHÔI PHỤC BẢN CŨ CỰC ĐẸP */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+          {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
+          {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
+          {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
+          {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
         </div>
-        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-orange-600 font-black text-sm sm:text-[15px] px-5 py-2.5 rounded-xl shadow-xl">{item.gia}</div>
+
+        {/* KHU VỰC GIÁ TIỀN GRADIENT KHÔI PHỤC BẢN CŨ CỰC ĐẸP */}
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 transition-transform duration-300">
+          {item.gia}
+        </div>
       </div>
 
-      <div className="p-6 flex flex-col flex-grow justify-between">
+      <div className="p-5 flex flex-col flex-grow justify-between">
         <div>
-          <div className="text-slate-400 text-[11px] font-extrabold uppercase mb-3 flex items-center gap-1.5 tracking-wider"><MapPin className="w-4 h-4 text-orange-500" /><span className="truncate">{item.diaChi || item.khuVucFull || "Đà Nẵng"}</span></div>
-          <h3 className="text-slate-800 font-extrabold text-[16px] sm:text-[17px] group-hover:text-orange-600 transition-colors duration-200 h-[2.8rem] sm:h-[3.2rem] line-clamp-2 overflow-hidden leading-snug mb-5">
+          <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" /><span className="truncate">{displayLocation}</span>
+          </div>
+          {/* Tiêu đề cố định 2 dòng, không lồi dòng 3 */}
+          <h3 className="text-slate-800 font-extrabold text-[15px] sm:text-base line-clamp-2 group-hover:text-orange-600 transition-colors duration-200 h-[2.6rem] sm:h-[3rem] overflow-hidden leading-snug mb-4">
             {item.tieude}
           </h3>
         </div>
-        <div className="grid grid-cols-3 gap-3 py-4 border-y border-slate-100 text-slate-600 text-[13px] text-center">
-          <div className="bg-slate-50/80 rounded-2xl py-2.5"><Square className="w-4 h-4 text-slate-400 mx-auto mb-1.5" /><span className="font-extrabold">{item.dienTich || "---"}</span></div>
-          <div className="bg-slate-50/80 rounded-2xl py-2.5"><Compass className="w-4 h-4 text-slate-400 mx-auto mb-1.5" /><span className="font-extrabold">{item.huong || "---"}</span></div>
-          <div className="bg-slate-50/80 rounded-2xl py-2.5"><BedDouble className="w-4 h-4 text-slate-400 mx-auto mb-1.5" /><span className="font-extrabold">{cauTruc}</span></div>
+
+        <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-50 text-slate-600 text-xs">
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+            <Square className="w-4 h-4 text-orange-500 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{item.dienTich || "---"}</span>
+          </div>
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+            <Compass className="w-4 h-4 text-orange-500 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{item.huong || "---"}</span>
+          </div>
+          <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl py-2">
+            <BedDouble className="w-4 h-4 text-orange-500 mb-1" /><span className="font-bold text-slate-700 truncate max-w-full px-1">{cauTrucPhong}</span>
+          </div>
         </div>
-        <div className="flex items-center justify-between mt-5 pt-1">
-          <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-300" /> {formatTimeAgo(item.ngayDang || item.ngay)}</span>
-          <span className="text-orange-500 text-[13px] font-extrabold flex items-center gap-1 group-hover:translate-x-1.5 transition-transform duration-300">Xem chi tiết <ChevronRight className="w-4 h-4" /></span>
+
+        <div className="flex items-center justify-between mt-4 pt-1">
+          <span className="text-[11px] text-slate-400 italic flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-300" /> {formatTimeAgo(displayTime)}</span>
+          <span className="text-orange-500 text-xs font-extrabold inline-flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-200">Chi tiết <ChevronRight className="w-4 h-4" /></span>
         </div>
       </div>
     </a>
