@@ -3,8 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import BackButton from "@/components/BackButton"; // 🌟 Import nút quay về chuẩn UX
 import PropertyClient from "./PropertyClient";
 import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils"; // 🌟 Import bùa chú tối ưu ảnh
@@ -105,13 +104,8 @@ export default async function NhaDatDetail({ params }: Props) {
 
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1 w-full max-w-full overflow-hidden">
-        <Link
-          href="/"
-          scroll={false}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" /> QUAY LẠI TRANG CHỦ
-        </Link>
+        {/* Nút Quay về mới tinh tích hợp lịch sử trình duyệt */}
+        <BackButton />
 
         {/* Bàn giao gói dữ liệu gốc siêu sạch sang cho Client xử lý hiệu ứng tương tác */}
         <PropertyClient item={item} />
