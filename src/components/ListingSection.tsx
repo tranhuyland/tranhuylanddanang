@@ -1,10 +1,12 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, Check, RotateCcw } from "lucide-react";
+import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check, RotateCcw } from "lucide-react";
 import { layUrlAnhChuan, cleanVietnameseText } from "@/lib/utils"; 
-import FilterWidget from "./FilterWidget"; // 🔥 Gọi Component vừa tách vào
 
+// ==========================================
+// 1. CẤU HÌNH INTERFACE & BIẾN TĨNH
+// ==========================================
 interface ListingSectionProps {
   allBdsItems: any[];
   forceDistrict?: string;
@@ -17,6 +19,14 @@ const TAB_OPTIONS = [
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
 
+const PHUONG_XA = {
+  phuong: ["Hải Châu", "Hòa Cường", "Thanh Khê", "An Khê", "An Hải", "Sơn Trà", "Ngũ Hành Sơn", "Hòa Khánh", "Hải Vân", "Liên Chiểu", "Cẩm Lệ", "Hòa Xuân", "Hòa Vang", "Bà Nà", "Hòa Tiến", "Hòa Phước"],
+  xa: ["Hòa Bắc", "Hòa Liên", "Hòa Ninh"]
+};
+
+// ==========================================
+// 2. CÁC HÀM TIỆN ÍCH (HELPERS)
+// ==========================================
 const formatTimeAgo = (dateStr: string) => {
   if (!dateStr) return "Tin mới";
   const parts = dateStr.split(/[-/]/);
@@ -26,6 +36,52 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
+// ==========================================
+// 3. COMPONENT CON LỌC DỮ LIỆU
+// ==========================================
+const FilterFields = ({ tempFilters, handleFilterChange, forceDistrict }: any) => (
+  <>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Phường / Xã</label>
+      <select disabled={!!forceDistrict} value={tempFilters.khuVuc} onChange={(e) => handleFilterChange('khuVuc', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
+        <option value="all">Tất cả Vị trí</option>
+        <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
+        {PHUONG_XA.phuong.map(p => <option key={p} value={p}>{p}</option>)}
+        <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Xã --</option>
+        {PHUONG_XA.xa.map(x => <option key={x} value={x}>{x}</option>)}
+      </select>
+    </div>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Khoảng Giá</label>
+      <select value={tempFilters.khoangGia} onChange={(e) => handleFilterChange('khoangGia', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
+        <option value="all">Tất cả mức giá</option>
+        <option value="duoi3">Dưới 3 Tỷ</option>
+        <option value="3to5">Từ 3 - 5 Tỷ</option>
+        <option value="tren5">Trên 5 Tỷ</option>
+      </select>
+    </div>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Hướng Nhà</label>
+      <select value={tempFilters.huong} onChange={(e) => handleFilterChange('huong', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
+        <option value="all">Tất cả các hướng</option>
+        {["Đông", "Tây", "Nam", "Bắc"].map(h => <option key={h} value={h}>Hướng {h}</option>)}
+      </select>
+    </div>
+    <div className="space-y-2">
+      <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest pl-1">Nhóm Đặc Quyền</label>
+      <select value={tempFilters.tag} onChange={(e) => handleFilterChange('tag', e.target.value)} className="w-full bg-slate-50 border border-slate-200 hover:border-orange-300 focus:border-orange-500 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-700 outline-none transition-all cursor-pointer appearance-none">
+        <option value="all">Tất cả phân nhóm</option>
+        <option value="mattien">🏢 Mặt Tiền Kinh Doanh</option>
+        <option value="chinhchu">✓ Hàng Chính Chủ</option>
+        <option value="chothue">🔑 Nhà Cho Thuê</option>
+      </select>
+    </div>
+  </>
+);
+
+// ==========================================
+// 4. COMPONENT CHÍNH
+// ==========================================
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
   const initialFilters = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
@@ -36,29 +92,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
-  const [searchTerm, setSearchTerm] = useState("");
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
-
-  // 🔥 LẮNG NGHE LỆNH TỪ HEADER TRUYỀN XUỐNG
-  useEffect(() => {
-    const handleOpenDrawer = () => {
-      setTempFilters(filters);
-      setIsDrawerOpen(true);
-    };
-    const handleSearch = (e: any) => {
-      setSearchTerm(e.detail);
-      setCurrentPage(1);
-    };
-
-    window.addEventListener('openFilterDrawer', handleOpenDrawer);
-    window.addEventListener('searchBds', handleSearch);
-
-    return () => {
-      window.removeEventListener('openFilterDrawer', handleOpenDrawer);
-      window.removeEventListener('searchBds', handleSearch);
-    };
-  }, [filters]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -89,15 +124,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems].sort((a: any, b: any) => {
-      const getTime = (d: string) => d ? new Date(d.split(/[-/]/)[2] as any, Number(d.split(/[-/]/)[1]) - 1, d.split(/[-/]/)[0] as any).getTime() : 0;
+      // 🔥 BẢO MẬT: Thuật toán ngày tháng chống lỗi (Safe Date Parser)
+      const getTime = (d: string) => {
+        if (!d) return 0;
+        const parts = d.split(/[-/]/);
+        if (parts.length < 3) return 0;
+        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
+      };
       const timeDiff = getTime(b.ngayDang || b.ngay) - getTime(a.ngayDang || a.ngay);
       return timeDiff !== 0 ? timeDiff : (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
-    if (searchTerm) {
-      const target = cleanVietnameseText(searchTerm);
-      result = result.filter(i => cleanVietnameseText(`${i.tieude || ""} ${i.diaChi || ""} ${i.khuVuc || ""} ${i.mota || ""}`).includes(target));
-    }
     if (filters.khuVuc !== "all") {
       const target = cleanVietnameseText(filters.khuVuc);
       result = result.filter(i => cleanVietnameseText(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
@@ -123,7 +160,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       });
     }
     return result;
-  }, [filters, activeLoaiHinh, searchTerm, safeBdsItems]);
+  }, [filters, activeLoaiHinh, safeBdsItems]);
 
   const handleApplyFilters = () => {
     setFilters(tempFilters);
@@ -151,16 +188,13 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
 
-          {/* 🔥 LẮP GHÉP BỘ LỌC GỌN GÀNG TẠI ĐÂY */}
-          <FilterWidget 
-            tempFilters={tempFilters} 
-            handleFilterChange={handleFilterChange} 
-            forceDistrict={forceDistrict}
-            isDrawerOpen={isDrawerOpen}
-            closeDrawer={closeDrawer}
-            handleResetFilters={handleResetFilters}
-            handleApplyFilters={handleApplyFilters}
-          />
+          <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
+            className="md:hidden w-full mb-2 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all">
+            <SlidersHorizontal size={18} />
+            Mở bộ lọc chi tiết {Object.values(filters).filter(v => v !== "all").length > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center">{Object.values(filters).filter(v => v !== "all").length}</span>}
+          </button>
+
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6"><FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} /></div>
 
           <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
             <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
@@ -172,16 +206,40 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-6 mb-20 scroll-mt-28">
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDrawer} />
+          <div className="relative bg-white rounded-t-[2rem] shadow-2xl h-[80vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 p-5 shrink-0">
+              <div className="flex items-center gap-2"><SlidersHorizontal size={18} className="text-orange-500" /><h4 className="font-extrabold text-slate-800 text-base">Bộ lọc nâng cao</h4></div>
+              <button onClick={closeDrawer} className="text-slate-400 p-2"><X size={22} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-48"><FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} /></div>
+            <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-28 z-20 pointer-events-none">
+              <div className="flex gap-3 bg-white p-2 rounded-[1.5rem] shadow-xl border border-slate-100 pointer-events-auto">
+                <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-bold text-sm py-3.5 rounded-xl bg-slate-50">Đặt lại</button>
+                <button onClick={handleApplyFilters} className="w-2/3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm py-3.5 rounded-xl flex items-center justify-center gap-2"><Check size={18} />Áp dụng ngay</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-12 mb-20 scroll-mt-28">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
-              <BdsCard key={item.id} item={item} rank={(currentPage - 1) * itemsPerPage + index + 1} />
+              <BdsCard 
+                key={item.id} 
+                item={item} 
+                rank={(currentPage - 1) * itemsPerPage + index + 1} 
+              />
             ))}
           </div>
         ) : (
           <div className="text-center py-24 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200"><p className="text-slate-500 font-bold text-lg">Không tìm thấy sản phẩm phù hợp</p></div>
         )}
+        
         {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
           <div className="flex justify-center gap-2 mt-16">
             {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
@@ -190,11 +248,19 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
         )}
+
+        {/* 💡 Công cụ để anh Huy kiểm tra lỗi data từ phía Google Sheet */}
+        <div className="text-center mt-8 text-slate-400 text-[13px] font-medium opacity-50">
+          (Debug nội bộ) Hệ thống đã lấy thành công: {safeBdsItems.length} sản phẩm.
+        </div>
       </main>
     </>
   );
 }
 
+// ==========================================
+// 5. COMPONENT THẺ BĐS 
+// ==========================================
 function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
@@ -228,8 +294,13 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 group-active:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-300" />
         
+        {/* KHU VỰC NHÃN (BADGES) */}
         <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-10">
-          {rank && <span className="bg-red-600/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-sm tracking-wider">#{rank}</span>}
+          {rank && (
+            <span className="bg-red-600/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-sm tracking-wider">
+              #{rank}
+            </span>
+          )}
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
