@@ -1,34 +1,50 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import SwiperCore from 'swiper';
-import { Navigation, Pagination, Thumbs, FreeMode, Zoom, Keyboard } from 'swiper/modules';
+import { Navigation, Pagination, Zoom, Keyboard } from 'swiper/modules';
+import { layUrlAnhChuan } from "@/lib/utils";
+import { PlayCircle, Image as ImageIcon, Map, X, ZoomIn, ZoomOut } from "lucide-react";
 
-// Import CSS cốt lõi của Swiper
+// Import CSS cốt lõi
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import 'swiper/css/thumbs';
-import 'swiper/css/free-mode';
 import 'swiper/css/zoom';
 
 interface PropertyGalleryProps {
   images: string[];
   alt: string;
-  videoUrl?: string; // Link Video (YouTube)
-  linkMap?: string;  // Link Google Maps (Nhúng)
+  videoUrl?: string; // Nhận link Video
+  linkMap?: string;  // Nhận link Map
 }
 
-export default function PropertyGallery({ images, alt, videoUrl, linkMap }: PropertyGalleryProps) {
-  const [thumbsSwiper, setThumbsSwiper] = useState<SwiperCore | null>(null);
+export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGalleryProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  
-  // Trạng thái quản lý 3 Tab: 'images' | 'video' | 'map'
   const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
 
-  // Hàm chuyển đổi link YouTube thường thành link Nhúng (Embed) để xem trực tiếp
+  // Xử lý nút Back của điện thoại để đóng Popup
+  useEffect(() => {
+    const handlePopState = () => setIsLightboxOpen(false);
+    if (isLightboxOpen) {
+      window.history.pushState({ lightbox: true }, '');
+      window.addEventListener('popstate', handlePopState);
+    }
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isLightboxOpen]);
+
+  const closeLightbox = () => {
+    if (isLightboxOpen) {
+      setIsLightboxOpen(false);
+      // Reset về tab ảnh mỗi khi đóng
+      setTimeout(() => setActiveTab('images'), 300);
+      if (window.history.state?.lightbox) window.history.back();
+    }
+  };
+
+  // Hàm chuyển đổi link YouTube thường thành link nhúng
   const getYoutubeEmbedUrl = (url?: string) => {
     if (!url) return '';
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -36,186 +52,179 @@ export default function PropertyGallery({ images, alt, videoUrl, linkMap }: Prop
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // Nếu không có ảnh nào, hiển thị khung trống
-  if (!images || images.length === 0) {
-    return <div className="w-full aspect-[16/10] bg-gray-100 flex items-center justify-center rounded-lg text-gray-400">Không có hình ảnh</div>;
-  }
+  if (!images || images.length === 0) return null;
 
   return (
     <>
-      {/* --------------------------------------------------------- */}
-      {/* KHU VỰC HIỂN THỊ CHÍNH (ẢNH / VIDEO / BẢN ĐỒ)               */}
-      {/* --------------------------------------------------------- */}
-      <div className="w-full property-gallery-normal flex flex-col gap-3">
-        
-        {/* Khung xem chính */}
-        <div className="relative group rounded-xl overflow-hidden aspect-[16/10] border border-gray-200 bg-gray-100 shadow-sm">
-          
-          {/* TAB 1: HÌNH ẢNH */}
-          {activeTab === 'images' && (
-            <Swiper
-              loop={true}
-              spaceBetween={0}
-              navigation={{ nextEl: '.main-next', prevEl: '.main-prev' }}
-              pagination={{ clickable: true, el: '.main-pagination' }}
-              thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
-              modules={[Navigation, Pagination, Thumbs]}
-              className="w-full h-full"
-              onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-            >
-              {images.map((img, index) => (
-                <SwiperSlide key={index} className="flex items-center justify-center">
-                  <Image
-                    src={img}
-                    alt={`${alt} - Hình ${index + 1}`}
-                    fill
-                    className="object-contain cursor-zoom-in"
-                    sizes="(max-width: 768px) 100vw, 800px"
-                    priority={index === 0}
-                    onClick={() => {
-                      setActiveIndex(index);
-                      setIsLightboxOpen(true);
-                    }}
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          )}
-
-          {/* TAB 2: VIDEO */}
-          {activeTab === 'video' && videoUrl && (
-            <iframe
-              src={getYoutubeEmbedUrl(videoUrl)}
-              className="w-full h-full"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            ></iframe>
-          )}
-
-          {/* TAB 3: BẢN ĐỒ */}
-          {activeTab === 'map' && linkMap && (
-            <div className="w-full h-full">
-              {linkMap.includes('<iframe') ? (
-                // Nếu khách dán nguyên thẻ iframe của Google Maps
-                <div className="w-full h-full [&>iframe]:w-full [&>iframe]:h-full" dangerouslySetInnerHTML={{ __html: linkMap }} />
-              ) : (
-                // Nếu khách dán link nhúng
-                <iframe src={linkMap} className="w-full h-full border-0" allowFullScreen loading="lazy"></iframe>
-              )}
-            </div>
-          )}
-
-          {/* Mũi tên điều hướng cho Hình Ảnh (Chỉ hiện khi ở tab ảnh) */}
-          {activeTab === 'images' && (
-            <>
-              <button className="main-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white/70 hover:bg-white p-3 rounded-full text-gray-800 opacity-0 group-hover:opacity-100 transition shadow-md hidden md:block cursor-pointer">❮</button>
-              <button className="main-next absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white/70 hover:bg-white p-3 rounded-full text-gray-800 opacity-0 group-hover:opacity-100 transition shadow-md hidden md:block cursor-pointer">❯</button>
-            </>
-          )}
-          
-          {/* THANH 3 TAB NỔI BÊN TRONG KHUNG ẢNH */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex bg-black/60 backdrop-blur-md p-1.5 rounded-full shadow-lg overflow-hidden">
-            <button 
-              onClick={() => setActiveTab('images')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${activeTab === 'images' ? 'bg-white text-orange-600 shadow-sm' : 'text-white hover:bg-white/20'}`}
-            >
-              🖼️ Hình ảnh
-            </button>
-            {videoUrl && (
-              <button 
-                onClick={() => setActiveTab('video')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${activeTab === 'video' ? 'bg-white text-orange-600 shadow-sm' : 'text-white hover:bg-white/20'}`}
+      {/* ========================================================= */}
+      {/* 1. GIAO DIỆN BÊN NGOÀI (TỐI GIẢN - CHỈ HIỆN ẢNH)          */}
+      {/* ========================================================= */}
+      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group">
+        <Swiper
+          modules={[Navigation, Pagination, Keyboard]}
+          spaceBetween={0}
+          slidesPerView={1}
+          initialSlide={activeIndex}
+          onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+          keyboard={{ enabled: true }}
+          navigation={{ nextEl: '.nm-next', prevEl: '.nm-prev' }}
+          pagination={{ type: 'fraction', el: '.nm-fraction' }}
+          className="w-full h-full"
+        >
+          {images.map((img, idx) => (
+            <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
+              <div 
+                className="w-full h-full relative cursor-zoom-in" 
+                onClick={() => {
+                  setActiveIndex(idx);
+                  setActiveTab('images');
+                  setIsLightboxOpen(true);
+                }}
               >
-                🎥 Video
-              </button>
-            )}
-            {linkMap && (
-              <button 
-                onClick={() => setActiveTab('map')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${activeTab === 'map' ? 'bg-white text-orange-600 shadow-sm' : 'text-white hover:bg-white/20'}`}
-              >
-                🗺️ Bản đồ
-              </button>
-            )}
-          </div>
-        </div>
+                <Image src={layUrlAnhChuan(img)} alt={`${alt} - Hình ${idx + 1}`} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority={idx === 0} />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
 
-        {/* Chấm tròn phân trang trên di động (Chỉ hiện khi ở tab ảnh) */}
-        {activeTab === 'images' && <div className="main-pagination flex justify-center z-10 md:hidden pb-1"></div>}
+        {/* Mũi tên vuông bo góc chuẩn Batdongsan.com */}
+        <button className="nm-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/90 text-black rounded flex items-center justify-center shadow hover:bg-white transition active:scale-95 disabled:opacity-0 cursor-pointer hidden md:flex">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button className="nm-next absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/90 text-black rounded flex items-center justify-center shadow hover:bg-white transition active:scale-95 disabled:opacity-0 cursor-pointer hidden md:flex">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
 
-        {/* MẢNG THUMBNAILS (Chỉ hiện khi ở tab ảnh) */}
-        {activeTab === 'images' && (
-          <div className="w-full">
-            <Swiper
-              onSwiper={setThumbsSwiper}
-              loop={true}
-              spaceBetween={10}
-              slidesPerView={4}
-              freeMode={true}
-              watchSlidesProgress={true}
-              modules={[FreeMode, Navigation, Thumbs]}
-              breakpoints={{
-                  640: { slidesPerView: 5 },
-                  1024: { slidesPerView: 6 },
-              }}
-              className="thumbs-swiper"
-            >
-              {images.map((img, index) => (
-                <SwiperSlide key={index} className="aspect-square rounded-md overflow-hidden cursor-pointer border-2 border-transparent hover:border-gray-300">
-                  <Image src={img} alt={`${alt} thumb ${index + 1}`} fill className="object-cover" sizes="150px" />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        )}
+        {/* Cục đếm phân số nằm góc dưới phải */}
+        <div className="nm-fraction absolute bottom-4 right-4 z-10 bg-black/70 text-white px-2.5 py-1 rounded text-xs font-semibold tracking-wider"></div>
       </div>
 
-      {/* --------------------------------------------------------- */}
-      {/* POPUP PHÓNG TO ẢNH (LIGHTBOX) - Không thay đổi               */}
-      {/* --------------------------------------------------------- */}
-      {isLightboxOpen && activeTab === 'images' && (
-        <div 
-          className="fixed inset-0 bg-black/95 z-[9999] flex flex-col"
-          onClick={(e) => { if (e.target === e.currentTarget) setIsLightboxOpen(false); }}
-        >
-          <div className="relative w-full h-20 flex items-center justify-center p-4">
-            <button onClick={() => setIsLightboxOpen(false)} className="absolute right-6 top-4 text-white text-3xl font-light z-20 opacity-70 hover:opacity-100 transition">✕</button>
-            <div className="flex items-center gap-6 z-20">
-              <button className="lb-prev text-white text-3xl font-extralight bg-gray-800/30 p-2.5 rounded-lg hover:bg-gray-800/60 transition cursor-pointer">❮</button>
-              <span className="text-white text-xl font-medium select-none min-w-[60px] text-center">{activeIndex + 1} / {images.length}</span>
-              <button className="lb-next text-white text-3xl font-extralight bg-gray-800/30 p-2.5 rounded-lg hover:bg-gray-800/60 transition cursor-pointer">❯</button>
+
+      {/* ========================================================= */}
+      {/* 2. GIAO DIỆN LIGHTBOX BÊN TRONG (FULL MÀN HÌNH CÓ 3 TAB)  */}
+      {/* ========================================================= */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 bg-black z-[99999] flex flex-col animate-fade-in">
+          
+          {/* THANH TOP BAR (Số trang + 3 Tabs + Nút Đóng) */}
+          <div className="relative w-full h-16 sm:h-20 flex items-center justify-between px-4 z-50 bg-black">
+            
+            {/* Phân số góc trái (Chỉ hiện số khi đang ở tab Ảnh) */}
+            <div className="w-16 sm:w-24 text-white text-sm sm:text-base font-medium">
+              {activeTab === 'images' ? `${activeIndex + 1} / ${images.length}` : ''}
+            </div>
+
+            {/* Khối 3 Tabs Cột giữa */}
+            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
+              {videoUrl && (
+                <button 
+                  onClick={() => setActiveTab('video')}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'video' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}
+                >
+                  <PlayCircle className="w-4 h-4" /> Video
+                </button>
+              )}
+              
+              <button 
+                onClick={() => setActiveTab('images')}
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'images' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}
+              >
+                <ImageIcon className="w-4 h-4" /> Hình ảnh
+              </button>
+
+              {linkMap && (
+                <button 
+                  onClick={() => setActiveTab('map')}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'map' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}
+                >
+                  <Map className="w-4 h-4" /> Bản đồ
+                </button>
+              )}
+            </div>
+
+            {/* Cụm nút bấm góc phải (Zoom + Đóng) */}
+            <div className="flex items-center justify-end w-16 sm:w-24 gap-1 sm:gap-2">
+               {/* 2 Nút Zoom (Ẩn trên di động, chỉ hiện máy tính và khi ở tab ảnh) */}
+              {activeTab === 'images' && (
+                <>
+                  <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-out"><ZoomOut className="w-5 h-5" /></button>
+                  <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-in"><ZoomIn className="w-5 h-5" /></button>
+                </>
+              )}
+              {/* Nút X Đóng Popup */}
+              <button onClick={closeLightbox} className="text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer">
+                <X className="w-6 h-6" />
+              </button>
             </div>
           </div>
 
-          <div className="flex-grow w-full relative overflow-hidden">
-            <Swiper
-              initialSlide={activeIndex}
-              spaceBetween={0}
-              navigation={{ nextEl: '.lb-next', prevEl: '.lb-prev' }}
-              zoom={true}
-              keyboard={{ enabled: true }}
-              modules={[Navigation, Zoom, Keyboard]}
-              className="w-full h-full lb-main-swiper"
-              onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
-            >
-              {images.map((img, index) => (
-                <SwiperSlide key={index} className="flex items-center justify-center overflow-hidden">
-                  <div className="swiper-zoom-container h-full flex items-center justify-center">
-                    <Image src={img} alt={`${alt} full ${index + 1}`} width={1600} height={1200} className="object-contain max-h-screen max-w-full" priority />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+          {/* VÙNG NỘI DUNG CHÍNH (Đổi theo Tab) */}
+          <div className="flex-1 w-full relative bg-black flex items-center justify-center overflow-hidden">
+            
+            {/* Nếu đang chọn Tab Hình Ảnh */}
+            {activeTab === 'images' && (
+              <Swiper
+                modules={[Navigation, Zoom, Keyboard]}
+                spaceBetween={20}
+                slidesPerView={1}
+                initialSlide={activeIndex}
+                onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+                zoom={true}
+                keyboard={{ enabled: true }}
+                navigation={{ nextEl: '.lb-next', prevEl: '.lb-prev' }}
+                className="w-full h-full lb-main-swiper"
+              >
+                {images.map((img, idx) => (
+                  <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
+                    <div className="swiper-zoom-container h-full w-full flex items-center justify-center">
+                      <Image src={layUrlAnhChuan(img)} alt={`${alt} - Full ${idx + 1}`} width={1600} height={1200} className="object-contain max-h-[85vh] max-w-full" priority />
+                    </div>
+                  </SwiperSlide>
+                ))}
+                
+                {/* Mũi tên riêng cho chế độ xem toàn màn hình */}
+                <button className="lb-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button className="lb-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </Swiper>
+            )}
+
+            {/* Nếu đang chọn Tab Video */}
+            {activeTab === 'video' && videoUrl && (
+              <div className="w-full h-[30vh] sm:h-[80vh] max-w-5xl mx-auto px-4">
+                <iframe src={getYoutubeEmbedUrl(videoUrl)} className="w-full h-full rounded-lg" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+              </div>
+            )}
+
+            {/* Nếu đang chọn Tab Bản Đồ */}
+            {activeTab === 'map' && linkMap && (
+              <div className="w-full h-[50vh] sm:h-[80vh] max-w-5xl mx-auto px-4">
+                {linkMap.includes('<iframe') ? (
+                  <div className="w-full h-full rounded-lg overflow-hidden [&>iframe]:w-full [&>iframe]:h-full" dangerouslySetInnerHTML={{ __html: linkMap }} />
+                ) : (
+                  <iframe src={linkMap} className="w-full h-full border-0 rounded-lg bg-white" allowFullScreen loading="lazy"></iframe>
+                )}
+              </div>
+            )}
           </div>
-          <p className="p-4 text-center text-white/50 text-xs select-none">Vuốt để chuyển ảnh hoặc dùng phím Esc để thoát</p>
+
+          {/* CHÚ THÍCH TIÊU ĐỀ Ở ĐÁY LIGHTBOX */}
+          <div className="w-full h-16 flex items-center justify-center bg-black px-4">
+             <p className="text-white/80 text-sm sm:text-base font-medium truncate max-w-2xl text-center">{alt}</p>
+          </div>
         </div>
       )}
-      
+
+      {/* CSS ẨN CÁC THÀNH PHẦN THỪA CỦA SWIPER */}
       <style jsx global>{`
-        .property-gallery-normal .thumbs-swiper .swiper-slide-thumb-active { opacity: 1; border-color: #f97316 !important; }
-        .property-gallery-normal .main-pagination .swiper-pagination-bullet { background: #9ca3af !important; opacity: 0.7; width: 8px; height: 8px; margin: 0 4px !important; }
-        .property-gallery-normal .main-pagination .swiper-pagination-bullet-active { background: #f97316 !important; opacity: 1; width: 16px; border-radius: 4px; }
-        .lb-main-swiper .swiper-button-next, .lb-main-swiper .swiper-button-prev, .lb-main-swiper .swiper-pagination { display: none !important; }
+        .nm-fraction.swiper-pagination-fraction {
+          width: auto !important;
+          left: auto !important;
+        }
+        .lb-main-swiper .swiper-pagination { display: none !important; }
       `}</style>
     </>
   );
