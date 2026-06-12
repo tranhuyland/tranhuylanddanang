@@ -3,10 +3,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import { notFound } from "next/navigation";
-import BackButton from "@/components/BackButton"; // 🌟 Import nút quay về chuẩn UX
+import BackButton from "@/components/BackButton"; // 🌟 Vẫn giữ import để nút nổi hoạt động
 import PropertyClient from "./PropertyClient";
 import Script from "next/script";
-import { layUrlAnhChuan } from "@/lib/utils"; // 🌟 Import bùa chú tối ưu ảnh
+import { layUrlAnhChuan } from "@/lib/utils";
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
@@ -29,8 +29,6 @@ export async function generateMetadata({ params }: Props) {
   const priceText = item.gia || item.Gia || "Liên hệ";
   const areaText = item.dienTich || item.DienTich || "Chưa rõ";
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
-  
-  // 🔥 Code được rút gọn tối đa: Tự động lấy ảnh đầu tiên và ép sang WebP
   const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
 
   return {
@@ -59,17 +57,11 @@ export default async function NhaDatDetail({ params }: Props) {
   if (!item) notFound();
 
   const titleText = item.tieude || item.Tieude || "";
-  
-  // Xử lý giá: Schema yêu cầu giá dạng số thuần (Ví dụ từ "3.5 tỷ" hoặc "3500000000" chuyển về dạng số)
   const rawPrice = item.gia || item.Gia || "0";
   const priceNumber = parseFloat(rawPrice.replace(/[^0-9]/g, "")) || 0; 
-
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
-  
-  // 🔥 Code được rút gọn tối đa cho Schema SEO
   const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
 
-  // 🛠️ CẬP NHẬT CẤU TRÚC SCHEMA LỒNG NHAU ĐỦ 3 PHẦN: RealEstateListing -> Residence -> Place
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
@@ -80,11 +72,11 @@ export default async function NhaDatDetail({ params }: Props) {
     "priceCurrency": "VND",
     "price": priceNumber > 0 ? priceNumber : rawPrice, 
     "about": {
-      "@type": "Residence", // 🏠 TẦNG 2: Định nghĩa đây là một nơi cư trú/bất động sản
+      "@type": "Residence",
       "name": titleText,
       "description": `Bất động sản diện tích ${item.dienTich || item.DienTich || "Chưa rõ"}`,
       "address": {
-        "@type": "PostalAddress", // 📍 TẦNG 3: Chi tiết địa điểm (Place) thuộc Residence
+        "@type": "PostalAddress",
         "streetAddress": locationText,
         "addressLocality": "Đà Nẵng", 
         "addressRegion": "Đà Nẵng",
@@ -95,7 +87,6 @@ export default async function NhaDatDetail({ params }: Props) {
 
   return (
     <>
-      {/* ⚡ Sử dụng component Script của Next.js để tối ưu hóa việc load script ngầm */}
       <Script
         id="bds-structured-data"
         type="application/ld+json"
@@ -104,12 +95,13 @@ export default async function NhaDatDetail({ params }: Props) {
 
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1 w-full max-w-full overflow-hidden">
-        {/* Nút Quay về mới tinh tích hợp lịch sử trình duyệt */}
-        <BackButton />
-
-        {/* Bàn giao gói dữ liệu gốc siêu sạch sang cho Client xử lý hiệu ứng tương tác */}
+        {/* Đã xóa <BackButton /> ở đây để nó không bị lặp lại hoặc nằm sai vị trí */}
         <PropertyClient item={item} />
       </main>
+      
+      {/* 🌟 Đặt BackButton ở đây: Vì nó là component 'fixed', nó sẽ tự biết cách nổi lên đúng vị trí */}
+      <BackButton />
+      
       <Footer />
       <FloatingWidgets />
     </>
