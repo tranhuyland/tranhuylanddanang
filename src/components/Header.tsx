@@ -100,7 +100,7 @@ export default function Header() {
               <div className="border-t border-slate-100 my-2"></div>
               
               {/* 🚨 Thay số điện thoại của anh vào đây nhé */}
-              <a href="tel:0905000000" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
+              <a href="tel:0931555551" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
                 <Phone size={18} className="text-orange-500" /> Gọi Hotline hỗ trợ
               </a>
             </div>
