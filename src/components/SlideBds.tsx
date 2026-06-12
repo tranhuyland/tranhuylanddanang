@@ -7,7 +7,6 @@ import { Navigation, Pagination, Zoom, Keyboard } from 'swiper/modules';
 import { layUrlAnhChuan } from "@/lib/utils";
 import { PlayCircle, Image as ImageIcon, Map, X, ZoomIn, ZoomOut } from "lucide-react";
 
-// Import CSS cốt lõi
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -16,8 +15,8 @@ import 'swiper/css/zoom';
 interface PropertyGalleryProps {
   images: string[];
   alt: string;
-  videoUrl?: string; // Nhận link Video
-  linkMap?: string;  // Nhận link Map
+  videoUrl?: string; 
+  linkMap?: string;  
 }
 
 export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGalleryProps) {
@@ -25,7 +24,6 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
 
-  // Xử lý nút Back của điện thoại để đóng Popup
   useEffect(() => {
     const handlePopState = () => setIsLightboxOpen(false);
     if (isLightboxOpen) {
@@ -38,13 +36,11 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
   const closeLightbox = () => {
     if (isLightboxOpen) {
       setIsLightboxOpen(false);
-      // Reset về tab ảnh mỗi khi đóng
       setTimeout(() => setActiveTab('images'), 300);
       if (window.history.state?.lightbox) window.history.back();
     }
   };
 
-  // Hàm chuyển đổi link YouTube thường thành link nhúng
   const getYoutubeEmbedUrl = (url?: string) => {
     if (!url) return '';
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -56,10 +52,8 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
 
   return (
     <>
-      {/* ========================================================= */}
-      {/* 1. GIAO DIỆN BÊN NGOÀI (TỐI GIẢN - CHỈ HIỆN ẢNH)          */}
-      {/* ========================================================= */}
-      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group">
+      {/* 1. GIAO DIỆN BÊN NGOÀI (ẢNH ĐƠN CHUẨN BATDONGSAN.COM) */}
+      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group z-0">
         <Swiper
           modules={[Navigation, Pagination, Keyboard]}
           spaceBetween={0}
@@ -87,81 +81,56 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
           ))}
         </Swiper>
 
-        {/* Mũi tên vuông bo góc chuẩn Batdongsan.com */}
-        <button className="nm-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/90 text-black rounded flex items-center justify-center shadow hover:bg-white transition active:scale-95 disabled:opacity-0 cursor-pointer hidden md:flex">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        {/* Đã xóa hidden, hiển thị mũi tên ở mọi thiết bị */}
+        <button className="nm-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <button className="nm-next absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white/90 text-black rounded flex items-center justify-center shadow hover:bg-white transition active:scale-95 disabled:opacity-0 cursor-pointer hidden md:flex">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        <button className="nm-next absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
 
-        {/* Cục đếm phân số nằm góc dưới phải */}
-        <div className="nm-fraction absolute bottom-4 right-4 z-10 bg-black/70 text-white px-2.5 py-1 rounded text-xs font-semibold tracking-wider"></div>
+        {/* Cục số trang góc phải dưới */}
+        <div className="nm-fraction absolute bottom-3 right-3 z-10 flex items-center justify-center pointer-events-none"></div>
       </div>
 
-
-      {/* ========================================================= */}
-      {/* 2. GIAO DIỆN LIGHTBOX BÊN TRONG (FULL MÀN HÌNH CÓ 3 TAB)  */}
-      {/* ========================================================= */}
+      {/* 2. POPUP BÊN TRONG KHI PHÓNG TO (3 TAB) */}
       {isLightboxOpen && (
         <div className="fixed inset-0 bg-black z-[99999] flex flex-col animate-fade-in">
-          
-          {/* THANH TOP BAR (Số trang + 3 Tabs + Nút Đóng) */}
           <div className="relative w-full h-16 sm:h-20 flex items-center justify-between px-4 z-50 bg-black">
-            
-            {/* Phân số góc trái (Chỉ hiện số khi đang ở tab Ảnh) */}
             <div className="w-16 sm:w-24 text-white text-sm sm:text-base font-medium">
               {activeTab === 'images' ? `${activeIndex + 1} / ${images.length}` : ''}
             </div>
 
-            {/* Khối 3 Tabs Cột giữa */}
             <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
               {videoUrl && (
-                <button 
-                  onClick={() => setActiveTab('video')}
-                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'video' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}
-                >
+                <button onClick={() => setActiveTab('video')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'video' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
                   <PlayCircle className="w-4 h-4" /> Video
                 </button>
               )}
-              
-              <button 
-                onClick={() => setActiveTab('images')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'images' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}
-              >
+              <button onClick={() => setActiveTab('images')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'images' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
                 <ImageIcon className="w-4 h-4" /> Hình ảnh
               </button>
-
               {linkMap && (
-                <button 
-                  onClick={() => setActiveTab('map')}
-                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'map' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}
-                >
+                <button onClick={() => setActiveTab('map')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'map' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
                   <Map className="w-4 h-4" /> Bản đồ
                 </button>
               )}
             </div>
 
-            {/* Cụm nút bấm góc phải (Zoom + Đóng) */}
             <div className="flex items-center justify-end w-16 sm:w-24 gap-1 sm:gap-2">
-               {/* 2 Nút Zoom (Ẩn trên di động, chỉ hiện máy tính và khi ở tab ảnh) */}
               {activeTab === 'images' && (
                 <>
                   <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-out"><ZoomOut className="w-5 h-5" /></button>
                   <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-in"><ZoomIn className="w-5 h-5" /></button>
                 </>
               )}
-              {/* Nút X Đóng Popup */}
               <button onClick={closeLightbox} className="text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer">
                 <X className="w-6 h-6" />
               </button>
             </div>
           </div>
 
-          {/* VÙNG NỘI DUNG CHÍNH (Đổi theo Tab) */}
           <div className="flex-1 w-full relative bg-black flex items-center justify-center overflow-hidden">
-            
-            {/* Nếu đang chọn Tab Hình Ảnh */}
             {activeTab === 'images' && (
               <Swiper
                 modules={[Navigation, Zoom, Keyboard]}
@@ -182,24 +151,21 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
                   </SwiperSlide>
                 ))}
                 
-                {/* Mũi tên riêng cho chế độ xem toàn màn hình */}
-                <button className="lb-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <button className="lb-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <button className="lb-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                <button className="lb-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
               </Swiper>
             )}
 
-            {/* Nếu đang chọn Tab Video */}
             {activeTab === 'video' && videoUrl && (
               <div className="w-full h-[30vh] sm:h-[80vh] max-w-5xl mx-auto px-4">
-                <iframe src={getYoutubeEmbedUrl(videoUrl)} className="w-full h-full rounded-lg" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                <iframe src={getYoutubeEmbedUrl(videoUrl)} className="w-full h-full rounded-lg" allowFullScreen></iframe>
               </div>
             )}
 
-            {/* Nếu đang chọn Tab Bản Đồ */}
             {activeTab === 'map' && linkMap && (
               <div className="w-full h-[50vh] sm:h-[80vh] max-w-5xl mx-auto px-4">
                 {linkMap.includes('<iframe') ? (
@@ -211,18 +177,23 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
             )}
           </div>
 
-          {/* CHÚ THÍCH TIÊU ĐỀ Ở ĐÁY LIGHTBOX */}
           <div className="w-full h-16 flex items-center justify-center bg-black px-4">
              <p className="text-white/80 text-sm sm:text-base font-medium truncate max-w-2xl text-center">{alt}</p>
           </div>
         </div>
       )}
 
-      {/* CSS ẨN CÁC THÀNH PHẦN THỪA CỦA SWIPER */}
+      {/* ÉP CSS TOÀN CỤC CHO CỤC ĐẾM SỐ ĐỂ LUÔN NỔI BẬT */}
       <style jsx global>{`
         .nm-fraction.swiper-pagination-fraction {
           width: auto !important;
           left: auto !important;
+          background-color: rgba(0, 0, 0, 0.75) !important;
+          color: #ffffff !important;
+          padding: 4px 12px !important;
+          border-radius: 6px !important;
+          font-size: 13px !important;
+          letter-spacing: 2px !important;
         }
         .lb-main-swiper .swiper-pagination { display: none !important; }
       `}</style>
