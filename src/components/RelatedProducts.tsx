@@ -79,7 +79,7 @@ export default function RelatedProducts({ currentItem, allItems }: RelatedProduc
           );
         })}
       </div>
-
+      
       {/* CSS Nhúng để ẩn thanh cuộn (Scrollbar) mà vẫn cho phép vuốt */}
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar {
