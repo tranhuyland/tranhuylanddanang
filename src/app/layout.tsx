@@ -23,9 +23,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={plusJakartaSans.variable}>
-      {/* 💡 Không cần thẻ <head> chứa <link> font thủ công nữa, Next.js tự xử lý ngầm cực sạch */}
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0`}>
         {children}
+        
+        {/* 🔥 BÙA CHÚ CHỐNG NHẢY TRANG: Khóa tự động cuộn của trình duyệt, giúp trải nghiệm mượt như App */}
+        <script dangerouslySetInnerHTML={{ __html: `history.scrollRestoration = 'manual'` }} />
       </body>
     </html>
   );

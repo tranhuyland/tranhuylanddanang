@@ -4,6 +4,7 @@ import PropertyGallery from "@/components/SlideBds";
 import { MapPin, Calendar, ShieldCheck, Layers, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef } from "react";
+import { layUrlAnhChuan } from "@/lib/utils"; // <-- Import bùa chú tối ưu WebP
 
 interface PropertyClientProps {
   item: any;
@@ -172,7 +173,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
               p: ({node, ...props}) => <p className="mb-3.5 whitespace-pre-wrap text-slate-600 font-medium" {...props} />,
               ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3.5 space-y-1" {...props} />,
               li: ({node, ...props}) => <li className="text-slate-600 font-medium" {...props} />,
-              // Sửa lại strong: bỏ bg-amber-50 và text-amber-700
               strong: ({node, ...props}) => <strong className="font-black text-slate-900" {...props} />,
             }}
           >
@@ -218,7 +218,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
           >
             <img 
-              src={anhSoDoGoc} 
+              src={layUrlAnhChuan(anhSoDoGoc)} /* 🔥 Tích hợp WebP cho ảnh sổ đỏ */
               alt="Sổ hồng bản vẽ chi tiết" 
               draggable={false}
               style={{

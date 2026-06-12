@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Zoom, Keyboard } from 'swiper/modules';
+import { layUrlAnhChuan } from "@/lib/utils"; // <-- Tích hợp hàm tối ưu ảnh WebP tập trung
 
 // Import CSS của Swiper
 import 'swiper/css';
@@ -73,39 +74,44 @@ export default function PropertyGallery({ images, alt }: PropertyGalleryProps) {
       initialSlide={initialSlide}
       className={`h-full w-full max-w-full ${isLightbox ? '' : 'rounded-lg overflow-hidden'}`}
     >
-      {images.map((src, index) => (
-        <SwiperSlide key={index} className={isLightbox ? 'overflow-auto' : ''}>
-          {isLightbox ? (
-            <div className="swiper-zoom-container flex items-center justify-center h-full w-full">
-              <div className="relative w-full h-full max-w-7xl max-h-[90vh]">
+      {images.map((src, index) => {
+        // 🔥 Áp dụng chuẩn hóa URL WebP cho từng bức ảnh trong Slider
+        const optimizedSrc = layUrlAnhChuan(src);
+
+        return (
+          <SwiperSlide key={index} className={isLightbox ? 'overflow-auto' : ''}>
+            {isLightbox ? (
+              <div className="swiper-zoom-container flex items-center justify-center h-full w-full">
+                <div className="relative w-full h-full max-w-7xl max-h-[90vh]">
+                  <Image
+                    src={optimizedSrc}
+                    alt={`${alt} - Hình ${index + 1}`}
+                    fill
+                    sizes="100vw"
+                    className="object-contain"
+                    priority={index === 0}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="relative w-full h-full cursor-zoom-in group"
+                style={{ minHeight: "100%" }}
+                onClick={() => openLightbox(index)}
+              >
                 <Image
-                  src={src}
+                  src={optimizedSrc}
                   alt={`${alt} - Hình ${index + 1}`}
                   fill
-                  sizes="100vw"
-                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                   priority={index === 0}
                 />
               </div>
-            </div>
-          ) : (
-            <div 
-              className="relative w-full h-full cursor-zoom-in group"
-              style={{ minHeight: "100%" }}
-              onClick={() => openLightbox(index)}
-            >
-              <Image
-                src={src}
-                alt={`${alt} - Hình ${index + 1}`}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                priority={index === 0}
-              />
-            </div>
-          )}
-        </SwiperSlide>
-      ))}
+            )}
+          </SwiperSlide>
+        );
+      })}
 
       <button className="swiper-button-prev-custom absolute left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/30 text-white shadow-md transition hover:bg-white/50 disabled:opacity-0">
         ❮
