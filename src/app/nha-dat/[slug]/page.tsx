@@ -6,7 +6,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import PropertyClient from "./PropertyClient";
-import Script from "next/script"; // 🌟 Import thêm Script của Next.js
+import Script from "next/script";
+import { layUrlAnhChuan } from "@/lib/utils"; // 🌟 Import bùa chú tối ưu ảnh
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
@@ -29,9 +30,9 @@ export async function generateMetadata({ params }: Props) {
   const priceText = item.gia || item.Gia || "Liên hệ";
   const areaText = item.dienTich || item.DienTich || "Chưa rõ";
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
-  const anhGoc = item.anh || item.Anh || "";
-  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()) : [];
-  const imageSeo = danhSachAnh.find((a: string) => a.startsWith("http")) || "/icon.png";
+  
+  // 🔥 Code được rút gọn tối đa: Tự động lấy ảnh đầu tiên và ép sang WebP
+  const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
 
   return {
     title: `${titleText} - Giá tốt: ${priceText} | Trần Huy Land`,
@@ -61,14 +62,13 @@ export default async function NhaDatDetail({ params }: Props) {
   const titleText = item.tieude || item.Tieude || "";
   
   // Xử lý giá: Schema yêu cầu giá dạng số thuần (Ví dụ từ "3.5 tỷ" hoặc "3500000000" chuyển về dạng số)
-  // Nếu dữ liệu trong Google Sheet của bạn đã là số thuần thì giữ nguyên, nếu có chữ bạn nên clean nó.
   const rawPrice = item.gia || item.Gia || "0";
   const priceNumber = parseFloat(rawPrice.replace(/[^0-9]/g, "")) || 0; 
 
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
-  const anhGoc = item.anh || item.Anh || "";
-  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()) : [];
-  const imageSeo = danhSachAnh.find((a: string) => a.startsWith("http")) || "";
+  
+  // 🔥 Code được rút gọn tối đa cho Schema SEO
+  const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
 
   // 🛠️ CẬP NHẬT CẤU TRÚC SCHEMA LỒNG NHAU ĐỦ 3 PHẦN: RealEstateListing -> Residence -> Place
   const jsonLd = {
@@ -87,7 +87,7 @@ export default async function NhaDatDetail({ params }: Props) {
       "address": {
         "@type": "PostalAddress", // 📍 TẦNG 3: Chi tiết địa điểm (Place) thuộc Residence
         "streetAddress": locationText,
-        "addressLocality": "Đà Nẵng", // Bạn có thể tách quận huyện từ Google Sheet nếu có
+        "addressLocality": "Đà Nẵng", 
         "addressRegion": "Đà Nẵng",
         "addressCountry": "VN"
       }
