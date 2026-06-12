@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check, RotateCcw } from "lucide-react";
+import { layUrlAnhChuan, cleanVietnameseText } from "@/lib/utils"; // <-- Đã import từ utils.ts
 
 // ==========================================
 // 1. CẤU HÌNH INTERFACE & BIẾN TĨNH (CONSTANTS)
@@ -26,11 +27,6 @@ const PHUONG_XA = {
 // ==========================================
 // 2. CÁC HÀM TIỆN ÍCH (HELPERS)
 // ==========================================
-const cleanVietnameseText = (str: string) => {
-  if (!str) return "";
-  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
-};
-
 const formatTimeAgo = (dateStr: string) => {
   if (!dateStr) return "Tin mới";
   const parts = dateStr.split(/[-/]/);
@@ -38,23 +34,6 @@ const formatTimeAgo = (dateStr: string) => {
   const day = parseInt(parts[0], 10), month = parseInt(parts[1], 10) - 1, year = parseInt(parts[2], 10);
   const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
-};
-
-const layUrlAnhChuan = (chuoiAnh: string) => {
-  if (!chuoiAnh) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-  const danhSach = chuoiAnh.split(",").map(a => a.trim()).filter(a => a.startsWith("http"));
-  if (danhSach.length === 0) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-  
-  let url = danhSach[0];
-  
-  // 🔥 BÙA CHÚ WEBP CLOUDINARY: Tự động chèn f_auto,q_auto để tối ưu dung lượng và tốc độ
-  if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
-    if (!url.includes("f_auto") && !url.includes("q_auto")) {
-      url = url.replace("/upload/", "/upload/f_auto,q_auto/");
-    }
-  }
-  
-  return url;
 };
 
 // ==========================================
