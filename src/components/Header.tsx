@@ -1,37 +1,84 @@
 'use client';
-import React, { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { PlusCircle } from "lucide-react";
-import { Modals } from "./Modals";
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { ChevronLeft, Search, SlidersHorizontal } from 'lucide-react';
 
 export default function Header() {
-  const [isOpenKyGui, setIsOpenKyGui] = useState(false);
+  const router = useRouter();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Lắng nghe sự kiện cuộn trang để ẩn/hiện Logo
+  useEffect(() => {
+    const handleScroll = () => {
+      // Khi cuộn qua 40px, logo sẽ bắt đầu ẩn đi
+      if (window.scrollY > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <>
-      <header className="sticky top-0 z-40 bg-white/90 glass border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="relative h-9 w-9 sm:h-11 sm:w-11">
-              <Image src="https://i.postimg.cc/JhKg8VZ9/70554272-47DB-4D3A-A1AE-2782EFCAF00F.png" alt="Trần Huy Land" fill className="object-contain" />
-            </div>
-            <div>
-              <h1 className="font-extrabold text-slate-900 text-base sm:text-lg tracking-tight">TRẦN HUY LAND</h1>
-              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Giỏ Hàng Thật • Pháp Lý Minh Bạch</p>
-            </div>
-          </Link>
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-bold text-slate-600">
-            <Link href="/" className="hover:text-slate-900 transition-all">Trang Chủ</Link>
-            <a href="#listing-section" className="hover:text-slate-900 transition-all">Nhà Đất Đang Bán</a>
-            <a href="#about-section" className="hover:text-slate-900 transition-all">Giới Thiệu</a>
-            <a href="#blog-section" className="hover:text-slate-900 transition-all">Tin Tức Khảo Sát</a>
-          </nav>
-          <button onClick={() => setIsOpenKyGui(true)} className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all shadow-sm">
-            <PlusCircle className="w-4 h-4" /> Ký Gửi Nhanh
-          </button>
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-100 shadow-sm transition-all duration-300">
+      
+      {/* 1. KHU VỰC LOGO (Tự động ẩn khi cuộn) */}
+      <div
+        className={`flex items-center justify-center overflow-hidden transition-all duration-300 ease-in-out ${
+          isScrolled ? 'h-0 opacity-0' : 'h-14 opacity-100'
+        }`}
+      >
+        <Link href="/" className="relative h-10 w-40 mt-2 block">
+          {/* 🚨 LƯU Ý: Anh thay icon.png bằng tên file logo thật của anh nhé */}
+          <Image
+            src="/icon.png" 
+            alt="Logo"
+            fill
+            className="object-contain"
+            priority
+          />
+        </Link>
+      </div>
+
+      {/* 2. KHU VỰC CÔNG CỤ (Nút Back + Tìm kiếm + Bộ lọc) */}
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        
+        {/* Nút Back */}
+        <button
+          onClick={() => router.back()}
+          className="p-2 text-slate-600 hover:bg-slate-100 active:bg-slate-200 rounded-full transition-colors active:scale-95"
+          aria-label="Quay về"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        {/* Ô Tìm kiếm */}
+        <div className="flex-1 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={18} className="text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Tìm khu vực, đường, dự án..."
+            className="w-full bg-slate-100 text-[13px] sm:text-sm text-slate-700 rounded-full py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all border border-transparent focus:border-orange-200 focus:bg-white"
+          />
         </div>
-      </header>
-      <Modals type="kygui" isOpen={isOpenKyGui} onClose={() => setIsOpenKyGui(false)} />
-    </>
+
+        {/* Nút Bộ lọc */}
+        <button
+          className="p-2.5 bg-slate-100 text-slate-700 hover:text-orange-600 hover:bg-orange-50 active:bg-orange-100 rounded-full transition-colors active:scale-95"
+          aria-label="Bộ lọc"
+          // onClick={() => Mở_Hàm_Bộ_Lọc_Của_Anh()} 
+        >
+          <SlidersHorizontal size={20} />
+        </button>
+      </div>
+    </header>
   );
 }
