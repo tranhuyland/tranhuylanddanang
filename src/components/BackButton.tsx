@@ -2,19 +2,34 @@
 
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function BackButton() {
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Chỉ hiện nút Back khi đã cuộn qua 200px
+    const toggleVisibility = () => {
+      setIsVisible(window.scrollY > 200);
+    };
+    window.addEventListener("scroll", toggleVisibility);
+    return () => window.removeEventListener("scroll", toggleVisibility);
+  }, []);
 
   return (
     <button
       onClick={() => router.back()}
-      // 🌟 Tích hợp hàng loạt hiệu ứng thẩm mỹ cao cấp
-      className="group inline-flex items-center gap-2 px-4 py-2.5 mb-6 bg-white border border-slate-200 text-slate-700 text-sm md:text-base font-bold rounded-full shadow-sm hover:shadow-md hover:border-orange-500 hover:text-orange-600 transition-all duration-300 active:scale-95 cursor-pointer"
+      // 🌟 Nút Back bây giờ nằm cố định ở góc phải, ngay trên nút ScrollToTop (cách đáy 150px)
+      className={`fixed right-6 z-40 px-4 py-2.5 flex items-center gap-1.5 rounded-full bg-white border border-slate-200 text-slate-700 shadow-xl transition-all duration-300 hover:border-orange-500 hover:text-orange-600 active:scale-95 ${
+        isVisible 
+          ? "opacity-100 translate-y-0 pointer-events-auto" 
+          : "opacity-0 translate-y-5 pointer-events-none"
+      }`}
+      style={{ bottom: "150px" }} // Nằm trên nút ScrollToTop (95px + 55px)
     >
-      {/* Icon mũi tên có hiệu ứng trượt nhẹ sang trái khi khách rê chuột */}
-      <ChevronLeft className="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1" />
-      <span>Quay về</span>
+      <ChevronLeft className="w-5 h-5" />
+      <span className="text-[11px] font-bold uppercase tracking-wider">Quay về</span>
     </button>
   );
 }
