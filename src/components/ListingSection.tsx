@@ -289,7 +289,6 @@ function BdsCard({ item }: { item: any }) {
   }, [item]);
 
   return (
-    {/* ÉP APPLE/SAFARI PHẢI NHẬN DIỆN CẢM ỨNG NGAY LẬP TỨC BẰNG onTouchStart */}
     <a href={`/nha-dat/${item.slug}`} onTouchStart={() => {}} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-orange-500/10 active:shadow-orange-500/20 border border-slate-100 hover:border-orange-200 active:border-orange-300 transition-all duration-300 flex flex-col h-full relative transform hover:-translate-y-1.5 active:translate-y-0 active:scale-[0.98] block">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 group-active:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
