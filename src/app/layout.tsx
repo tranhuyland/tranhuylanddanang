@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google"; // 🌟 Import font chuẩn Next.js
 import "./globals.css";
+import ScrollToTop from "@/components/ScrollToTop"; // 🌟 Import nút mũi tên cuộn lên đầu trang chuẩn UX
 
 // Khởi tạo cấu hình Font chữ hệ thống
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -26,6 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       {/* 💡 Không cần thẻ <head> chứa <link> font thủ công nữa, Next.js tự xử lý ngầm cực sạch */}
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0`}>
         {children}
+        
+        {/* 🚀 Kích hoạt nút bấm cuộn lên đầu trang, tự ẩn/hiện thông minh khi kéo màn hình */}
+        <ScrollToTop />
       </body>
     </html>
   );
