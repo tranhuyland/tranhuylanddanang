@@ -1,7 +1,7 @@
 "use client";
 
 import PropertyGallery from "@/components/SlideBds";
-import { MapPin, Calendar, ShieldCheck, Layers, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef } from "react";
 import { layUrlAnhChuan } from "@/lib/utils";
@@ -93,7 +93,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden w-full max-w-full">
       
-      {/* KHU VỰC RENDER GALLERY ĐÃ TÍCH HỢP 3 TAB (SỬA ĐỔI TẠI ĐÂY) */}
+      {/* KHU VỰC RENDER GALLERY ĐÃ TÍCH HỢP 3 TAB */}
       <div className="relative w-full max-w-full group-gallery p-2 sm:p-3 pb-0">
         <PropertyGallery 
           images={tatCaAnhGallery} 
@@ -101,11 +101,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           videoUrl={item.videoUrl || item.VideoUrl} 
           linkMap={item.linkMap || item.LinkMap || item.toado} 
         />
-
-        {/* Nút đếm Media nằm nổi phía trên ảnh */}
-        <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-6 left-6 z-10 flex items-center gap-1 uppercase tracking-wider shadow pointer-events-none">
-          <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{tatCaAnhGallery.length} Hình Ảnh
-        </div>
+        {/* 🔥 ĐÃ XÓA NHÃN "MEDIA: 8 HÌNH ẢNH" TRONG KHU VỰC NÀY */}
       </div>
 
       {/* KHU VỰC THÔNG TIN SẢN PHẨM BÊN DƯỚI */}
