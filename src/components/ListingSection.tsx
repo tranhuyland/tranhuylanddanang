@@ -1,9 +1,9 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, Check, RotateCcw } from "lucide-react";
-import { layUrlAnhChuan, cleanVietnameseText } from "@/lib/utils"; 
-import FilterWidget from "./FilterWidget";
+import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw } from "lucide-react";
+import { layUrlAnhChuan } from "@/lib/utils"; 
+import FilterWidget from "./FilterWidget"; 
 
 interface ListingSectionProps {
   allBdsItems: any[];
@@ -16,6 +16,12 @@ const TAB_OPTIONS = [
   { id: "Nhà phố", label: "🏠 Nhà phố" },
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
+
+// 🔥 THUẬT TOÁN KHỬ DẤU SIÊU MẠNH (Xử lý cả "Hòa" và "Hoà")
+const removeAccents = (str: string) => {
+  if (!str) return "";
+  return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
+};
 
 const formatTimeAgo = (dateStr: string) => {
   if (!dateStr) return "Tin mới";
@@ -37,12 +43,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
-  // BIẾN TÌM KIẾM TỪ HEADER
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
-  // LẮNG NGHE LỆNH TỪ HEADER
   useEffect(() => {
     const handleOpenDrawer = () => {
       setTempFilters(filters);
@@ -101,20 +105,22 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       return timeDiff !== 0 ? timeDiff : (Number(b.id) || 0) - (Number(a.id) || 0);
     });
 
+    // 🔍 SỬA LỖI TÌM KIẾM: Quét sạch mọi ngóc ngách dữ liệu
     if (searchTerm) {
-      const target = cleanVietnameseText(searchTerm);
-      result = result.filter(i => 
-        cleanVietnameseText(`${i.tieude || ""} ${i.diaChi || ""} ${i.khuVuc || ""} ${i.mota || ""}`).includes(target)
-      );
+      const target = removeAccents(searchTerm);
+      result = result.filter(i => {
+        const fullText = removeAccents(`${i.tieude || ""} ${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""} ${i.khuVucFull || ""} ${i.mota || ""} ${i.moTa || ""} ${i.phuong || ""}`);
+        return fullText.includes(target);
+      });
     }
 
     if (filters.khuVuc !== "all") {
-      const target = cleanVietnameseText(filters.khuVuc);
-      result = result.filter(i => cleanVietnameseText(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
+      const target = removeAccents(filters.khuVuc);
+      result = result.filter(i => removeAccents(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
     }
     if (activeLoaiHinh !== "all") {
-      const target = cleanVietnameseText(activeLoaiHinh);
-      result = result.filter(i => cleanVietnameseText(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`).includes(target));
+      const target = removeAccents(activeLoaiHinh);
+      result = result.filter(i => removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`).includes(target));
     }
     if (filters.khoangGia !== "all") {
       result = result.filter(i => {
@@ -122,13 +128,13 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         return filters.khoangGia === "duoi3" ? gia < 3.0 : filters.khoangGia === "3to5" ? gia >= 3.0 && gia <= 5.0 : gia > 5.0;
       });
     }
-    if (filters.huong !== "all") result = result.filter(i => cleanVietnameseText(i.huong || "").includes(cleanVietnameseText(filters.huong)));
+    if (filters.huong !== "all") result = result.filter(i => removeAccents(i.huong || "").includes(removeAccents(filters.huong)));
     if (filters.tag !== "all") {
       result = result.filter(i => {
-        const text = cleanVietnameseText(`${i.tieude || ""} ${i.mota || ""} ${i.tag || ""} ${i.loaiHinh || ""}`);
+        const text = removeAccents(`${i.tieude || ""} ${i.mota || ""} ${i.tag || ""} ${i.loaiHinh || ""}`);
         if (filters.tag === "mattien") return i.isMatTien || text.includes("mat tien");
         if (filters.tag === "chinhchu") return text.includes("chinh chu");
-        if (filters.tag === "chothue") return cleanVietnameseText(`${i.tieude || ""} ${i.tag || ""} ${i.loaiHinh || ""}`).includes("cho thue");
+        if (filters.tag === "chothue") return removeAccents(`${i.tieude || ""} ${i.tag || ""} ${i.loaiHinh || ""}`).includes("cho thue");
         return true;
       });
     }
@@ -161,6 +167,19 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
 
+          {/* 🔥 KHÔI PHỤC NÚT MỞ BỘ LỌC TRÊN ĐIỆN THOẠI */}
+          <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
+            className="md:hidden w-full mb-6 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
+            <SlidersHorizontal size={18} />
+            Mở bộ lọc chi tiết 
+            {Object.values(filters).filter(v => v !== "all").length > 0 && (
+              <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-md">
+                {Object.values(filters).filter(v => v !== "all").length}
+              </span>
+            )}
+          </button>
+
+          {/* Giao diện bộ lọc đã tách file */}
           <FilterWidget 
             tempFilters={tempFilters} 
             handleFilterChange={handleFilterChange} 
@@ -191,6 +210,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         ) : (
           <div className="text-center py-24 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-bold text-lg">Không tìm thấy sản phẩm phù hợp</p>
+            {searchTerm && <p className="text-sm text-slate-400 mt-2">Thử bỏ bớt dấu hoặc gõ từ khóa ngắn hơn xem sao anh nhé.</p>}
           </div>
         )}
         
@@ -207,21 +227,24 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
+// ==========================================
+// THẺ SẢN PHẨM BĐS
+// ==========================================
 function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  const textLower = cleanVietnameseText(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
+  const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
   const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
-  const strictTextChoThue = cleanVietnameseText(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+  const strictTextChoThue = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
-    if (cleanVietnameseText(currentLoaiHinh).includes("dat")) return "Đất trống";
+    if (removeAccents(currentLoaiHinh).includes("dat")) return "Đất trống";
     const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
     const matchTang = combinedText.match(/(\d+)\s*(tầng|tang)/i);
     const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
