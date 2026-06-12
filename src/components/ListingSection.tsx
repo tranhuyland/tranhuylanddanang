@@ -25,7 +25,7 @@ const PHUONG_XA = {
 };
 
 // ==========================================
-// 2. CÁC HÀM TIỆN ÍCH (HELPERS)
+// 2. CÁC HÀM TIỆN ÍCH
 // ==========================================
 const formatTimeAgo = (dateStr: string) => {
   if (!dateStr) return "Tin mới";
@@ -93,7 +93,33 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
+  // 🔥 THÊM BIẾN TÌM KIẾM ĐỂ LƯU TỪ KHÓA TỪ HEADER
+  const [searchTerm, setSearchTerm] = useState("");
+
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
+
+  // 🔥 GẮN "ĂNG-TEN" LẮNG NGHE TÍN HIỆU TỪ HEADER XUỐNG
+  useEffect(() => {
+    // Hàm mở bảng bộ lọc khi bấm nút ở Header
+    const handleOpenDrawer = () => {
+      setTempFilters(filters);
+      setIsDrawerOpen(true);
+    };
+    
+    // Hàm lưu từ khóa khi gõ vào thanh tìm kiếm ở Header
+    const handleSearch = (e: any) => {
+      setSearchTerm(e.detail);
+      setCurrentPage(1); // Gõ tìm kiếm thì tự động về lại trang 1
+    };
+
+    window.addEventListener('openFilterDrawer', handleOpenDrawer);
+    window.addEventListener('searchBds', handleSearch);
+
+    return () => {
+      window.removeEventListener('openFilterDrawer', handleOpenDrawer);
+      window.removeEventListener('searchBds', handleSearch);
+    };
+  }, [filters]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -124,7 +150,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems].sort((a: any, b: any) => {
-      // 🔥 BẢO MẬT: Thuật toán ngày tháng chống lỗi (Safe Date Parser)
       const getTime = (d: string) => {
         if (!d) return 0;
         const parts = d.split(/[-/]/);
@@ -134,6 +159,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       const timeDiff = getTime(b.ngayDang || b.ngay) - getTime(a.ngayDang || a.ngay);
       return timeDiff !== 0 ? timeDiff : (Number(b.id) || 0) - (Number(a.id) || 0);
     });
+
+    // 🔥 KÍCH HOẠT LOGIC TÌM KIẾM BẰNG TỪ KHÓA TỪ HEADER
+    if (searchTerm) {
+      const target = cleanVietnameseText(searchTerm);
+      result = result.filter(i => 
+        cleanVietnameseText(`${i.tieude || ""} ${i.diaChi || ""} ${i.khuVuc || ""} ${i.mota || ""}`).includes(target)
+      );
+    }
 
     if (filters.khuVuc !== "all") {
       const target = cleanVietnameseText(filters.khuVuc);
@@ -160,7 +193,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       });
     }
     return result;
-  }, [filters, activeLoaiHinh, safeBdsItems]);
+  }, [filters, activeLoaiHinh, searchTerm, safeBdsItems]);
 
   const handleApplyFilters = () => {
     setFilters(tempFilters);
@@ -188,13 +221,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
 
-          <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
-            className="md:hidden w-full mb-2 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all">
-            <SlidersHorizontal size={18} />
-            Mở bộ lọc chi tiết {Object.values(filters).filter(v => v !== "all").length > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center">{Object.values(filters).filter(v => v !== "all").length}</span>}
-          </button>
-
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6"><FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} /></div>
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} />
+          </div>
 
           <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
             <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
@@ -206,15 +235,18 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
+      {/* CỬA SỔ POPUP BỘ LỌC TRÊN ĐIỆN THOẠI */}
       {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+        <div className="fixed inset-0 z-[60] md:hidden flex flex-col justify-end">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDrawer} />
           <div className="relative bg-white rounded-t-[2rem] shadow-2xl h-[80vh] flex flex-col z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between border-b border-slate-100 p-5 shrink-0">
               <div className="flex items-center gap-2"><SlidersHorizontal size={18} className="text-orange-500" /><h4 className="font-extrabold text-slate-800 text-base">Bộ lọc nâng cao</h4></div>
               <button onClick={closeDrawer} className="text-slate-400 p-2"><X size={22} /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-48"><FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} /></div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-48">
+              <FilterFields tempFilters={tempFilters} handleFilterChange={handleFilterChange} forceDistrict={forceDistrict} />
+            </div>
             <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-28 z-20 pointer-events-none">
               <div className="flex gap-3 bg-white p-2 rounded-[1.5rem] shadow-xl border border-slate-100 pointer-events-auto">
                 <button onClick={handleResetFilters} className="w-1/3 text-slate-600 font-bold text-sm py-3.5 rounded-xl bg-slate-50">Đặt lại</button>
@@ -248,8 +280,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             ))}
           </div>
         )}
-
-        {/* 💡 Công cụ để anh Huy kiểm tra lỗi data từ phía Google Sheet */}
         <div className="text-center mt-8 text-slate-400 text-[13px] font-medium opacity-50">
           (Debug nội bộ) Hệ thống đã lấy thành công: {safeBdsItems.length} sản phẩm.
         </div>
@@ -270,7 +300,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const isChinhChu = textLower.includes("chinh chu");
   const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
-  
   const strictTextChoThue = cleanVietnameseText(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
 
@@ -294,13 +323,8 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 group-active:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-300" />
         
-        {/* KHU VỰC NHÃN (BADGES) */}
         <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-10">
-          {rank && (
-            <span className="bg-red-600/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-sm tracking-wider">
-              #{rank}
-            </span>
-          )}
+          {rank && <span className="bg-red-600/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-sm tracking-wider">#{rank}</span>}
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
