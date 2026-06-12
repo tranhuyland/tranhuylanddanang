@@ -1,10 +1,10 @@
 "use client";
 
 import PropertyGallery from "@/components/SlideBds";
-import { MapPin, Calendar, ShieldCheck, Layers, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef } from "react";
-import { layUrlAnhChuan } from "@/lib/utils"; // <-- Import bùa chú tối ưu WebP
+import { layUrlAnhChuan } from "@/lib/utils";
 
 interface PropertyClientProps {
   item: any;
@@ -26,6 +26,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     }
   }, [isPopupOpen]);
 
+  // Xử lý mảng hình ảnh
   const anhGoc = item.anh || item.Anh || "";
   const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
   const anhSoDoGoc = item.anhSoDo || item.AnhSoDo || "";
@@ -37,6 +38,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
 
   const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
 
+  // Logic phóng to, thu nhỏ ảnh sổ đỏ
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 1));
   const handleResetZoom = () => {
@@ -90,25 +92,19 @@ export default function PropertyClient({ item }: PropertyClientProps) {
 
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden w-full max-w-full">
-      <div className="relative aspect-[16/10] bg-slate-100 w-full max-w-full overflow-hidden group-gallery">
-        {item.videoUrl ? (
-          <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar max-w-full">
-            <div className="w-full h-full flex-shrink-0 snap-start relative max-w-full">
-              <iframe className="w-full h-full" src={item.videoUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-            </div>
-            <div className="w-full h-full flex-shrink-0 snap-start relative max-w-full">
-              <PropertyGallery images={tatCaAnhGallery} alt={item.tieude || item.Title} />
-            </div>
-          </div>
-        ) : (
-          <PropertyGallery images={tatCaAnhGallery} alt={item.tieude || item.Title} />
-        )}
-
-        <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-md absolute top-4 left-4 z-10 flex items-center gap-1 uppercase tracking-wider shadow pointer-events-none">
-          <Layers className="w-3 h-3 text-amber-400" /> Media: {item.videoUrl ? '1 Video & ' : ''}{tatCaAnhGallery.length} Hình Ảnh
-        </div>
+      
+      {/* KHU VỰC RENDER GALLERY ĐÃ TÍCH HỢP 3 TAB */}
+      <div className="relative w-full max-w-full group-gallery p-2 sm:p-3 pb-0">
+        <PropertyGallery 
+          images={tatCaAnhGallery} 
+          alt={item.tieude || item.Title} 
+          videoUrl={item.videoUrl || item.VideoUrl} 
+          linkMap={item.linkMap || item.LinkMap || item.toado} 
+        />
+        {/* 🔥 ĐÃ XÓA NHÃN "MEDIA: 8 HÌNH ẢNH" TRONG KHU VỰC NÀY */}
       </div>
 
+      {/* KHU VỰC THÔNG TIN SẢN PHẨM BÊN DƯỚI */}
       <div className="p-6 sm:p-8 w-full max-w-full">
         <div className="flex items-center justify-between">
           <span className="bg-amber-500 text-slate-900 font-extrabold text-base px-3 py-1 rounded-xl shadow-sm">{item.gia || item.Gia}</span>
@@ -139,6 +135,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </div>
 
+        {/* Các nút bấm xem thêm nếu có (Vị trí Bản đồ / Sổ hồng Popup) */}
         {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
           <div className={`grid gap-3 mb-6 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
@@ -181,6 +178,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
         </div>
       </div>
 
+      {/* POPUP XEM ẢNH SỔ ĐỎ PHÓNG TO KHI BẤM NÚT */}
       {isPopupOpen && (
         <div 
           className="fixed inset-0 bg-black/95 backdrop-blur-md z-[99999] flex flex-col items-center justify-center animate-fade-in touch-none select-none"
@@ -218,7 +216,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
           >
             <img 
-              src={layUrlAnhChuan(anhSoDoGoc)} /* 🔥 Tích hợp WebP cho ảnh sổ đỏ */
+              src={layUrlAnhChuan(anhSoDoGoc)}
               alt="Sổ hồng bản vẽ chi tiết" 
               draggable={false}
               style={{

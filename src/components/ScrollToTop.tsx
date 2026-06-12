@@ -1,52 +1,42 @@
-"use client";
+// src/components/ScrollToTop.tsx
+'use client';
 
-import { useEffect, useState } from "react";
-import { ChevronUp } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { ArrowUp } from 'lucide-react'; // Hoặc thư viện icon anh đang dùng
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const toggleVisibility = () => {
-      // Khi khách cuộn xuống quá 400px (khoảng 1 màn hình điện thoại) thì nút mới hiện ra
-      if (window.scrollY > 400) {
+      if (window.scrollY > 300) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
       }
     };
-
-    window.addEventListener("scroll", toggleVisibility);
-    return () => window.removeEventListener("scroll", toggleVisibility);
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth", // Hiệu ứng trượt mượt mà lên đỉnh
+      behavior: 'smooth',
     });
   };
+
+  if (!isVisible) return null;
 
   return (
     <button
       onClick={scrollToTop}
-      // 🌟 CẬP NHẬT GIAO DIỆN: Chuyển sang hình viên thuốc (pill), thêm flex để căn chỉnh icon và chữ
-      className={`fixed right-6 z-50 px-4 py-2.5 flex items-center gap-1.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-xl transition-all duration-300 ease-in-out hover:scale-105 active:scale-95 cursor-pointer ${
-        isVisible 
-          ? "opacity-100 translate-y-0 pointer-events-auto" 
-          : "opacity-0 translate-y-5 pointer-events-none"
-      }`}
-      // 💡 Đặt cách đáy 95px để né thanh 2 nút Gọi/Zalo cố định dưới đáy màn hình điện thoại
-      style={{ bottom: "95px" }}
-      aria-label="Cuộn lên đầu trang"
+      // Đã thay đổi p-3 thành p-2 để nút nhỏ hơn
+      className="fixed right-4 bottom-24 p-2 bg-orange-500 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 z-50"
+      aria-label="Trở lên trên"
     >
-      {/* Icon mũi tên nhỏ hơn một chút để cân bằng với chữ */}
-      <ChevronUp className="w-4 h-4 stroke-[3]" />
-      
-      {/* 🌟 Thêm chữ "nhỏ nhỏ" theo yêu cầu của anh Huy */}
-      <span className="text-[11px] font-bold leading-none whitespace-nowrap uppercase tracking-wider">
-        trở lên trên
-      </span>
+      {/* Đã thay đổi size={24} thành size={20} */}
+      <ArrowUp size={20} />
     </button>
   );
 }
