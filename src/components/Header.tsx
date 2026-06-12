@@ -44,7 +44,7 @@ export default function Header() {
         {isHomePage && (
           <div className={`flex items-center justify-center overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'h-0 opacity-0' : 'h-14 opacity-100'}`}>
             <Link href="/" className="relative h-10 w-40 mt-2 block">
-              <Image src="/icon.png" alt="Trần Huy Land" fill className="object-contain" priority />
+              <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
             </Link>
           </div>
         )}
