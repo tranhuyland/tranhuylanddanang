@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Zoom, Keyboard } from 'swiper/modules';
 import { layUrlAnhChuan } from "@/lib/utils";
-import { PlayCircle, Image as ImageIcon, Map, X, ZoomIn, ZoomOut } from "lucide-react";
+import { PlayCircle, Image as ImageIcon, Map, X, ZoomIn, ZoomOut, ExternalLink } from "lucide-react";
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -48,11 +48,23 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
+  // Logic bóc tách link bản đồ thông minh (Tránh lỗi màn hình trắng)
+  const getMapIframeSrc = (mapStr?: string) => {
+    if (!mapStr) return '';
+    if (mapStr.includes('<iframe')) {
+      const match = mapStr.match(/src=["'](.*?)["']/);
+      return match ? match[1] : '';
+    }
+    return mapStr;
+  };
+
+  const mapSrc = getMapIframeSrc(linkMap);
+  const isEmbedMap = mapSrc.includes('/embed') || (linkMap && linkMap.includes('<iframe'));
+
   if (!images || images.length === 0) return null;
 
   return (
     <>
-      {/* 1. GIAO DIỆN BÊN NGOÀI (ẢNH ĐƠN CHUẨN BATDONGSAN.COM) */}
       <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group z-0">
         <Swiper
           modules={[Navigation, Pagination, Keyboard]}
@@ -81,7 +93,6 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
           ))}
         </Swiper>
 
-        {/* Đã xóa hidden, hiển thị mũi tên ở mọi thiết bị */}
         <button className="nm-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
@@ -89,11 +100,9 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
 
-        {/* Cục số trang góc phải dưới */}
         <div className="nm-fraction absolute bottom-3 right-3 z-10 flex items-center justify-center pointer-events-none"></div>
       </div>
 
-      {/* 2. POPUP BÊN TRONG KHI PHÓNG TO (3 TAB) */}
       {isLightboxOpen && (
         <div className="fixed inset-0 bg-black z-[99999] flex flex-col animate-fade-in">
           <div className="relative w-full h-16 sm:h-20 flex items-center justify-between px-4 z-50 bg-black">
@@ -166,12 +175,29 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
               </div>
             )}
 
+            {/* BẢN ĐỒ ĐƯỢC TỐI ƯU HÓA CHỐNG LỖI MÀN HÌNH TRẮNG */}
             {activeTab === 'map' && linkMap && (
-              <div className="w-full h-[50vh] sm:h-[80vh] max-w-5xl mx-auto px-4">
-                {linkMap.includes('<iframe') ? (
-                  <div className="w-full h-full rounded-lg overflow-hidden [&>iframe]:w-full [&>iframe]:h-full" dangerouslySetInnerHTML={{ __html: linkMap }} />
+              <div className="w-full h-[50vh] sm:h-[80vh] max-w-5xl mx-auto px-4 flex items-center justify-center">
+                {isEmbedMap ? (
+                  <iframe src={mapSrc} className="w-full h-full border-0 rounded-lg bg-white shadow-xl" allowFullScreen loading="lazy"></iframe>
                 ) : (
-                  <iframe src={linkMap} className="w-full h-full border-0 rounded-lg bg-white" allowFullScreen loading="lazy"></iframe>
+                  <div className="w-full max-w-md bg-gray-900 rounded-2xl flex flex-col items-center justify-center text-center p-8 border border-gray-800 shadow-2xl">
+                    <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-5">
+                      <Map className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-white text-xl font-bold mb-2">Đã tìm thấy vị trí</h3>
+                    <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                      Do chính sách bảo mật, bản đồ này cần được mở trong một cửa sổ riêng biệt để xem chi tiết.
+                    </p>
+                    <a 
+                      href={linkMap} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
+                    >
+                      Mở ứng dụng Bản đồ <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
                 )}
               </div>
             )}
@@ -183,7 +209,6 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
         </div>
       )}
 
-      {/* ÉP CSS TOÀN CỤC CHO CỤC ĐẾM SỐ ĐỂ LUÔN NỔI BẬT */}
       <style jsx global>{`
         .nm-fraction.swiper-pagination-fraction {
           width: auto !important;
