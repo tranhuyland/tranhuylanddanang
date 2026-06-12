@@ -7,6 +7,7 @@ import BackButton from "@/components/BackButton"; // 🌟 Vẫn giữ import đ�
 import PropertyClient from "./PropertyClient";
 import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils";
+import RelatedProducts from "@/components/RelatedProducts"; // 🔥 ĐÃ THÊM: Import component Tin Liên Quan
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
@@ -51,8 +52,8 @@ export async function generateMetadata({ params }: Props) {
 // 🏢 2. KHUNG TRANG RENDER THỜI GIAN THỰC TỪ SERVER
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
-  const data = await getBdsData();
-  const item = data.find((p) => p.slug === slug) as any;
+  const data = await getBdsData(); // Lấy toàn bộ danh sách nhà đất
+  const item = data.find((p) => p.slug === slug) as any; // Lấy riêng căn đang xem
 
   if (!item) notFound();
 
@@ -97,6 +98,10 @@ export default async function NhaDatDetail({ params }: Props) {
       <main className="max-w-4xl mx-auto px-4 py-10 flex-1 w-full max-w-full overflow-hidden">
         {/* Đã xóa <BackButton /> ở đây để nó không bị lặp lại hoặc nằm sai vị trí */}
         <PropertyClient item={item} />
+
+        {/* 🔥 GẮN KHU VỰC TIN LIÊN QUAN VÀO ĐÂY */}
+        {/* Truyền cả căn nhà hiện tại (item) và toàn bộ dữ liệu (data) để thuật toán tự động lọc */}
+        <RelatedProducts currentItem={item} allItems={data} />
       </main>
       
       {/* 🌟 Đặt BackButton ở đây: Vì nó là component 'fixed', nó sẽ tự biết cách nổi lên đúng vị trí */}

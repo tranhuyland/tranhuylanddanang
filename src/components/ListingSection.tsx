@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, X, Check, RotateCcw } from "lucide-react";
-import { layUrlAnhChuan, cleanVietnameseText } from "@/lib/utils"; // <-- Đã import từ utils.ts
+import { layUrlAnhChuan, cleanVietnameseText } from "@/lib/utils"; 
 
 // ==========================================
 // 1. CẤU HÌNH INTERFACE & BIẾN TĨNH (CONSTANTS)
@@ -229,7 +229,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-12 mb-20 scroll-mt-28">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => <BdsCard key={item.id} item={item} />)}
+            {/* 🔥 ĐÃ SỬA: Bổ sung index và truyền rank vào để đánh số thứ tự */}
+            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
+              <BdsCard 
+                key={item.id} 
+                item={item} 
+                rank={(currentPage - 1) * itemsPerPage + index + 1} 
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-24 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200"><p className="text-slate-500 font-bold text-lg">Không tìm thấy sản phẩm phù hợp</p></div>
@@ -248,11 +255,15 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 }
 
 // ==========================================
-// 5. COMPONENT THẺ BĐS (Fix nhạy cảm ứng Mobile)
+// 5. COMPONENT THẺ BĐS 
 // ==========================================
-function BdsCard({ item }: { item: any }) {
+// 🔥 ĐÃ SỬA: Nhận prop rank để hiển thị số thứ tự
+function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const thumbnail = layUrlAnhChuan(item.anh);
-  const displayLocation = item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
+  
+  // 🔥 ĐÃ SỬA: Ưu tiên lấy item.khuVuc đầu tiên để hiển thị đúng Phường/Xã ra ngoài
+  const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
+  
   const displayTime = item.ngayDang || item.ngay || "";
 
   // Thuật toán nhận diện nhãn chuẩn gốc
@@ -285,7 +296,13 @@ function BdsCard({ item }: { item: any }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-300" />
         
         {/* KHU VỰC NHÃN (BADGES) */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+        <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-10">
+          {/* 🔥 ĐÃ THÊM LẠI: Nhãn số thứ tự */}
+          {rank && (
+            <span className="bg-red-600/90 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-sm tracking-wider">
+              #{rank}
+            </span>
+          )}
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
