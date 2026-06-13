@@ -31,8 +31,8 @@ export default function Hero() {
 
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật <br />
-            {/* 🔥 SỬA LỖI NHỨC MẮT: Dùng màu cam đậm nét căng thay vì gradient mờ ảo */}
-            <span className="text-orange-600 drop-shadow-sm">
+            {/* 🔥 Đổi sang màu xám đen đồng bộ, bỏ hiệu ứng bóng đổ để chữ nét và sắc sảo nhất */}
+            <span className="text-slate-900">
               Giao Dịch Minh Bạch
             </span>
           </h1>
