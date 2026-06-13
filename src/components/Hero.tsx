@@ -4,7 +4,7 @@ import { Phone, MessageCircle, Building2, MapPin, TrendingUp } from 'lucide-reac
 
 export default function Hero() {
   return (
-    // 💡 Đã giảm chiều cao: từ 85vh xuống 65vh, và min-h từ 600px xuống 480px
+    // Đã giảm chiều cao: từ 85vh xuống 65vh, và min-h từ 600px xuống 480px
     <section className="relative w-full h-[65vh] min-h-[480px] flex items-center mb-10 overflow-hidden">
       
       {/* KHU VỰC 1: ẢNH NỀN TOÀN MÀN HÌNH (BACKGROUND) */}
@@ -23,19 +23,19 @@ export default function Hero() {
       {/* KHU VỰC 2: KHỐI NỘI DUNG (GLASSMORPHISM BOX) */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
         
-        {/* Khối Box nằm lệch trái - 💡 Thu gọn padding từ p-10 xuống p-8 */}
-        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 backdrop-blur-xl p-5 md:p-8 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+        {/* Khối Box nằm lệch trái - Thu gọn padding từ p-10 xuống p-8 */}
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 backdrop-blur-xl p-5 md:p-8 rounded-[2.5rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           
-          {/* Nhãn nhỏ trên cùng - Đã tối ưu cho nổi bật, viền mảnh mềm mại và dễ đọc */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-orange-200 text-orange-700 text-xs md:text-sm font-bold shadow-sm mb-5 backdrop-blur-md">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-600"></span>
+          {/* Nhãn nhỏ trên cùng - Đã trả lại Y HỆT BẢN CŨ anh thích */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-[11px] md:text-xs font-bold uppercase tracking-wider mb-4">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            Trần Huy Land - Kho Nhà Đất Chính Chủ Đà Nẵng
+            Kho Nhà Đất Chính Chủ Đà Nẵng
           </div>
 
-          {/* Tiêu đề chính - 💡 Thu nhỏ font chữ một chút (từ 6xl xuống 5xl) */}
+          {/* Tiêu đề chính */}
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-800 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
@@ -43,12 +43,12 @@ export default function Hero() {
             </span>
           </h1>
 
-          {/* Mô tả phụ - 💡 Giảm margin mb-8 thành mb-5 */}
+          {/* Mô tả phụ */}
           <p className="text-slate-500 font-medium text-sm md:text-base mb-5 max-w-lg leading-relaxed">
             Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng. Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp từ chủ nhà.
           </p>
 
-          {/* NÚT LIÊN HỆ - 💡 Căn chỉnh lại độ rộng nút (py-3.5 thành py-2.5) */}
+          {/* NÚT LIÊN HỆ */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <a 
               href="tel:0905778852" 
@@ -66,7 +66,7 @@ export default function Hero() {
             </a>
           </div>
 
-          {/* Dải thống kê nhanh - 💡 Kéo gần lại khối nút bấm (mt-8 pt-8 thành mt-5 pt-4) */}
+          {/* Dải thống kê nhanh */}
           <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-slate-200/60">
              <div className="flex flex-col">
                 <span className="flex items-center gap-1 text-slate-800 font-black text-lg md:text-xl"><Building2 className="w-4 h-4 text-orange-500"/> 500+</span>
