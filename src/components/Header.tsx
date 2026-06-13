@@ -35,7 +35,7 @@ export default function Header() {
     // Gửi chữ vừa gõ xuống
     window.dispatchEvent(new CustomEvent('searchBds', { detail: searchValue }));
     
-    // 🟢 THÊM LỆNH NÀY: Ép hệ thống chạy bộ lọc ngay lập tức giống hệt nút "Áp dụng"
+    // Ép hệ thống chạy bộ lọc ngay lập tức giống hệt nút "Áp dụng"
     window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
     
     // Tự động giấu bàn phím điện thoại đi
@@ -46,7 +46,7 @@ export default function Header() {
   const handleClearSearch = () => {
     setSearchValue("");
     window.dispatchEvent(new CustomEvent('searchBds', { detail: "" }));
-    // Xóa xong cũng có thể ép lọc lại luôn để ra list ban đầu
+    // Ép lọc lại luôn để ra list ban đầu
     window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
   };
 
@@ -95,14 +95,15 @@ export default function Header() {
                   type="text"
                   value={searchValue}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  // 🟢 THÊM onKeyDown ĐỂ BẮT PHÍM ENTER TRÊN ĐIỆN THOẠI CỰC NHẠY
+                  // Bắt sự kiện phím Enter trên điện thoại cực nhạy
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       executeSearch(e);
                     }
                   }}
                   placeholder="Tìm khu vực, đường, dự án..."
-                  className="w-full bg-slate-100/80 text-[13.5px] font-medium text-slate-700 rounded-full py-2.5 pl-9 pr-9 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all focus:bg-white border border-transparent focus:border-orange-200"
+                  // 🔥 ĐÃ SỬA: Đổi font-size thành 16px trên mobile để chống Safari Zoom
+                  className="w-full bg-slate-100/80 text-[16px] md:text-[13.5px] font-medium text-slate-700 rounded-full py-2.5 pl-9 pr-9 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all focus:bg-white border border-transparent focus:border-orange-200"
                 />
                 
                 {/* Nút X xóa nhanh */}
