@@ -1,19 +1,29 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, PenTool, Copy } from "lucide-react";
 
-interface ModalsProps {
-  type: "kygui";
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function Modals({ type, isOpen, onClose }: ModalsProps) {
+export function Modals() {
+  // Tự quản lý trạng thái đóng/mở bên trong component
+  const [isOpen, setIsOpen] = useState(false);
   const [kgTen, setKgTen] = useState("");
   const [kgDiaChi, setKgDiaChi] = useState("");
   const [kgGia, setKgGia] = useState("");
 
-  if (!isOpen || type !== "kygui") return null;
+  // Lắng nghe sự kiện từ Hero.tsx
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    
+    window.addEventListener('open-ky-goi-modal', handleOpen);
+    
+    // Dọn dẹp event khi component unmount
+    return () => {
+      window.removeEventListener('open-ky-goi-modal', handleOpen);
+    };
+  }, []);
+
+  const onClose = () => setIsOpen(false);
+
+  if (!isOpen) return null;
 
   const handleKyGuiSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +39,8 @@ export function Modals({ type, isOpen, onClose }: ModalsProps) {
       // Mở Zalo
       window.open("https://zalo.me/0905778852", "_blank");
       onClose();
+      // Reset form sau khi gửi
+      setKgTen(""); setKgDiaChi(""); setKgGia("");
     }).catch(() => {
       // Nếu copy lỗi, vẫn mở Zalo để khách tự gõ
       window.open("https://zalo.me/0905778852", "_blank");
