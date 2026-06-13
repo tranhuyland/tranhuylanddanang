@@ -1,27 +1,26 @@
-'use client';
+'use client'; // Thêm dòng này để cho phép dùng state/sự kiện
 import React from 'react';
 import Image from 'next/image';
-import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
+import { Phone, MessageCircle, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
   // Hàm này kích hoạt sự kiện mở Modal Ký Gửi
   const handleOpenKyGui = () => {
+    // Chúng ta tạo một sự kiện tùy chỉnh để Modals.tsx lắng nghe
     window.dispatchEvent(new CustomEvent('open-ky-goi-modal'));
   };
 
   return (
     <section className="relative w-full h-[65vh] min-h-[480px] flex items-center mb-10 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        {/* 🔥 THAY ĐỔI 1: Ảnh Drone Đà Nẵng + Hiệu ứng làm mờ (blur-sm) và phóng to nhẹ (scale-105) để viền không bị lộ trắng */}
         <Image
-          src="https://images.unsplash.com/photo-1559592413-7cea4ee054f7?q=80&w=2070&auto=format&fit=crop"
-          alt="Toàn cảnh flycam Đà Nẵng"
+          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1727771746/hero_banner_bds_vn.jpg"
+          alt=""
           fill
-          className="object-cover object-center blur-[3px] scale-105 transition-transform duration-1000"
+          className="object-cover object-center"
           priority
         />
-        {/* 🔥 THAY ĐỔI 2: Chỉnh lại lớp phủ gradient tối màu một chút để khối chữ màu trắng nổi bật hẳn lên */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-slate-900/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-transparent"></div>
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
@@ -54,6 +53,7 @@ export default function Hero() {
               <Phone className="w-4 h-4 md:w-5 md:h-5" /> Liên Hệ Tư Vấn
             </a>
             
+            {/* NÚT KÝ GỬI NHÀ ĐẤT - Gọi Modal */}
             <button 
               onClick={handleOpenKyGui}
               className="w-full sm:w-auto flex justify-center items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 font-bold py-2.5 px-6 rounded-full transition-all duration-300 active:scale-95"
