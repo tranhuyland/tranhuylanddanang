@@ -23,22 +23,31 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 1. Chỉ lưu lại chữ khách gõ (KHÔNG lọc ngay lập tức)
+  // 1. Chỉ lưu lại chữ khách gõ
   const handleSearchChange = (val: string) => {
     setSearchValue(val);
   };
 
-  // 2. HÀM CHÍNH: Chỉ lọc khi khách bấm ENTER hoặc nút Tìm Kiếm
-  const executeSearch = (e: React.FormEvent) => {
-    e.preventDefault(); // Ngăn trình duyệt load lại trang
+  // 2. HÀM CHÍNH: Xử lý tìm kiếm khi bấm Kính lúp hoặc phím Enter
+  const executeSearch = (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault(); // Ngăn trình duyệt load lại trang
+    
+    // Gửi chữ vừa gõ xuống
     window.dispatchEvent(new CustomEvent('searchBds', { detail: searchValue }));
-    (document.activeElement as HTMLElement)?.blur(); // Tự động giấu bàn phím điện thoại đi
+    
+    // 🟢 THÊM LỆNH NÀY: Ép hệ thống chạy bộ lọc ngay lập tức giống hệt nút "Áp dụng"
+    window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
+    
+    // Tự động giấu bàn phím điện thoại đi
+    (document.activeElement as HTMLElement)?.blur(); 
   };
 
   // Nút xóa nhanh tìm kiếm
   const handleClearSearch = () => {
     setSearchValue("");
     window.dispatchEvent(new CustomEvent('searchBds', { detail: "" }));
+    // Xóa xong cũng có thể ép lọc lại luôn để ra list ban đầu
+    window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
   };
 
   return (
@@ -86,6 +95,12 @@ export default function Header() {
                   type="text"
                   value={searchValue}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  // 🟢 THÊM onKeyDown ĐỂ BẮT PHÍM ENTER TRÊN ĐIỆN THOẠI CỰC NHẠY
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      executeSearch(e);
+                    }
+                  }}
                   placeholder="Tìm khu vực, đường, dự án..."
                   className="w-full bg-slate-100/80 text-[13.5px] font-medium text-slate-700 rounded-full py-2.5 pl-9 pr-9 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all focus:bg-white border border-transparent focus:border-orange-200"
                 />
