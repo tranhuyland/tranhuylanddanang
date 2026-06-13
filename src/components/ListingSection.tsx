@@ -41,7 +41,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [activeLoaiHinh, setActiveLoaiHinh] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 6;
+  
+  // 🔥 THAY ĐỔI Ở ĐÂY: Hiển thị 10 sản phẩm mỗi trang
+  const itemsPerPage = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
 
