@@ -1,81 +1,77 @@
-'use client'; // Thêm dòng này để cho phép dùng state/sự kiện
+'use client';
 import React from 'react';
-import Image from 'next/image';
-import { Phone, MessageCircle, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
+import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
-  // Hàm này kích hoạt sự kiện mở Modal Ký Gửi
   const handleOpenKyGui = () => {
-    // Chúng ta tạo một sự kiện tùy chỉnh để Modals.tsx lắng nghe
     window.dispatchEvent(new CustomEvent('open-ky-goi-modal'));
   };
 
   return (
-    <section className="relative w-full h-[65vh] min-h-[480px] flex items-center mb-10 overflow-hidden">
+    <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <Image
-          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1727771746/hero_banner_bds_vn.jpg"
-          alt=""
-          fill
-          className="object-cover object-center"
-          priority
+        <img
+          src="/hero-bg.jpg"
+          alt="Toàn cảnh Đà Nẵng"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-slate-900/20"></div>
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 backdrop-blur-xl p-5 md:p-8 rounded-[2.5rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/30 backdrop-blur-lg p-6 md:p-8 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-[11px] md:text-xs font-bold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-sm border border-white">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             </span>
-            Kho Nhà Đất Chính Chủ Đà Nẵng
+            Kho Nhà Đất Đà Nẵng
           </div>
 
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-800 leading-[1.2] tracking-tight mb-3">
+          <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">
+            {/* 🔥 Đổi sang màu xám đen đồng bộ, bỏ hiệu ứng bóng đổ để chữ nét và sắc sảo nhất */}
+            <span className="text-slate-900">
               Giao Dịch Minh Bạch
             </span>
           </h1>
 
-          <p className="text-slate-500 font-medium text-sm md:text-base mb-5 max-w-lg leading-relaxed">
-            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng. Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp từ chủ nhà.
+          <p className="text-slate-900 font-medium text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
+            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng. Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <a 
               href="tel:0905778852" 
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-2.5 px-6 rounded-full shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 active:scale-95 transition-all duration-300"
+              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-orange-500/30 text-sm hover:shadow-orange-500/50 active:scale-95 transition-all"
             >
-              <Phone className="w-4 h-4 md:w-5 md:h-5" /> Liên Hệ Tư Vấn
+              <Phone className="w-4 h-4" /> Liên Hệ Tư Vấn
             </a>
             
-            {/* NÚT KÝ GỬI NHÀ ĐẤT - Gọi Modal */}
             <button 
               onClick={handleOpenKyGui}
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 font-bold py-2.5 px-6 rounded-full transition-all duration-300 active:scale-95"
+              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white/95 text-slate-800 border border-white hover:bg-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md active:scale-95 transition-all"
             >
-              <FileText className="w-4 h-4 md:w-5 md:h-5" /> Ký Gởi Nhà Đất
+              <FileText className="w-4 h-4 text-blue-600" /> Ký Gởi Nhà Đất
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-slate-200/60">
+          <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-900/10">
              <div className="flex flex-col">
-                <span className="flex items-center gap-1 text-slate-800 font-black text-lg md:text-xl"><Building2 className="w-4 h-4 text-orange-500"/> 500+</span>
-                <span className="text-slate-500 text-[10px] md:text-xs font-medium uppercase tracking-wide mt-0.5">Sản Phẩm</span>
+                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><Building2 className="w-4 h-4 text-orange-600"/> 500+</span>
+                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Sản Phẩm</span>
              </div>
-             <div className="flex flex-col border-l border-slate-200/60 pl-3 md:pl-4">
-                <span className="flex items-center gap-1 text-slate-800 font-black text-lg md:text-xl"><MapPin className="w-4 h-4 text-orange-500"/> 100%</span>
-                <span className="text-slate-500 text-[10px] md:text-xs font-medium uppercase tracking-wide mt-0.5">Chính Chủ</span>
+             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
+                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><MapPin className="w-4 h-4 text-orange-600"/> 100%</span>
+                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Chính Chủ</span>
              </div>
-             <div className="flex flex-col border-l border-slate-200/60 pl-3 md:pl-4">
-                <span className="flex items-center gap-1 text-slate-800 font-black text-lg md:text-xl"><TrendingUp className="w-4 h-4 text-orange-500"/> Siêu</span>
-                <span className="text-slate-500 text-[10px] md:text-xs font-medium uppercase tracking-wide mt-0.5">Đầu Tư</span>
+             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
+                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><TrendingUp className="w-4 h-4 text-orange-600"/> Siêu</span>
+                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Đầu Tư</span>
              </div>
           </div>
+
         </div>
       </div>
     </section>
