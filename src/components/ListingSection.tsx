@@ -183,12 +183,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
-      {/* 🔥 THAY ĐỔI: Khung chứa bung 100% chiều ngang (w-full), không còn viền trắng ở 2 bên */}
       <section className="w-full relative z-10 -mt-6 sm:-mt-10">
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
             
-            {/* Dải Tab bám sát viền màn hình (không có padding) */}
             <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none">
               {TAB_OPTIONS.map((tab, index) => {
                 const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
@@ -229,7 +227,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               })}
             </div>
 
-            {/* Khu vực chứa nút bấm thì có padding 2 bên (px-4) để tránh sát mép gây khó chạm */}
             <div className="px-4 sm:px-8">
               <div className="md:hidden flex flex-col gap-3 mb-2">
                 <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
@@ -311,10 +308,26 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
 
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
-  const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+  
   const strictTextChoThue = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
+
+  // 🔥 1. ĐỊNH NGHĨA CÁC CỤM TỪ LÀM "GIẢ" MẶT TIỀN
+  const isMatTienFake = 
+    textLower.includes("cach mat tien") || 
+    textLower.includes("sau lung can mat tien") || 
+    textLower.includes("sau lung mat tien") || 
+    textLower.includes("sau mat tien") ||
+    textLower.includes("gan mat tien");
+
+  // 🔥 2. ĐIỀU KIỆN ĐỂ LÀ KIỆT/HẺM:
+  // Có chữ kiệt/hẻm, HOẶC dính các từ khoá fake mặt tiền ở trên
+  const isKietHem = textLower.includes("kiet") || textLower.includes("hem") || isMatTienFake;
+
+  // 🔥 3. ĐIỀU KIỆN ĐỂ LÀ MẶT TIỀN CHUẨN: 
+  // Có chữ mặt tiền VÀ KHÔNG mang cờ Kiệt/Hẻm (đảm bảo tính loại trừ lẫn nhau)
+  const isMatTien = textLower.includes("mat tien") && !isKietHem;
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
@@ -340,7 +353,10 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
+          
+          {/* LUẬT ĐỘC QUYỀN ĐÃ ĐƯỢC ÁP DỤNG: Sẽ chỉ hiện 1 trong 2 do logic !isKietHem ở trên */}
           {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
+          {isKietHem && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🛣️ Kiệt/Hẻm</span>}
         </div>
 
         <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 group-active:scale-110 group-hover:shadow-orange-500/40 group-active:shadow-orange-500/40 transition-all duration-300">
