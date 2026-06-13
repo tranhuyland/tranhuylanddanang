@@ -9,14 +9,14 @@ export default function Hero() {
 
   return (
     <section className="hero-bg text-white">
-      {/* 🛠 Đã thu gọn chiều cao: Giảm padding từ py-20 sm:py-28 xuống py-12 sm:py-16 */}
-      <div className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
+      {/* 🛠 Đã nới rộng khoảng cách đáy: Thay py-12 thành pt-12 pb-24 và py-16 thành pt-16 pb-32 */}
+      <div className="max-w-7xl mx-auto px-4 pt-12 pb-24 sm:pt-16 sm:pb-32">
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 rounded-full px-4 py-1.5 text-xs font-bold mb-5 tracking-wide uppercase">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> KHO NHÀ ĐẤT CHÍNH CHỦ ĐÀ NẴNG
           </div>
           
-          {/* 🛠 Chữ tiêu đề thu gọn lại một chút trên mobile để đỡ chiếm diện tích */}
+          {/* Chữ tiêu đề thu gọn lại một chút trên mobile để đỡ chiếm diện tích */}
           <h2 className="text-4xl sm:text-5xl font-extrabold leading-tight mb-4">
             Nhà Thật • Giá Thật • Giao Dịch Minh Bạch
           </h2>
@@ -30,7 +30,7 @@ export default function Hero() {
               Liên Hệ Tư Vấn
             </a>
             
-            {/* 🛠 Nút Ký Gởi Nhanh: Đổi thẻ <a> thành thẻ <button> và thêm sự kiện mở Modal */}
+            {/* Nút Ký Gởi Nhanh: Đổi thẻ <a> thành thẻ <button> và thêm sự kiện mở Modal */}
             <button 
               onClick={() => setIsOpenKyGui(true)}
               className="border border-white/20 hover:bg-white/10 px-6 py-3.5 rounded-2xl font-bold transition-all flex items-center gap-2"
@@ -41,7 +41,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* 🛠 Nhúng Modal Ký Gửi vào đây. Nó sẽ bị ẩn đi cho đến khi isOpenKyGui = true */}
+      {/* Nhúng Modal Ký Gửi vào đây. Nó sẽ bị ẩn đi cho đến khi isOpenKyGui = true */}
       <Modals type="kygui" isOpen={isOpenKyGui} onClose={() => setIsOpenKyGui(false)} />
     </section>
   );
