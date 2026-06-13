@@ -26,13 +26,15 @@ export default function Hero() {
         {/* Khối Box nằm lệch trái - Thu gọn padding từ p-10 xuống p-8 */}
         <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 backdrop-blur-xl p-5 md:p-8 rounded-[2.5rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           
-          {/* Nhãn nhỏ trên cùng - Đã trả lại Y HỆT BẢN CŨ anh thích */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-[11px] md:text-xs font-bold uppercase tracking-wider mb-4">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+          {/* Nhãn nhỏ trên cùng - Đã sửa lại để NỔI BẬT rực rỡ */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-red-600 shadow-[0_4px_15px_rgba(249,115,22,0.4)] mb-5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
             </span>
-            Kho Nhà Đất Chính Chủ Đà Nẵng
+            <span className="text-white text-xs md:text-sm font-bold tracking-wide">
+              Trần Huy Land - Kho Nhà Đất Chính Chủ Đà Nẵng
+            </span>
           </div>
 
           {/* Tiêu đề chính */}
