@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Image from 'next/image';
 import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
@@ -10,15 +11,17 @@ export default function Hero() {
   return (
     <section className="relative w-full h-[65vh] min-h-[480px] flex items-center mb-10 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        {/* 🔥 Đã dùng lại link Cloudinary CỦA ANH để đảm bảo 100% không bị lỗi.
-            Đã thêm hiệu ứng làm mờ (blur-[4px]) và phóng to nhẹ (scale-105) */}
-        <img
-          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1727771746/hero_banner_bds_vn.jpg"
-          alt="Toàn cảnh Đà Nẵng"
-          className="absolute inset-0 w-full h-full object-cover object-center blur-[4px] scale-105 transition-transform duration-1000"
+        {/* 🔥 Gọi trực tiếp ảnh từ thư mục public. 
+            Không bao giờ bị lỗi link hỏng, Next.js sẽ tự tối ưu tốc độ load! */}
+        <Image
+          src="/hero-bg.jpg"
+          alt="Toàn cảnh flycam Đà Nẵng"
+          fill
+          className="object-cover object-center blur-[4px] scale-105 transition-transform duration-1000"
+          priority
         />
         
-        {/* Lớp phủ gradient (đã chỉnh tối đi một chút để chữ trắng nổi bật) */}
+        {/* Lớp phủ gradient làm nổi bật chữ */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-slate-900/30"></div>
       </div>
 
