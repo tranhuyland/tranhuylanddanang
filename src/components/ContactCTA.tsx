@@ -1,9 +1,13 @@
 'use client';
-import React, { useState } from "react";
+import React from "react";
 import { Modals } from "./Modals";
 
 export default function ContactCTA() {
-  const [isOpenKyGui, setIsOpenKyGui] = useState(false);
+  // Hàm kích hoạt sự kiện mở Modal Ký Gửi (giống hệt bên Hero.tsx)
+  const handleOpenKyGui = () => {
+    window.dispatchEvent(new CustomEvent('open-ky-goi-modal'));
+  };
+
   return (
     <>
       <section className="max-w-7xl mx-auto px-4 pb-20">
@@ -13,13 +17,20 @@ export default function ContactCTA() {
             <h2 className="text-3xl lg:text-5xl font-extrabold mb-5">Cần Bán Nhanh Nhà Đất Tại Đà Nẵng?</h2>
             <p className="text-base leading-relaxed mb-8 font-medium">Gửi thông tin sơ bộ qua hệ thống để được anh Huy hỗ trợ kiểm tra pháp lý, trích lục bản vẽ quy hoạch và kết nối khách hàng thực tế nhanh nhất.</p>
             <div className="flex flex-wrap gap-3">
-              <button onClick={() => setIsOpenKyGui(true)} className="bg-slate-900 hover:bg-slate-800 text-white px-7 py-4 rounded-2xl font-extrabold text-sm shadow-xl transition-all">Ký Gửi Trực Tuyến</button>
+              <button 
+                onClick={handleOpenKyGui} 
+                className="bg-slate-900 hover:bg-slate-800 text-white px-7 py-4 rounded-2xl font-extrabold text-sm shadow-xl transition-all"
+              >
+                Ký Gửi Trực Tuyến
+              </button>
               <a href="tel:0905778852" className="border border-slate-900 hover:bg-slate-900/10 px-7 py-4 rounded-2xl font-extrabold text-sm transition-all">Hotline: 0905 77 88 52</a>
             </div>
           </div>
         </div>
       </section>
-      <Modals type="kygui" isOpen={isOpenKyGui} onClose={() => setIsOpenKyGui(false)} />
+      
+      {/* Chỉ gọi thẻ Modals trơn, không truyền tham số nữa để tránh lỗi TypeScript */}
+      <Modals />
     </>
   );
 }
