@@ -32,11 +32,13 @@ export default function Header() {
   const executeSearch = (e?: React.FormEvent | React.KeyboardEvent) => {
     if (e) e.preventDefault(); // Ngăn trình duyệt load lại trang
     
-    // Gửi chữ vừa gõ xuống
+    // Gửi chữ vừa gõ xuống cho Component Danh sách
     window.dispatchEvent(new CustomEvent('searchBds', { detail: searchValue }));
     
-    // Ép hệ thống chạy bộ lọc ngay lập tức giống hệt nút "Áp dụng"
-    window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
+    // 🟢 BÙA CHÚ Ở ĐÂY: Đợi 100 mili-giây để danh sách cập nhật chữ xong, rồi mới ép lọc
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
+    }, 100);
     
     // Tự động giấu bàn phím điện thoại đi
     (document.activeElement as HTMLElement)?.blur(); 
@@ -46,8 +48,11 @@ export default function Header() {
   const handleClearSearch = () => {
     setSearchValue("");
     window.dispatchEvent(new CustomEvent('searchBds', { detail: "" }));
-    // Ép lọc lại luôn để ra list ban đầu
-    window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
+    
+    // 🟢 Đợi 100ms rồi ép hệ thống khôi phục danh sách ban đầu
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('forceApplyFilters')); 
+    }, 100);
   };
 
   return (
@@ -102,7 +107,7 @@ export default function Header() {
                     }
                   }}
                   placeholder="Tìm khu vực, đường, dự án..."
-                  // 🔥 ĐÃ SỬA: Đổi font-size thành 16px trên mobile để chống Safari Zoom
+                  // Font-size 16px chống tự động Zoom màn hình trên iPhone
                   className="w-full bg-slate-100/80 text-[16px] md:text-[13.5px] font-medium text-slate-700 rounded-full py-2.5 pl-9 pr-9 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all focus:bg-white border border-transparent focus:border-orange-200"
                 />
                 
