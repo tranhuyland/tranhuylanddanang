@@ -93,6 +93,28 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     else setIsDrawerOpen(false);
   };
 
+  // 🟢 BỘ ĐẾM SỐ LƯỢNG SẢN PHẨM THEO TỪNG DANH MỤC THÔNG MINH
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: safeBdsItems.length,
+      "Đất nền": 0,
+      "Nhà phố": 0,
+      "Cho thuê": 0,
+    };
+
+    safeBdsItems.forEach((i: any) => {
+      if (!i) return;
+      // Khớp chính xác với thuật toán tìm kiếm LoaiHinh bên dưới
+      const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`);
+      
+      if (searchStr.includes(removeAccents("Đất nền"))) counts["Đất nền"]++;
+      if (searchStr.includes(removeAccents("Nhà phố"))) counts["Nhà phố"]++;
+      if (searchStr.includes(removeAccents("Cho thuê"))) counts["Cho thuê"]++;
+    });
+
+    return counts;
+  }, [safeBdsItems]);
+
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems].sort((a: any, b: any) => {
       const getTime = (d: string) => {
@@ -158,13 +180,22 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
           <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
-            {TAB_OPTIONS.map(tab => (
-              <button key={tab.id} onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
-                className={`flex-1 flex justify-center whitespace-nowrap text-center py-4 px-0.5 text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold transition-all relative rounded-t-xl ${activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"}`}>
-                {tab.label}
-                {activeLoaiHinh === tab.id && <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />}
-              </button>
-            ))}
+            {TAB_OPTIONS.map(tab => {
+              // Lấy số lượng tương ứng cho Tab
+              const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
+              
+              return (
+                <button key={tab.id} onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
+                  className={`flex-1 flex justify-center items-center gap-1.5 whitespace-nowrap text-center py-4 px-0.5 text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold transition-all relative rounded-t-xl ${activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"}`}>
+                  {tab.label}
+                  {/* 🟢 HIỂN THỊ SỐ LƯỢNG VÀO ĐÂY */}
+                  <span className={`text-[11px] md:text-[12px] font-bold ${activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"}`}>
+                    ({currentCount})
+                  </span>
+                  {activeLoaiHinh === tab.id && <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />}
+                </button>
+              );
+            })}
           </div>
 
           {/* 🔥 KHÔI PHỤC NÚT MỞ BỘ LỌC TRÊN ĐIỆN THOẠI */}
