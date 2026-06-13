@@ -53,7 +53,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setIsDrawerOpen(true);
     };
     
-    // 🟢 THAY ĐỔI 1: Tự động xóa bộ lọc nâng cao khi khách gõ tìm kiếm mới
     const handleSearch = (e: any) => {
       setSearchTerm(e.detail);
       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
@@ -98,7 +97,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     else setIsDrawerOpen(false);
   };
 
-  // 🟢 BỘ ĐẾM SỐ LƯỢNG SẢN PHẨM THEO TỪNG DANH MỤC THÔNG MINH
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {
       all: safeBdsItems.length,
@@ -187,23 +185,28 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     <>
       <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
         <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
-          <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
-            {TAB_OPTIONS.map(tab => {
+          
+          {/* 🔥 BẢN NÂNG CẤP: Dải tab kéo tràn viền 2 bên và sát mép trên */}
+          <div className="flex w-full items-stretch -mx-5 sm:-mx-8 -mt-5 sm:-mt-8 mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem]">
+            {TAB_OPTIONS.map((tab, index) => {
               const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
+              const isFirst = index === 0;
+              const isLast = index === TAB_OPTIONS.length - 1;
               
               return (
                 <button 
                   key={tab.id} 
                   onClick={() => { 
                     setActiveLoaiHinh(tab.id); 
-                    // 🟢 THAY ĐỔI 2: Tự động xóa bộ lọc nâng cao cũ khi bấm chuyển danh mục tab mới
                     const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
                     setFilters(resetState);
                     setTempFilters(resetState);
                     setCurrentPage(1); 
                   }}
-                  className={`flex-1 flex flex-col justify-center items-center py-2 px-0.5 transition-all relative rounded-t-xl ${
-                    activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
+                  className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative ${isFirst ? 'rounded-tl-[2rem]' : ''} ${isLast ? 'rounded-tr-[2rem]' : ''} ${
+                    activeLoaiHinh === tab.id 
+                      ? "text-orange-600 bg-white" 
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"
                   }`}
                 >
                   <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
@@ -213,18 +216,18 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${
                     activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"
                   }`}>
-                    ({currentCount} sản phẩm)
+                    ({currentCount} SP)
                   </span>
 
+                  {/* Dải chỉ mục tràn viền khối */}
                   {activeLoaiHinh === tab.id && (
-                    <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
+                    <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />
                   )}
                 </button>
               );
             })}
           </div>
 
-          {/* 🔥 THAY ĐỔI 3: Thêm nút Hủy bộ lọc cực nhanh xuất hiện ngay trên điện thoại */}
           <div className="md:hidden flex flex-col gap-3 mb-6">
             <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
               className="w-full flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
@@ -237,7 +240,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               )}
             </button>
 
-            {/* Nút này chỉ xuất hiện khi khách hàng ĐANG ÁP DỤNG bộ lọc */}
             {activeFiltersCount > 0 && (
               <button onClick={handleResetFilters}
                 className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95">
@@ -246,7 +248,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             )}
           </div>
 
-          {/* Giao diện bộ lọc đã tách file */}
           <FilterWidget 
             tempFilters={tempFilters} 
             handleFilterChange={handleFilterChange} 
