@@ -43,7 +43,7 @@ export default function Header() {
         {/* 1. KHU VỰC LOGO (Chỉ hiện ở trang chủ, cuộn xuống tự thu gọn) */}
         {isHomePage && (
           <div className={`flex items-center justify-center overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'h-0 opacity-0' : 'h-14 opacity-100'}`}>
-            <Link href="/" className="relative h-15 w-60 mt-2 block">
+            <Link href="/" className="relative h-10 w-40 mt-2 block">
               <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
             </Link>
           </div>
