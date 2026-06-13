@@ -11,7 +11,7 @@ export default function Hero() {
       <div className="absolute inset-0 z-0">
         <Image
           src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1727771746/hero_banner_bds_vn.jpg"
-          alt="Trần Huy Land - Kho nhà đất chính chủ Đà Nẵng"
+          alt=""
           fill
           className="object-cover object-center"
           priority
