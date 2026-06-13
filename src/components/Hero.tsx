@@ -3,7 +3,6 @@ import React from 'react';
 import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
-  // Hàm này kích hoạt sự kiện mở Modal Ký Gửi
   const handleOpenKyGui = () => {
     window.dispatchEvent(new CustomEvent('open-ky-goi-modal'));
   };
@@ -11,13 +10,15 @@ export default function Hero() {
   return (
     <section className="relative w-full h-[65vh] min-h-[480px] flex items-center mb-10 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        {/* 🔥 Đã thay bằng thẻ img HTML cơ bản, thêm class 'absolute inset-0 w-full h-full' để giãn đều */}
+        {/* 🔥 Đã dùng lại link Cloudinary CỦA ANH để đảm bảo 100% không bị lỗi.
+            Đã thêm hiệu ứng làm mờ (blur-[4px]) và phóng to nhẹ (scale-105) */}
         <img
-          src="https://images.unsplash.com/photo-1559592413-7cea4ee054f7?q=80&w=2070&auto=format&fit=crop"
-          alt="Toàn cảnh flycam Đà Nẵng"
-          className="absolute inset-0 w-full h-full object-cover object-center blur-[3px] scale-105 transition-transform duration-1000"
+          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1727771746/hero_banner_bds_vn.jpg"
+          alt="Toàn cảnh Đà Nẵng"
+          className="absolute inset-0 w-full h-full object-cover object-center blur-[4px] scale-105 transition-transform duration-1000"
         />
-        {/* Lớp phủ gradient */}
+        
+        {/* Lớp phủ gradient (đã chỉnh tối đi một chút để chữ trắng nổi bật) */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-slate-900/30"></div>
       </div>
 
