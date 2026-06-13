@@ -15,12 +15,10 @@ export default function Hero() {
           alt="Toàn cảnh Đà Nẵng"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        {/* Lớp phủ siêu mỏng giúp làm dịu ảnh gốc một xíu để phần kính phía trên nổi bật */}
         <div className="absolute inset-0 bg-slate-900/20"></div>
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        {/* 🔥 GIAO DIỆN KÍNH MỜ CHUẨN APPLE: bg-white/30 (siêu trong suốt) + backdrop-blur-lg (kính nhòe mạnh) */}
         <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/30 backdrop-blur-lg p-6 md:p-8 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-sm border border-white">
@@ -33,7 +31,8 @@ export default function Hero() {
 
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">
+            {/* 🔥 SỬA LỖI NHỨC MẮT: Dùng màu cam đậm nét căng thay vì gradient mờ ảo */}
+            <span className="text-orange-600 drop-shadow-sm">
               Giao Dịch Minh Bạch
             </span>
           </h1>
