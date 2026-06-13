@@ -26,13 +26,13 @@ export default function Hero() {
         {/* Khối Box nằm lệch trái - 💡 Thu gọn padding từ p-10 xuống p-8 */}
         <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 backdrop-blur-xl p-5 md:p-8 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           
-          {/* Nhãn nhỏ trên cùng - 💡 Giảm margin mb-6 thành mb-4 */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-600 text-[11px] md:text-xs font-bold uppercase tracking-wider mb-4">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+          {/* Nhãn nhỏ trên cùng - Đã tối ưu cho nổi bật, viền mảnh mềm mại và dễ đọc */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-orange-200 text-orange-700 text-xs md:text-sm font-bold shadow-sm mb-5 backdrop-blur-md">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-600"></span>
             </span>
-            Kho Nhà Đất Chính Chủ Đà Nẵng
+            Trần Huy Land - Kho Nhà Đất Chính Chủ Đà Nẵng
           </div>
 
           {/* Tiêu đề chính - 💡 Thu nhỏ font chữ một chút (từ 6xl xuống 5xl) */}
