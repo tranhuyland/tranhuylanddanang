@@ -185,14 +185,26 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
               
               return (
-                <button key={tab.id} onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
-                  className={`flex-1 flex justify-center items-center gap-1.5 whitespace-nowrap text-center py-4 px-0.5 text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold transition-all relative rounded-t-xl ${activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"}`}>
-                  {tab.label}
-                  {/* 🟢 HIỂN THỊ SỐ LƯỢNG VÀO ĐÂY */}
-                  <span className={`text-[11px] md:text-[12px] font-bold ${activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"}`}>
-                    ({currentCount})
+                <button 
+                  key={tab.id} 
+                  onClick={() => { setActiveLoaiHinh(tab.id); setCurrentPage(1); }}
+                  className={`flex-1 flex flex-col justify-center items-center py-2 px-0.5 transition-all relative rounded-t-xl ${
+                    activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
+                    {tab.label}
                   </span>
-                  {activeLoaiHinh === tab.id && <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />}
+                  
+                  <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${
+                    activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"
+                  }`}>
+                    ({currentCount} sản phẩm)
+                  </span>
+
+                  {activeLoaiHinh === tab.id && (
+                    <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
+                  )}
                 </button>
               );
             })}
