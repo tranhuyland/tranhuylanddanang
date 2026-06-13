@@ -41,7 +41,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [activeLoaiHinh, setActiveLoaiHinh] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 6;
+  
+  // 🔥 THAY ĐỔI Ở ĐÂY: Hiển thị 10 sản phẩm mỗi trang
+  const itemsPerPage = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -53,7 +55,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setIsDrawerOpen(true);
     };
     
-    // 🟢 THAY ĐỔI 1: Tự động xóa bộ lọc nâng cao khi khách gõ tìm kiếm mới
     const handleSearch = (e: any) => {
       setSearchTerm(e.detail);
       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
@@ -98,7 +99,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     else setIsDrawerOpen(false);
   };
 
-  // 🟢 BỘ ĐẾM SỐ LƯỢNG SẢN PHẨM THEO TỪNG DANH MỤC THÔNG MINH
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {
       all: safeBdsItems.length,
@@ -185,89 +185,95 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
-      <section className="max-w-7xl mx-auto w-full px-4 -mt-10 relative z-10">
-        <div className="bg-white p-5 sm:p-8 rounded-[2rem] border border-slate-100 shadow-xl">
-          <div className="flex w-full justify-between items-center gap-1 sm:gap-2 border-b-2 border-slate-100 mb-6 pb-0">
-            {TAB_OPTIONS.map(tab => {
-              const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
-              
-              return (
-                <button 
-                  key={tab.id} 
-                  onClick={() => { 
-                    setActiveLoaiHinh(tab.id); 
-                    // 🟢 THAY ĐỔI 2: Tự động xóa bộ lọc nâng cao cũ khi bấm chuyển danh mục tab mới
-                    const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
-                    setFilters(resetState);
-                    setTempFilters(resetState);
-                    setCurrentPage(1); 
-                  }}
-                  className={`flex-1 flex flex-col justify-center items-center py-2 px-0.5 transition-all relative rounded-t-xl ${
-                    activeLoaiHinh === tab.id ? "text-orange-600 bg-orange-50/50" : "text-slate-400 hover:text-slate-800 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
-                    {tab.label}
-                  </span>
-                  
-                  <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${
-                    activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"
-                  }`}>
-                    ({currentCount} sản phẩm)
-                  </span>
+      <section className="w-full relative z-10 -mt-6 sm:-mt-10">
+        <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
+          <div className="max-w-7xl mx-auto">
+            
+            <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none">
+              {TAB_OPTIONS.map((tab, index) => {
+                const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
+                const isFirst = index === 0;
+                const isLast = index === TAB_OPTIONS.length - 1;
+                
+                return (
+                  <button 
+                    key={tab.id} 
+                    onClick={() => { 
+                      setActiveLoaiHinh(tab.id); 
+                      const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
+                      setFilters(resetState);
+                      setTempFilters(resetState);
+                      setCurrentPage(1); 
+                    }}
+                    className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative ${isFirst ? 'rounded-tl-[2rem] sm:rounded-none' : ''} ${isLast ? 'rounded-tr-[2rem] sm:rounded-none' : ''} ${
+                      activeLoaiHinh === tab.id 
+                        ? "text-orange-600 bg-white" 
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"
+                    }`}
+                  >
+                    <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
+                      {tab.label}
+                    </span>
+                    
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${
+                      activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"
+                    }`}>
+                      ({currentCount} SP)
+                    </span>
 
-                  {activeLoaiHinh === tab.id && (
-                    <span className="absolute bottom-[-2px] left-[10%] w-[80%] h-[4px] bg-gradient-to-r from-orange-500 to-red-600 rounded-t-full" />
+                    {activeLoaiHinh === tab.id && (
+                      <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="px-4 sm:px-8">
+              <div className="md:hidden flex flex-col gap-3 mb-2">
+                <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
+                  className="w-full flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
+                  <SlidersHorizontal size={18} />
+                  Mở bộ lọc chi tiết 
+                  {activeFiltersCount > 0 && (
+                    <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-md">
+                      {activeFiltersCount}
+                    </span>
                   )}
                 </button>
-              );
-            })}
-          </div>
 
-          {/* 🔥 THAY ĐỔI 3: Thêm nút Hủy bộ lọc cực nhanh xuất hiện ngay trên điện thoại */}
-          <div className="md:hidden flex flex-col gap-3 mb-6">
-            <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
-              className="w-full flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
-              <SlidersHorizontal size={18} />
-              Mở bộ lọc chi tiết 
-              {activeFiltersCount > 0 && (
-                <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-md">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
+                {activeFiltersCount > 0 && (
+                  <button onClick={handleResetFilters}
+                    className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95">
+                    <X size={18} /> Hủy bỏ bộ lọc đang áp dụng
+                  </button>
+                )}
+              </div>
 
-            {/* Nút này chỉ xuất hiện khi khách hàng ĐANG ÁP DỤNG bộ lọc */}
-            {activeFiltersCount > 0 && (
-              <button onClick={handleResetFilters}
-                className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95">
-                <X size={18} /> Hủy bỏ bộ lọc đang áp dụng
-              </button>
-            )}
-          </div>
+              <FilterWidget 
+                tempFilters={tempFilters} 
+                handleFilterChange={handleFilterChange} 
+                forceDistrict={forceDistrict}
+                isDrawerOpen={isDrawerOpen}
+                closeDrawer={closeDrawer}
+                handleResetFilters={handleResetFilters}
+                handleApplyFilters={handleApplyFilters}
+              />
 
-          {/* Giao diện bộ lọc đã tách file */}
-          <FilterWidget 
-            tempFilters={tempFilters} 
-            handleFilterChange={handleFilterChange} 
-            forceDistrict={forceDistrict}
-            isDrawerOpen={isDrawerOpen}
-            closeDrawer={closeDrawer}
-            handleResetFilters={handleResetFilters}
-            handleApplyFilters={handleApplyFilters}
-          />
-
-          <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
-            <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
-            <div className="flex items-center gap-3">
-              {activeFiltersCount > 0 && <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50"><RotateCcw size={16} className="inline mr-2" />Xóa lọc</button>}
-              <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all"><Check size={16} className="inline mr-2" />Tìm kiếm ngay</button>
+              <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
+                <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
+                <div className="flex items-center gap-3">
+                  {activeFiltersCount > 0 && <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50"><RotateCcw size={16} className="inline mr-2" />Xóa lọc</button>}
+                  <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all"><Check size={16} className="inline mr-2" />Tìm kiếm ngay</button>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-6 mb-20 scroll-mt-28">
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
@@ -304,10 +310,26 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
 
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
-  const isMatTien = textLower.includes("mat tien");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+  
   const strictTextChoThue = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
+
+  // 🔥 1. ĐỊNH NGHĨA CÁC CỤM TỪ LÀM "GIẢ" MẶT TIỀN
+  const isMatTienFake = 
+    textLower.includes("cach mat tien") || 
+    textLower.includes("sau lung can mat tien") || 
+    textLower.includes("sau lung mat tien") || 
+    textLower.includes("sau mat tien") ||
+    textLower.includes("gan mat tien");
+
+  // 🔥 2. ĐIỀU KIỆN ĐỂ LÀ KIỆT/HẺM:
+  // Có chữ kiệt/hẻm, HOẶC dính các từ khoá fake mặt tiền ở trên
+  const isKietHem = textLower.includes("kiet") || textLower.includes("hem") || isMatTienFake;
+
+  // 🔥 3. ĐIỀU KIỆN ĐỂ LÀ MẶT TIỀN CHUẨN: 
+  // Có chữ mặt tiền VÀ KHÔNG mang cờ Kiệt/Hẻm (đảm bảo tính loại trừ lẫn nhau)
+  const isMatTien = textLower.includes("mat tien") && !isKietHem;
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
@@ -333,7 +355,10 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider shadow-purple-500/30">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">✓ Chính Chủ</span>}
+          
+          {/* LUẬT ĐỘC QUYỀN ĐÃ ĐƯỢC ÁP DỤNG: Sẽ chỉ hiện 1 trong 2 do logic !isKietHem ở trên */}
           {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🏢 Mặt Tiền</span>}
+          {isKietHem && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">🛣️ Kiệt/Hẻm</span>}
         </div>
 
         <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-extrabold text-sm px-3.5 py-1.5 rounded-xl shadow-lg border border-orange-400/20 z-10 tracking-wide transform group-hover:scale-110 group-active:scale-110 group-hover:shadow-orange-500/40 group-active:shadow-orange-500/40 transition-all duration-300">
