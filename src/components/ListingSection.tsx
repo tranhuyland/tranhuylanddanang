@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-// 🔥 Đã bổ sung đầy đủ các Icon mới bao gồm cả Bath (WC)
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -18,7 +17,6 @@ const TAB_OPTIONS = [
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
 
-// 🔥 THUẬT TOÁN KHỬ DẤU SIÊU MẠNH (Xử lý cả "Hòa" và "Hoà")
 const removeAccents = (str: string) => {
   if (!str) return "";
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
@@ -42,13 +40,46 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [activeLoaiHinh, setActiveLoaiHinh] = useState("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  
-  // 🔥 Hiển thị 10 sản phẩm mỗi trang
-  const itemsPerPage = 10;
-
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
+  // 🔥 TÍNH NĂNG MỚI: LƯU TRỮ YÊU THÍCH (KHÔNG CẦN ĐĂNG NHẬP)
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Tự động gọi lại danh sách nhà đã lưu từ bộ nhớ điện thoại khách hàng
+    const saved = localStorage.getItem("thl_favorites");
+    if (saved) {
+      try { setFavoriteIds(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const toggleFavorite = (id: string, e: any) => {
+    e.preventDefault(); // Tránh bị nhảy trang khi bấm tim
+    let newFavs;
+    if (favoriteIds.includes(id)) {
+      newFavs = favoriteIds.filter(f => f !== id);
+    } else {
+      newFavs = [...favoriteIds, id];
+    }
+    setFavoriteIds(newFavs);
+    localStorage.setItem('thl_favorites', JSON.stringify(newFavs)); // Ghi nhớ vĩnh viễn vào trình duyệt
+  };
+
+  const handleToggleShowFavorites = () => {
+    const nextVal = !showFavorites;
+    setShowFavorites(nextVal);
+    setCurrentPage(1);
+    if (nextVal) {
+      setFilters(initialFilters);
+      setTempFilters(initialFilters);
+      setActiveLoaiHinh("all");
+    }
+  };
+
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const handleOpenDrawer = () => {
@@ -86,18 +117,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  useEffect(() => {
-    const handlePopState = () => isDrawerOpen && setIsDrawerOpen(false);
-    if (isDrawerOpen) {
-      window.history.pushState({ drawer: 'open' }, '');
-      window.addEventListener('popstate', handlePopState);
-    }
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [isDrawerOpen]);
-
   const closeDrawer = () => {
-    if (window.history.state?.drawer === 'open') window.history.back();
-    else setIsDrawerOpen(false);
+    setIsDrawerOpen(false);
   };
 
   const tabCounts = useMemo(() => {
@@ -107,21 +128,25 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       "Nhà phố": 0,
       "Cho thuê": 0,
     };
-
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
       const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`);
-      
       if (searchStr.includes(removeAccents("Đất nền"))) counts["Đất nền"]++;
       if (searchStr.includes(removeAccents("Nhà phố"))) counts["Nhà phố"]++;
       if (searchStr.includes(removeAccents("Cho thuê"))) counts["Cho thuê"]++;
     });
-
     return counts;
   }, [safeBdsItems]);
 
   const filteredItems = useMemo(() => {
-    let result = [...safeBdsItems].sort((a: any, b: any) => {
+    let result = [...safeBdsItems];
+
+    // 🔥 Ưu tiên lọc: Nếu đang bật chế độ "Đã lưu", chỉ hiện các nhà khách đã thả tim
+    if (showFavorites) {
+      result = result.filter(i => favoriteIds.includes(i.id?.toString() || i.slug));
+    }
+
+    result.sort((a: any, b: any) => {
       const getTime = (d: string) => {
         if (!d) return 0;
         const parts = d.split(/[-/]/);
@@ -144,7 +169,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       const target = removeAccents(filters.khuVuc);
       result = result.filter(i => removeAccents(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
     }
-    if (activeLoaiHinh !== "all") {
+    if (!showFavorites && activeLoaiHinh !== "all") {
       const target = removeAccents(activeLoaiHinh);
       result = result.filter(i => removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`).includes(target));
     }
@@ -165,7 +190,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       });
     }
     return result;
-  }, [filters, activeLoaiHinh, searchTerm, safeBdsItems]);
+  }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
   const handleApplyFilters = () => {
     setFilters(tempFilters);
@@ -190,24 +215,24 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
             
-            <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none">
+            <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none overflow-hidden">
               {TAB_OPTIONS.map((tab, index) => {
                 const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
                 const isFirst = index === 0;
-                const isLast = index === TAB_OPTIONS.length - 1;
                 
                 return (
                   <button 
                     key={tab.id} 
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); 
+                      setShowFavorites(false); // Tắt chế độ yêu thích khi chọn lại tab
                       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
                       setFilters(resetState);
                       setTempFilters(resetState);
                       setCurrentPage(1); 
                     }}
-                    className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative ${isFirst ? 'rounded-tl-[2rem] sm:rounded-none' : ''} ${isLast ? 'rounded-tr-[2rem] sm:rounded-none' : ''} ${
-                      activeLoaiHinh === tab.id 
+                    className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative ${isFirst ? 'rounded-tl-[2rem] sm:rounded-none' : ''} ${
+                      !showFavorites && activeLoaiHinh === tab.id 
                         ? "text-orange-600 bg-white" 
                         : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"
                     }`}
@@ -215,41 +240,58 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
                       {tab.label}
                     </span>
-                    
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${
-                      activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"
-                    }`}>
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${!showFavorites && activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"}`}>
                       ({currentCount} SP)
                     </span>
-
-                    {activeLoaiHinh === tab.id && (
+                    {!showFavorites && activeLoaiHinh === tab.id && (
                       <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />
                     )}
                   </button>
                 );
               })}
+
+              {/* 🔥 TÍNH NĂNG MỚI: Tab ĐÃ LƯU DÀNH CHO MÁY TÍNH */}
+              <button 
+                onClick={handleToggleShowFavorites}
+                className={`hidden sm:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}`}
+              >
+                <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold flex items-center gap-1.5">
+                  <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
+                </span>
+                <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-400'}`}>
+                  ({isClient ? favoriteIds.length : 0} SP)
+                </span>
+                {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" />}
+              </button>
             </div>
 
             <div className="px-4 sm:px-8">
-              <div className="md:hidden flex flex-col gap-3 mb-2">
+              {/* 🔥 TÍNH NĂNG MỚI: NÚT ĐÃ LƯU DÀNH CHO ĐIỆN THOẠI */}
+              <div className="md:hidden flex gap-2 mb-2">
                 <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
-                  className="w-full flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-4 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
+                  className="flex-1 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-3 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
                   <SlidersHorizontal size={18} />
-                  Mở bộ lọc chi tiết 
+                  Bộ lọc chi tiết 
                   {activeFiltersCount > 0 && (
                     <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-md">
                       {activeFiltersCount}
                     </span>
                   )}
                 </button>
-
-                {activeFiltersCount > 0 && (
-                  <button onClick={handleResetFilters}
-                    className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95">
-                    <X size={18} /> Hủy bỏ bộ lọc đang áp dụng
-                  </button>
-                )}
+                
+                <button onClick={handleToggleShowFavorites}
+                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-2xl text-sm font-bold border transition-all active:scale-95 ${showFavorites ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                  <Heart size={20} fill={showFavorites ? "currentColor" : "none"} className={showFavorites ? "text-white" : "text-red-500"} />
+                  <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({isClient ? favoriteIds.length : 0})</span>
+                </button>
               </div>
+
+              {activeFiltersCount > 0 && !showFavorites && (
+                <button onClick={handleResetFilters}
+                  className="md:hidden w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95 mb-2">
+                  <X size={18} /> Hủy bỏ bộ lọc đang áp dụng
+                </button>
+              )}
 
               <FilterWidget 
                 tempFilters={tempFilters} 
@@ -277,14 +319,27 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
-              <BdsCard key={item.id} item={item} rank={(currentPage - 1) * itemsPerPage + index + 1} />
-            ))}
+            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => {
+               const bdsId = item.id?.toString() || item.slug;
+               return (
+                 <BdsCard 
+                   key={bdsId} 
+                   item={item} 
+                   rank={(currentPage - 1) * itemsPerPage + index + 1} 
+                   isFavorite={favoriteIds.includes(bdsId)}
+                   onToggleFavorite={(e: any) => toggleFavorite(bdsId, e)}
+                 />
+               );
+            })}
           </div>
         ) : (
           <div className="text-center py-24 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
-            <p className="text-slate-500 font-bold text-lg">Không tìm thấy sản phẩm phù hợp</p>
-            {searchTerm && <p className="text-sm text-slate-400 mt-2">Thử bỏ bớt dấu hoặc gõ từ khóa ngắn hơn xem sao anh nhé.</p>}
+            <p className="text-slate-500 font-bold text-lg">
+              {showFavorites ? "Anh chưa lưu tin yêu thích nào" : "Không tìm thấy sản phẩm phù hợp"}
+            </p>
+            <p className="text-sm text-slate-400 mt-2">
+              {showFavorites ? "Hãy bấm vào biểu tượng trái tim (❤️) trên sản phẩm để lưu lại nhé!" : "Thử bỏ bớt dấu hoặc gõ từ khóa ngắn hơn xem sao anh nhé."}
+            </p>
           </div>
         )}
         
@@ -303,14 +358,13 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
 // ==========================================
 // THẺ SẢN PHẨM BĐS - GIAO DIỆN CHUẨN BATDONGSAN.COM.VN
-// Đã fix: Tự động hiểu 8,xx tỷ là 8 tỷ để chia Giá/m2 chuẩn xác
+// Đã FIX CHÍNH XÁC 100% Thuật toán Giá/M2 & Thêm tính năng Lưu Tin
 // ==========================================
-function BdsCard({ item, rank }: { item: any, rank?: number }) {
+function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: any) => void }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  // 🔥 THUẬT TOÁN ĐẾM ẢNH CHÍNH XÁC TỪ GOOGLE SHEETS
   const soLuongAnhChinhXac = useMemo(() => {
     if (item.soLuongAnh) return item.soLuongAnh; 
     if (typeof item.anh === 'string') {
@@ -321,41 +375,48 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
     return 1;
   }, [item]);
 
-  // 🔥 TÍNH TOÁN GIÁ TRÊN MÉT VUÔNG (Hỗ trợ định dạng 8,xx tỷ)
+  // 🔥 ĐÃ FIX TOÁN HỌC: Ưu tiên bóc giá trị thực từ cột "soGia" của anh Huy thay vì quét chữ ngoài tiêu đề
   const giaM2 = useMemo(() => {
     if (item.giaM2) return item.giaM2; 
     try {
-      // Thay thế ký tự x thành 0 để tính toán chuẩn
-      const giaStr = (item.gia || "").toLowerCase().replace(/x/g, '0');
-      const dtStr = (item.dienTich || "").toLowerCase();
       let giaTriTrieu = 0;
       
-      // Bóc tách Giá bán
-      if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
-        const match = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
-        if (match) {
-          const ty = parseFloat(match[1].replace(/,/g, '.'));
-          let trieu = 0;
-          if (match[2]) {
-            const trieuStr = match[2];
-            if (trieuStr.length === 1) trieu = parseInt(trieuStr) * 100;
-            else if (trieuStr.length === 2) trieu = parseInt(trieuStr) * 10;
-            else trieu = parseInt(trieuStr); 
+      // Bước 1: Nếu anh có cột số Giá chuẩn (Ví dụ: 8.7 hoặc 4650)
+      if (item.soGia && !isNaN(Number(item.soGia))) {
+          const so = Number(item.soGia);
+          // Nếu số < 1000 (Ví dụ 8.7 tỷ), nhân 1000 để ra Triệu
+          giaTriTrieu = so < 1000 ? so * 1000 : so;
+      } else {
+          // Bước 2: Chỉ lấy chữ làm giải pháp thay thế nếu không có số thực
+          const giaStr = (item.gia || "").toLowerCase().replace(/x/g, '0');
+          if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
+              const match = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
+              if (match) {
+                  const ty = parseFloat(match[1].replace(/,/g, '.'));
+                  let trieu = 0;
+                  if (match[2]) {
+                      const trieuStr = match[2];
+                      if (trieuStr.length === 1) trieu = parseInt(trieuStr) * 100;
+                      else if (trieuStr.length === 2) trieu = parseInt(trieuStr) * 10;
+                      else trieu = parseInt(trieuStr.substring(0, 3)); 
+                  }
+                  giaTriTrieu = ty * 1000 + trieu;
+              }
+          } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
+              const match = giaStr.match(/([\d,.]+)/);
+              if (match) {
+                  giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
+              }
           }
-          giaTriTrieu = ty * 1000 + trieu;
-        }
-      } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
-        const match = giaStr.match(/([\d,.]+)/);
-        if (match) {
-          giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
-        }
       }
       
-      // Bóc tách Diện tích
+      const dtStr = (item.dienTich || "").toLowerCase();
       const dtNum = parseFloat(dtStr.replace(/[^0-9,.]/g, '').replace(/,/g, '.'));
       
+      // Tính toán tỷ lệ cực kỳ chuẩn xác
       if (giaTriTrieu > 0 && dtNum > 0) {
         const calc = giaTriTrieu / dtNum;
+        // Ép lấy đúng 2 số lẻ thập phân (toFixed)
         const result = parseFloat(calc.toFixed(2)).toLocaleString('vi-VN');
         return `${result} tr/m²`;
       }
@@ -363,7 +424,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
     return null;
   }, [item]);
 
-  // 🔥 TÁCH PHÒNG NGỦ VÀ WC
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
     if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
@@ -378,7 +438,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
     };
   }, [item]);
 
-  // Logic Nhận Diện Nhãn Dán 
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
@@ -394,7 +453,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
       href={`/nha-dat/${item.slug}`} 
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full block transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]"
     >
-      {/* 🖼️ KHỐI HÌNH ẢNH */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <Image 
           src={thumbnail} 
@@ -404,10 +462,8 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           sizes="(max-width: 1280px) 100vw" 
           priority={false} 
         />
-        
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Nhãn dán Độc Quyền */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">VIP {rank}</span>}
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -417,21 +473,18 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           {isKietHem && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Kiệt/Hẻm</span>}
         </div>
 
-        {/* Số lượng ảnh */}
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
           <ImageIcon size={12} />
           <span>{soLuongAnhChinhXac}</span>
         </div>
       </div>
 
-      {/* 📝 KHỐI NỘI DUNG */}
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
           <h3 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
             {item.tieude}
           </h3>
 
-          {/* 🔥 Dòng Thông số */}
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">
               {item.gia || "Thỏa thuận"}
@@ -476,7 +529,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           </div>
         </div>
 
-        {/* 👤 KHỐI FOOTER */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex items-center gap-2 max-w-[50%]">
             <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
@@ -498,7 +550,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
-                window.location.href = 'tel:0900000000'; // Đổi số hotline ở đây
+                window.location.href = 'tel:0900000000'; 
               }}
             >
               <Phone size={13} className="fill-current" />
@@ -506,14 +558,12 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               <span className="min-[380px]:hidden">Gọi</span>
             </button>
             
+            {/* 🔥 NÚT LƯU TIN (YÊU THÍCH) ĐÃ CÓ CƠ CHẾ LƯU TRỮ */}
             <button 
-              className="p-1.5 border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50 active:scale-95 transition-all"
-              onClick={(e) => {
-                e.preventDefault();
-                alert("Đã lưu tin vào danh sách yêu thích!");
-              }}
+              className={`p-1.5 border rounded active:scale-95 transition-all shadow-sm ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50'}`}
+              onClick={onToggleFavorite}
             >
-              <Heart size={15} />
+              <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
             </button>
           </div>
         </div>
