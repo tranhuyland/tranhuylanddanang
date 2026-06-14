@@ -42,14 +42,18 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 🔥 TÍNH NĂNG MỚI: LƯU TRỮ YÊU THÍCH (KHÔNG CẦN ĐĂNG NHẬP)
+  // 🔥 TÍNH NĂNG MỚI: LƯU TRỮ YÊU THÍCH
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
+  const itemsPerPage = 10;
+
+  // 🛠️ ĐÃ VÁ LỖI TẠI ĐÂY: Thêm lại hàm xử lý bộ lọc bị thiếu
+  const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
+
   useEffect(() => {
     setIsClient(true);
-    // Tự động gọi lại danh sách nhà đã lưu từ bộ nhớ điện thoại khách hàng
     const saved = localStorage.getItem("thl_favorites");
     if (saved) {
       try { setFavoriteIds(JSON.parse(saved)); } catch (e) {}
@@ -57,7 +61,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   }, []);
 
   const toggleFavorite = (id: string, e: any) => {
-    e.preventDefault(); // Tránh bị nhảy trang khi bấm tim
+    e.preventDefault();
     let newFavs;
     if (favoriteIds.includes(id)) {
       newFavs = favoriteIds.filter(f => f !== id);
@@ -65,7 +69,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       newFavs = [...favoriteIds, id];
     }
     setFavoriteIds(newFavs);
-    localStorage.setItem('thl_favorites', JSON.stringify(newFavs)); // Ghi nhớ vĩnh viễn vào trình duyệt
+    localStorage.setItem('thl_favorites', JSON.stringify(newFavs));
   };
 
   const handleToggleShowFavorites = () => {
@@ -78,8 +82,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setActiveLoaiHinh("all");
     }
   };
-
-  const itemsPerPage = 10;
 
   useEffect(() => {
     const handleOpenDrawer = () => {
@@ -141,7 +143,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems];
 
-    // 🔥 Ưu tiên lọc: Nếu đang bật chế độ "Đã lưu", chỉ hiện các nhà khách đã thả tim
     if (showFavorites) {
       result = result.filter(i => favoriteIds.includes(i.id?.toString() || i.slug));
     }
@@ -225,7 +226,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     key={tab.id} 
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); 
-                      setShowFavorites(false); // Tắt chế độ yêu thích khi chọn lại tab
+                      setShowFavorites(false); 
                       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
                       setFilters(resetState);
                       setTempFilters(resetState);
@@ -250,7 +251,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 );
               })}
 
-              {/* 🔥 TÍNH NĂNG MỚI: Tab ĐÃ LƯU DÀNH CHO MÁY TÍNH */}
+              {/* Nút Đã Lưu (Máy Tính) */}
               <button 
                 onClick={handleToggleShowFavorites}
                 className={`hidden sm:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}`}
@@ -261,12 +262,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-400'}`}>
                   ({isClient ? favoriteIds.length : 0} SP)
                 </span>
-                {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" />}
+                {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
               </button>
             </div>
 
             <div className="px-4 sm:px-8">
-              {/* 🔥 TÍNH NĂNG MỚI: NÚT ĐÃ LƯU DÀNH CHO ĐIỆN THOẠI */}
+              {/* Nút Đã Lưu & Bộ Lọc (Điện thoại) */}
               <div className="md:hidden flex gap-2 mb-2">
                 <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
                   className="flex-1 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-3 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
@@ -357,8 +358,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 }
 
 // ==========================================
-// THẺ SẢN PHẨM BĐS - GIAO DIỆN CHUẨN BATDONGSAN.COM.VN
-// Đã FIX CHÍNH XÁC 100% Thuật toán Giá/M2 & Thêm tính năng Lưu Tin
+// THẺ SẢN PHẨM BĐS
 // ==========================================
 function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: any) => void }) {
   const thumbnail = layUrlAnhChuan(item.anh);
@@ -375,19 +375,15 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
     return 1;
   }, [item]);
 
-  // 🔥 ĐÃ FIX TOÁN HỌC: Ưu tiên bóc giá trị thực từ cột "soGia" của anh Huy thay vì quét chữ ngoài tiêu đề
   const giaM2 = useMemo(() => {
     if (item.giaM2) return item.giaM2; 
     try {
       let giaTriTrieu = 0;
       
-      // Bước 1: Nếu anh có cột số Giá chuẩn (Ví dụ: 8.7 hoặc 4650)
       if (item.soGia && !isNaN(Number(item.soGia))) {
           const so = Number(item.soGia);
-          // Nếu số < 1000 (Ví dụ 8.7 tỷ), nhân 1000 để ra Triệu
           giaTriTrieu = so < 1000 ? so * 1000 : so;
       } else {
-          // Bước 2: Chỉ lấy chữ làm giải pháp thay thế nếu không có số thực
           const giaStr = (item.gia || "").toLowerCase().replace(/x/g, '0');
           if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
               const match = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
@@ -413,10 +409,8 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
       const dtStr = (item.dienTich || "").toLowerCase();
       const dtNum = parseFloat(dtStr.replace(/[^0-9,.]/g, '').replace(/,/g, '.'));
       
-      // Tính toán tỷ lệ cực kỳ chuẩn xác
       if (giaTriTrieu > 0 && dtNum > 0) {
         const calc = giaTriTrieu / dtNum;
-        // Ép lấy đúng 2 số lẻ thập phân (toFixed)
         const result = parseFloat(calc.toFixed(2)).toLocaleString('vi-VN');
         return `${result} tr/m²`;
       }
@@ -550,7 +544,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
-                window.location.href = 'tel:0900000000'; 
+                window.location.href = 'tel:0900000000'; // 🚨 Thay số điện thoại của anh
               }}
             >
               <Phone size={13} className="fill-current" />
@@ -558,7 +552,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               <span className="min-[380px]:hidden">Gọi</span>
             </button>
             
-            {/* 🔥 NÚT LƯU TIN (YÊU THÍCH) ĐÃ CÓ CƠ CHẾ LƯU TRỮ */}
             <button 
               className={`p-1.5 border rounded active:scale-95 transition-all shadow-sm ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50'}`}
               onClick={onToggleFavorite}
