@@ -131,7 +131,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
 
-  // 🔥 XỬ LÝ ĐỊA CHỈ THÔNG MINH (Ưu tiên Đường + Phường + Quận)
   const displayLocation = useMemo(() => {
     if (item.diaChiFull) return item.diaChiFull;
     if (item.diachiFull) return item.diachiFull;
@@ -196,7 +195,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
       {/* 📝 2. NỘI DUNG SẢN PHẨM */}
       <div className="p-5 sm:p-8 w-full max-w-full">
         
-        {/* Tiêu đề & Cụm Action (Đã tối ưu giãn cách chữ) */}
+        {/* Tiêu đề & Cụm Action */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
           <h1 className="text-[20px] sm:text-[22px] md:text-2xl font-bold text-[#2C2C2C] leading-[1.45] uppercase flex-1 pr-0 sm:pr-4">
             {item.tieude || item.Tieude}
@@ -211,7 +210,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </div>
 
-        {/* Địa chỉ & Thời gian (Đã hiển thị Đường/Phường) */}
+        {/* Địa chỉ & Thời gian */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-[#505050] text-[14px] mb-6">
           <span className="flex items-start gap-1.5 leading-snug max-w-full">
             <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
@@ -243,26 +242,30 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           )}
         </div>
 
-        {/* Bảng Thông số Kỹ thuật (Grid) */}
+        {/* Bảng Thông số Kỹ thuật (Grid) - Đã cấu hình ẩn PN/WC nếu rỗng */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-slate-100 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
-              <BedDouble size={18} className="text-slate-500" />
+          {pn && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+                <BedDouble size={18} className="text-slate-500" />
+              </div>
+              <div>
+                <div className="text-slate-400 text-[11px] uppercase tracking-wide">Phòng ngủ</div>
+                <div className="text-[#2C2C2C] font-semibold text-[15px]">{pn}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-slate-400 text-[11px] uppercase tracking-wide">Phòng ngủ</div>
-              <div className="text-[#2C2C2C] font-semibold text-[15px]">{pn || '---'}</div>
+          )}
+          {wc && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+                <Bath size={18} className="text-slate-500" />
+              </div>
+              <div>
+                <div className="text-slate-400 text-[11px] uppercase tracking-wide">Phòng tắm</div>
+                <div className="text-[#2C2C2C] font-semibold text-[15px]">{wc}</div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
-              <Bath size={18} className="text-slate-500" />
-            </div>
-            <div>
-              <div className="text-slate-400 text-[11px] uppercase tracking-wide">Phòng tắm</div>
-              <div className="text-[#2C2C2C] font-semibold text-[15px]">{wc || '---'}</div>
-            </div>
-          </div>
+          )}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
               <Compass size={18} className="text-slate-500" />
@@ -283,16 +286,24 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </div>
 
-        {/* Nút Xem Bản Đồ & Sổ Đỏ */}
+        {/* 🔥 Nút Xem Bản Đồ & Sổ Đỏ - Bản Đồ Đã Được Làm Nổi Bật Tối Đa */}
         {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
           <div className={`grid gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
-              <a href={item.linkMap || item.LinkMap} target="_blank" rel="noopener noreferrer" className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 rounded-lg py-3 px-4 text-center text-[14px] flex items-center justify-center gap-2 transition-colors">
-                <Map size={18} /> Xem vị trí bản đồ
+              <a 
+                href={item.linkMap || item.LinkMap} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="bg-[#0068FF] hover:bg-[#0055D4] text-white font-bold rounded-lg py-3 px-4 text-center text-[14px] flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border border-[#0068FF]"
+              >
+                <Map size={18} className="text-white" /> Xem vị trí bản đồ
               </a>
             )}
             {!!anhSoDoGoc && (
-              <button onClick={() => setIsPopupOpen(true)} className="bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold border border-orange-200 rounded-lg py-3 px-4 text-center text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer w-full">
+              <button 
+                onClick={() => setIsPopupOpen(true)} 
+                className="bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold border border-orange-200 rounded-lg py-3 px-4 text-center text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer w-full"
+              >
                 <FileText size={18} /> Xem sổ đỏ / Bản vẽ
               </button>
             )}
