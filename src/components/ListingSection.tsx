@@ -134,6 +134,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -153,6 +154,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   }, []);
 
   useEffect(() => {
+    setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
     if (saved) {
       try { setFavoriteIds(JSON.parse(saved)); } catch (e) {}
@@ -196,12 +198,26 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setCurrentPage(1); 
     };
 
+    // 🔥 NÂNG CẤP TÍNH NĂNG 1: Lắng nghe tín hiệu từ nút "Tin đã lưu" trên Header
+    const handleShowSaved = () => {
+      setShowFavorites(true);
+      const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
+      setFilters(resetState);
+      setTempFilters(resetState);
+      setActiveLoaiHinh("all");
+      setCurrentPage(1);
+      // Tự động cuộn xuống danh sách sản phẩm đã lưu
+      document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     window.addEventListener('openFilterDrawer', handleOpenDrawer);
     window.addEventListener('searchBds', handleSearch);
+    window.addEventListener('showSavedListings', handleShowSaved);
 
     return () => {
       window.removeEventListener('openFilterDrawer', handleOpenDrawer);
       window.removeEventListener('searchBds', handleSearch);
+      window.removeEventListener('showSavedListings', handleShowSaved);
     };
   }, [filters, forceDistrict]);
 
@@ -365,7 +381,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
                 </span>
                 <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-400'}`}>
-                  ({favoriteIds.length} SP)
+                  ({isClient ? favoriteIds.length : 0} SP)
                 </span>
                 {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
               </button>
@@ -387,7 +403,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 <button onClick={handleToggleShowFavorites}
                   className={`flex flex-col items-center justify-center px-4 py-2 rounded-2xl text-sm font-bold border transition-all active:scale-95 ${showFavorites ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 text-red-500 border-red-100'}`}>
                   <Heart size={20} fill={showFavorites ? "currentColor" : "none"} className={showFavorites ? "text-white" : "text-red-500"} />
-                  <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({favoriteIds.length})</span>
+                  <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({isClient ? favoriteIds.length : 0})</span>
                 </button>
               </div>
 
@@ -478,6 +494,11 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
+      onClick={() => {
+        // 🔥 NÂNG CẤP TÍNH NĂNG 2: ÉP VỀ ĐẦU TRANG - Tạm thời tắt hiệu ứng trôi khi load trang chi tiết để nó mở thẳng ở trên cùng
+        document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
+        setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 50);
+      }}
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
