@@ -532,10 +532,11 @@ function BdsCard({
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
-      scroll={false}
+      /* 🔥 ĐÃ XÓA scroll={false} Ở ĐÂY CHÍNH LÀ NGUYÊN NHÂN LỖI 🔥 */
       onClick={() => {
+        // Tạm thời tắt hiệu ứng trượt của CSS hệ thống để trang nhảy thẳng lên đầu tiên
         document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
-        setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 50);
+        setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300);
       }}
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
@@ -647,7 +648,11 @@ function BdsCard({
             
             <button 
               className={`p-1.5 border rounded active:scale-95 transition-all shadow-sm ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50'}`}
-              onClick={onToggleFavorite}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavorite(e);
+              }}
             >
               <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
             </button>
