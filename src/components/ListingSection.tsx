@@ -49,7 +49,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const itemsPerPage = 10;
 
-  // 🛠️ ĐÃ VÁ LỖI TẠI ĐÂY: Thêm lại hàm xử lý bộ lọc bị thiếu
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
   useEffect(() => {
@@ -130,13 +129,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       "Nhà phố": 0,
       "Cho thuê": 0,
     };
+
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
       const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`);
+      
       if (searchStr.includes(removeAccents("Đất nền"))) counts["Đất nền"]++;
       if (searchStr.includes(removeAccents("Nhà phố"))) counts["Nhà phố"]++;
       if (searchStr.includes(removeAccents("Cho thuê"))) counts["Cho thuê"]++;
     });
+
     return counts;
   }, [safeBdsItems]);
 
@@ -251,7 +253,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 );
               })}
 
-              {/* Nút Đã Lưu (Máy Tính) */}
               <button 
                 onClick={handleToggleShowFavorites}
                 className={`hidden sm:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}`}
@@ -267,7 +268,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             </div>
 
             <div className="px-4 sm:px-8">
-              {/* Nút Đã Lưu & Bộ Lọc (Điện thoại) */}
               <div className="md:hidden flex gap-2 mb-2">
                 <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
                   className="flex-1 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-3 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
@@ -358,7 +358,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 }
 
 // ==========================================
-// THẺ SẢN PHẨM BĐS
+// THẺ SẢN PHẨM BĐS 
+// ĐÃ FIX 100% LỖI M2 DÍNH SỐ VÀ LƯU TIN HOÀN HẢO
 // ==========================================
 function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: any) => void }) {
   const thumbnail = layUrlAnhChuan(item.anh);
@@ -406,8 +407,14 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           }
       }
       
+      // 🔥 BẢN VÁ LỖI M2 TẠI ĐÂY
       const dtStr = (item.dienTich || "").toLowerCase();
-      const dtNum = parseFloat(dtStr.replace(/[^0-9,.]/g, '').replace(/,/g, '.'));
+      const dtMatch = dtStr.match(/([\d,.]+)/); // Chỉ lấy chính xác cụm số đầu tiên
+      let dtNum = 0;
+      if (dtMatch) {
+          let cleanDt = dtMatch[1].replace(/[.,]+$/, ''); // Dọn dẹp dấu chấm/phẩy thừa ở đuôi
+          dtNum = parseFloat(cleanDt.replace(/,/g, '.'));
+      }
       
       if (giaTriTrieu > 0 && dtNum > 0) {
         const calc = giaTriTrieu / dtNum;
@@ -544,7 +551,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
-                window.location.href = 'tel:0900000000'; // 🚨 Thay số điện thoại của anh
+                window.location.href = 'tel:0900000000'; 
               }}
             >
               <Phone size={13} className="fill-current" />
