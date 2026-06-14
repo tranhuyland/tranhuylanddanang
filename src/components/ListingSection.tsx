@@ -303,14 +303,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
 // ==========================================
 // THẺ SẢN PHẨM BĐS - GIAO DIỆN CHUẨN BATDONGSAN.COM.VN
-// Đã nâng cấp: Màu M2 đỏ, thêm Giá/M2, thêm Icon WC, Sửa đếm ảnh, Fix Avatar
+// Đã fix lỗi chia toán học Giá/m2 sắc nét từng số lẻ
 // ==========================================
 function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  // 🔥 THUẬT TOÁN ĐẾM ẢNH CHÍNH XÁC TỪ GOOGLE SHEETS
+  // 🔥 1. ĐẾM ẢNH TỪ GOOGLE SHEETS
   const soLuongAnhChinhXac = useMemo(() => {
     if (item.soLuongAnh) return item.soLuongAnh; 
     if (typeof item.anh === 'string') {
@@ -321,7 +321,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
     return 1;
   }, [item]);
 
-  // 🔥 TÍNH TOÁN GIÁ TRÊN MÉT VUÔNG (VD: 100 tr/m²)
+  // 🔥 2. THUẬT TOÁN TOÁN HỌC CHIA GIÁ/M2 CỰC KỲ CHÍNH XÁC
   const giaM2 = useMemo(() => {
     if (item.giaM2) return item.giaM2; 
     try {
@@ -329,23 +329,43 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
       const dtStr = (item.dienTich || "").toLowerCase();
       let giaTriTrieu = 0;
       
+      // Xử lý logic bóc tách số cho Giá bán
       if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
-        giaTriTrieu = parseFloat(giaStr.replace(/[^0-9,.]/g, '').replace(',', '.')) * 1000;
+        const match = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
+        if (match) {
+          const ty = parseFloat(match[1].replace(/,/g, '.'));
+          let trieu = 0;
+          if (match[2]) {
+            const trieuStr = match[2];
+            // Khách gõ "8 tỷ 5" -> 500 triệu | "8 tỷ 50" -> 500 triệu | "3 tỷ 750" -> 750 triệu
+            if (trieuStr.length === 1) trieu = parseInt(trieuStr) * 100;
+            else if (trieuStr.length === 2) trieu = parseInt(trieuStr) * 10;
+            else trieu = parseInt(trieuStr); 
+          }
+          giaTriTrieu = ty * 1000 + trieu;
+        }
       } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
-        giaTriTrieu = parseFloat(giaStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+        const match = giaStr.match(/([\d,.]+)/);
+        if (match) {
+          giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
+        }
       }
       
-      const dtNum = parseFloat(dtStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      // Xử lý bóc tách số cho Diện tích
+      const dtNum = parseFloat(dtStr.replace(/[^0-9,.]/g, '').replace(/,/g, '.'));
       
+      // Chia toán học và ép 2 số lẻ thập phân
       if (giaTriTrieu > 0 && dtNum > 0) {
-        const result = Math.round(giaTriTrieu / dtNum);
+        const calc = giaTriTrieu / dtNum;
+        // toFixed(2) lấy 2 số đuôi -> parseFloat xóa số 0 thừa -> toLocaleString đổi dấu chấm sang phẩy chuẩn VN
+        const result = parseFloat(calc.toFixed(2)).toLocaleString('vi-VN');
         return `${result} tr/m²`;
       }
     } catch(e) {}
     return null;
   }, [item]);
 
-  // 🔥 TÁCH PHÒNG NGỦ VÀ WC
+  // 🔥 3. TÁCH PHÒNG NGỦ VÀ WC
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
     if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
@@ -360,7 +380,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
     };
   }, [item]);
 
-  // Logic Nhận Diện Nhãn Dán 
+  // 🔥 4. NHẬN DIỆN NHÃN QUYỀN LỰC
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
@@ -389,7 +409,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
         
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Nhãn dán Độc Quyền */}
+        {/* Nhãn dán */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">VIP {rank}</span>}
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -399,7 +419,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           {isKietHem && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Kiệt/Hẻm</span>}
         </div>
 
-        {/* Số lượng ảnh ĐÃ FIX */}
+        {/* Cụm đếm ảnh góc phải dưới */}
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
           <ImageIcon size={12} />
           <span>{soLuongAnhChinhXac}</span>
@@ -413,14 +433,12 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
             {item.tieude}
           </h3>
 
-          {/* 🔥 Dòng Thông số ĐÃ NÂNG CẤP */}
+          {/* 🔥 Dòng Thông số: Giá đỏ, M2 Đỏ, Giá/M2, Phòng Ngủ, WC */}
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
-            {/* Giá Bán */}
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">
               {item.gia || "Thỏa thuận"}
             </span>
 
-            {/* Diện tích (ĐỔI SANG MÀU ĐỎ) */}
             {item.dienTich && (
               <>
                 <span className="text-slate-300 text-[10px]">●</span>
@@ -428,7 +446,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               </>
             )}
             
-            {/* Giá/M2 */}
             {giaM2 && (
               <>
                 <span className="text-slate-300 text-[10px]">●</span>
@@ -436,7 +453,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               </>
             )}
 
-            {/* Phòng Ngủ */}
             {cauTrucPhong.pn && (
               <>
                 <span className="text-slate-300 text-[10px]">●</span>
@@ -446,7 +462,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               </>
             )}
 
-            {/* Số WC */}
             {cauTrucPhong.wc && (
               <>
                 <span className="text-slate-300 text-[10px]">●</span>
@@ -463,10 +478,10 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           </div>
         </div>
 
-        {/* 👤 KHỐI FOOTER */}
+        {/* 👤 KHỐI FOOTER CHUYÊN NGHIỆP */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex items-center gap-2 max-w-[50%]">
-            {/* 🔥 ĐÃ FIX AVATAR BẰNG THẺ <img> TIÊU CHUẨN */}
+            {/* Ảnh đại diện <img> */}
             <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
               <img 
                 src="https://tranhuyland.vn/logo.png" 
@@ -486,7 +501,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
-                window.location.href = 'tel:0900000000'; // 🚨 Anh nhớ đổi số điện thoại ở đây nhé
+                window.location.href = 'tel:0931555551'; // 🚨 Thay số điện thoại của anh
               }}
             >
               <Phone size={13} className="fill-current" />
