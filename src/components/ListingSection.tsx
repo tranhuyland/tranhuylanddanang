@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +18,10 @@ const TAB_OPTIONS = [
   { id: "Nhà phố", label: "🏠 Nhà phố" },
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
+
+// ==========================================
+// 🛠️ CÁC HÀM TIỆN ÍCH (HELPERS)
+// ==========================================
 
 const removeAccents = (str: string) => {
   if (!str) return "";
@@ -106,8 +111,15 @@ const extractRooms = (item: any) => {
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
   const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
   const matchWC = combinedText.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
-  return { pn: matchPhong ? matchPhong[1] : null, wc: matchWC ? matchWC[1] : null };
+  return { 
+    pn: matchPhong && matchPhong[1] !== "0" ? matchPhong[1] : null, 
+    wc: matchWC && matchWC[1] !== "0" ? matchWC[1] : null 
+  };
 };
+
+// ==========================================
+// 🏢 COMPONENT CHÍNH: BỘ LỌC DANH SÁCH
+// ==========================================
 
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
@@ -122,12 +134,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
   const itemsPerPage = 10;
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
+  // 🚀 Tắt "smooth scroll" khi ấn Back để tránh trang bị trôi/giật
   useEffect(() => {
     const handlePopState = () => {
       const html = document.documentElement;
@@ -141,7 +153,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   }, []);
 
   useEffect(() => {
-    setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
     if (saved) {
       try { setFavoriteIds(JSON.parse(saved)); } catch (e) {}
@@ -354,7 +365,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
                 </span>
                 <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-400'}`}>
-                  ({isClient ? favoriteIds.length : 0} SP)
+                  ({favoriteIds.length} SP)
                 </span>
                 {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
               </button>
@@ -376,7 +387,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 <button onClick={handleToggleShowFavorites}
                   className={`flex flex-col items-center justify-center px-4 py-2 rounded-2xl text-sm font-bold border transition-all active:scale-95 ${showFavorites ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 text-red-500 border-red-100'}`}>
                   <Heart size={20} fill={showFavorites ? "currentColor" : "none"} className={showFavorites ? "text-white" : "text-red-500"} />
-                  <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({isClient ? favoriteIds.length : 0})</span>
+                  <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({favoriteIds.length})</span>
                 </button>
               </div>
 
@@ -450,6 +461,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
+// ==========================================
+// 🏡 SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
+// ==========================================
+
 function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
@@ -463,7 +478,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
-      scroll={false}
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
