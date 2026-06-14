@@ -140,7 +140,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
-  // 🚀 Tắt "smooth scroll" khi ấn Back để tránh trang bị trôi/giật
   useEffect(() => {
     const handlePopState = () => {
       const html = document.documentElement;
@@ -153,7 +152,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Đọc danh sách yêu thích
   useEffect(() => {
     setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
@@ -164,6 +162,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     let newFavs;
     if (favoriteIds.includes(id)) {
       newFavs = favoriteIds.filter(f => f !== id);
@@ -185,7 +184,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   };
 
-  // 🔥 ĐÂY LÀ ĐOẠN ĐỌC MẬT MÃ TỪ TRANG CHI TIẾT ĐỂ TỰ ĐỘNG BẬT "TIN ĐÃ LƯU"
   useEffect(() => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
@@ -195,10 +193,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         setTempFilters(initialFilters);
         setActiveLoaiHinh("all");
         setCurrentPage(1);
-        
-        // Xóa mật mã khỏi URL cho đẹp link
         window.history.replaceState({}, '', window.location.pathname);
-        
         setTimeout(() => {
           document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 300);
@@ -220,7 +215,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setCurrentPage(1); 
     };
 
-    // Lắng nghe sự kiện từ Header (khi khách đang đứng ở Trang chủ)
     const handleShowSaved = () => {
       setShowFavorites(true);
       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
@@ -228,7 +222,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setTempFilters(resetState);
       setActiveLoaiHinh("all");
       setCurrentPage(1);
-      document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => {
+        document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     };
 
     window.addEventListener('openFilterDrawer', handleOpenDrawer);
@@ -515,11 +511,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
-      onClick={() => {
-        // Tạm thời tắt hiệu ứng trôi khi load trang chi tiết để nó mở thẳng ở trên cùng
-        document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
-        setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 50);
-      }}
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
@@ -619,6 +610,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
+                e.stopPropagation(); 
                 window.location.href = 'tel:0905778852'; 
               }}
             >
@@ -629,7 +621,11 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             
             <button 
               className={`p-1.5 border rounded active:scale-95 transition-all shadow-sm ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50'}`}
-              onClick={onToggleFavorite}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavorite(e);
+              }}
             >
               <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
             </button>
