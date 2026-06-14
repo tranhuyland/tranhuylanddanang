@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone } from 'lucide-react';
+// 🔥 ĐÃ THÊM ICON HEART VÀO ĐÂY
+import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone, Heart } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -164,6 +165,15 @@ export default function Header() {
               <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
                 <Home size={18} className="text-orange-500" /> Trang chủ
               </Link>
+
+              {/* 🔥 NÚT TIN YÊU THÍCH MỚI */}
+              <Link href="/" onClick={() => {
+                  setIsMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-red-50 hover:text-red-600 rounded-2xl font-bold transition-colors">
+                <Heart size={18} className="text-red-500" /> Tin yêu thích đã lưu
+              </Link>
+
               <Link href="/dang-tin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
                 <PlusCircle size={18} className="text-orange-500" /> Úp sản phẩm mới
               </Link>
