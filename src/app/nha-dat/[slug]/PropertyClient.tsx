@@ -1,7 +1,7 @@
 "use client";
 
 import PropertyGallery from "@/components/SlideBds";
-import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw, BedDouble, Bath, Compass, Square, Heart, Share2, Phone, MessageCircle } from "lucide-react";
+import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw, BedDouble, Bath, Compass, Heart, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { layUrlAnhChuan } from "@/lib/utils";
@@ -11,7 +11,7 @@ interface PropertyClientProps {
 }
 
 // ==========================================
-// 🛠️ HÀM TIỆN ÍCH (Tái sử dụng từ Trang Chủ để đồng bộ dữ liệu)
+// 🛠️ HÀM TIỆN ÍCH
 // ==========================================
 const removeAccents = (str: string) => {
   if (!str) return "";
@@ -73,7 +73,6 @@ const calculateGiaM2 = (item: any) => {
 // 🏡 COMPONENT CHÍNH: CHI TIẾT SẢN PHẨM
 // ==========================================
 export default function PropertyClient({ item }: PropertyClientProps) {
-  // 1. Logic Phóng to Sổ đỏ
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -81,7 +80,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const dragStart = useRef({ x: 0, y: 0 });
   const touchStartDist = useRef(0);
 
-  // 2. Logic Yêu thích (Lưu tin)
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
@@ -120,7 +118,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     alert("Đã sao chép đường dẫn sản phẩm!");
   };
 
-  // 3. Tiền xử lý Dữ liệu
   const anhGoc = item.anh || item.Anh || "";
   const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
   const anhSoDoGoc = item.anhSoDo || item.AnhSoDo || "";
@@ -134,7 +131,23 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
 
-  // Các hàm hỗ trợ Touch & Mouse cho hình ảnh
+  // 🔥 XỬ LÝ ĐỊA CHỈ THÔNG MINH (Ưu tiên Đường + Phường + Quận)
+  const displayLocation = useMemo(() => {
+    if (item.diaChiFull) return item.diaChiFull;
+    if (item.diachiFull) return item.diachiFull;
+    if (item.diaChi) return item.diaChi;
+    if (item.Diachi) return item.Diachi;
+    
+    const parts = [];
+    if (item.duong || item.Duong) parts.push(item.duong || item.Duong);
+    if (item.phuong || item.Phuong) parts.push(item.phuong || item.Phuong);
+    if (item.khuVuc || item.Khuvuc || item.quan || item.Quan) parts.push(item.khuVuc || item.Khuvuc || item.quan || item.Quan);
+    
+    if (parts.length > 0) return parts.join(", ");
+    
+    return item.khuVucFull || item.khuvucFull || "Đà Nẵng";
+  }, [item]);
+
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 1));
   const handleResetZoom = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
@@ -183,12 +196,12 @@ export default function PropertyClient({ item }: PropertyClientProps) {
       {/* 📝 2. NỘI DUNG SẢN PHẨM */}
       <div className="p-5 sm:p-8 w-full max-w-full">
         
-        {/* Tiêu đề & Cụm Action */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#2C2C2C] leading-snug uppercase">
+        {/* Tiêu đề & Cụm Action (Đã tối ưu giãn cách chữ) */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+          <h1 className="text-[20px] sm:text-[22px] md:text-2xl font-bold text-[#2C2C2C] leading-[1.45] uppercase flex-1 pr-0 sm:pr-4">
             {item.tieude || item.Tieude}
           </h1>
-          <div className="flex items-center gap-2 shrink-0 pt-1">
+          <div className="flex items-center gap-2 shrink-0 self-start">
             <button onClick={handleCopyLink} className="p-2 border border-slate-200 rounded-full text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all bg-white" title="Chia sẻ">
               <Share2 size={18} />
             </button>
@@ -198,15 +211,20 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </div>
 
-        {/* Địa chỉ & Thời gian */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[#505050] text-[14px] mb-6">
-          <span className="flex items-center gap-1.5"><MapPin size={16} className="text-slate-400" />{item.khuVucFull || item.khuvucFull || "Đà Nẵng"}</span>
-          <span className="flex items-center gap-1.5"><Calendar size={16} className="text-slate-400" />Đăng ngày: {item.ngayDang || item.NgayDang || "Gần đây"}</span>
+        {/* Địa chỉ & Thời gian (Đã hiển thị Đường/Phường) */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-[#505050] text-[14px] mb-6">
+          <span className="flex items-start gap-1.5 leading-snug max-w-full">
+            <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
+            <span className="break-words">{displayLocation}</span>
+          </span>
+          <span className="flex items-center gap-1.5 shrink-0">
+            <Calendar size={16} className="text-slate-400 shrink-0" />Đăng ngày: {item.ngayDang || item.NgayDang || "Gần đây"}
+          </span>
         </div>
 
         <hr className="border-slate-100 mb-6" />
 
-        {/* Mức Giá & Diện Tích (Tông Đỏ Chuẩn) */}
+        {/* Mức Giá & Diện Tích */}
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4 mb-6">
           <div>
             <div className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">Mức giá</div>
@@ -297,38 +315,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           >
             {noiDungMoTa}
           </ReactMarkdown>
-        </div>
-
-        {/* 👤 3. BOX LIÊN HỆ CHUYÊN NGHIỆP TẠI CHÂN TRANG */}
-        <div className="mt-10 bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4 w-full sm:w-auto">
-            <img 
-              src="https://tranhuyland.vn/logo.png" 
-              alt="Trần Huy Land"
-              className="w-16 h-16 rounded-full object-cover border border-slate-200 bg-white p-1 shadow-sm"
-              onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=TH&background=random&color=fff&bold=true'; }}
-            />
-            <div>
-              <div className="text-slate-500 text-xs font-semibold uppercase mb-1">Được đăng bởi</div>
-              <div className="text-lg font-bold text-[#2C2C2C]">Trần Huy Land</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <a 
-              href="tel:0905778852" 
-              className="flex-1 sm:flex-none bg-[#009177] hover:bg-[#007a64] text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
-            >
-              <Phone size={18} className="fill-current" /> 0905 778 852
-            </a>
-            <a 
-              href="https://zalo.me/0905778852" 
-              target="_blank" rel="noopener noreferrer"
-              className="flex-1 sm:flex-none bg-[#0068FF] hover:bg-[#0055D4] text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
-            >
-              <MessageCircle size={18} className="fill-current" /> Zalo
-            </a>
-          </div>
         </div>
 
       </div>
