@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link"; // 🔥 ĐÃ THÊM IMPORT LINK CỦA NEXT.JS
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -19,7 +20,6 @@ const TAB_OPTIONS = [
 
 // ==========================================
 // 🛠️ CÁC HÀM TIỆN ÍCH (HELPERS) ĐỘC LẬP
-// Tách logic ra ngoài giúp Component sạch sẽ và render nhanh hơn 100%
 // ==========================================
 
 const removeAccents = (str: string) => {
@@ -36,7 +36,6 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
-// 1. Hàm bóc tách nhãn dán quyền lực
 const parsePropertyTags = (item: any) => {
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
@@ -53,7 +52,6 @@ const parsePropertyTags = (item: any) => {
   return { isChinhChu, isSapHam, isChoThue, isKietHem, isMatTien };
 };
 
-// 2. Hàm bóc tách số lượng ảnh
 const countImages = (item: any) => {
   if (item.soLuongAnh) return item.soLuongAnh; 
   if (typeof item.anh === 'string') {
@@ -64,7 +62,6 @@ const countImages = (item: any) => {
   return 1;
 };
 
-// 3. Hàm tính toán Giá/m2
 const calculateGiaM2 = (item: any) => {
   if (item.giaM2) return item.giaM2; 
   try {
@@ -111,7 +108,6 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 4. Hàm bóc tách Cấu trúc phòng
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
@@ -125,7 +121,6 @@ const extractRooms = (item: any) => {
     wc: matchWC ? matchWC[1] : null
   };
 };
-
 
 // ==========================================
 // 🏢 COMPONENT CHÍNH: BỘ LỌC DANH SÁCH SẢN PHẨM
@@ -158,7 +153,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, []);
 
-  const toggleFavorite = (id: string, e: any) => {
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     let newFavs;
     if (favoriteIds.includes(id)) {
@@ -287,7 +282,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     
     if (filters.tag !== "all") {
       result = result.filter(i => {
-        // Tái sử dụng hàm helper đã tách ra, giúp code gọn hơn rất nhiều
         const tags = parsePropertyTags(i);
         if (filters.tag === "mattien") return i.isMatTien || tags.isMatTien;
         if (filters.tag === "chinhchu") return tags.isChinhChu;
@@ -432,7 +426,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                    item={item} 
                    rank={(currentPage - 1) * itemsPerPage + index + 1} 
                    isFavorite={favoriteIds.includes(bdsId)}
-                   onToggleFavorite={(e: any) => toggleFavorite(bdsId, e)}
+                   onToggleFavorite={(e: React.MouseEvent) => toggleFavorite(bdsId, e)}
                  />
                );
             })}
@@ -464,22 +458,21 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
 // ==========================================
 // 🏡 SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
-// (Bây giờ đã cực kỳ ngắn gọn và dễ bảo trì vì thuật toán đã tách ra ngoài)
 // ==========================================
 
-function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: any) => void }) {
+function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  // Chỉ gọi hàm 1 lần, thẻ Component bây giờ sạch sẽ tuyệt đối
   const soLuongAnhChinhXac = useMemo(() => countImages(item), [item]);
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
   const { isChinhChu, isSapHam, isChoThue, isMatTien, isKietHem } = useMemo(() => parsePropertyTags(item), [item]);
 
   return (
-    <a 
+    {/* 🔥 ĐÃ ĐỔI THÀNH THẺ LINK CỦA NEXTJS GIÚP CHỐNG RESET CUỘN TRANG */}
+    <Link 
       href={`/nha-dat/${item.slug}`} 
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full block transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]"
     >
@@ -597,6 +590,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           </div>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
