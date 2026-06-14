@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { MapPin, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, BedDouble, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -118,6 +119,27 @@ const extractRooms = (item: any) => {
 };
 
 // ==========================================
+// 🔥 THIẾT BỊ DÒ TÌM URL THÔNG MINH CHO NEXT.JS
+// ==========================================
+function FavoritesUrlHandler({ onTrigger }: { onTrigger: () => void }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Nếu phát hiện khách vừa bấm vào link chứa ?showFavorites=true
+    if (searchParams?.get("showFavorites") === "true") {
+      onTrigger(); // Bật chế độ xem Tin Yêu Thích
+      // Lặng lẽ xóa đường dẫn cho gọn đẹp mà không reload trang
+      router.replace(pathname, { scroll: false });
+    }
+  }, [searchParams, pathname, router, onTrigger]);
+
+  return null;
+}
+
+
+// ==========================================
 // 🏢 COMPONENT CHÍNH: BỘ LỌC DANH SÁCH
 // ==========================================
 
@@ -140,6 +162,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
+  // 1. Tắt "smooth scroll" khi ấn Back để tránh trang bị trôi/giật
   useEffect(() => {
     const handlePopState = () => {
       const html = document.documentElement;
@@ -152,6 +175,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // 2. Tải danh sách yêu thích từ ổ cứng trình duyệt
   useEffect(() => {
     setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
@@ -159,6 +183,19 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       try { setFavoriteIds(JSON.parse(saved)); } catch (e) {}
     }
   }, []);
+
+  // 3. Hàm cốt lõi: Kích hoạt chế độ Yêu Thích và Reset bộ lọc
+  const activateFavorites = useCallback(() => {
+    setShowFavorites(true);
+    const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
+    setFilters(resetState);
+    setTempFilters(resetState);
+    setActiveLoaiHinh("all");
+    setCurrentPage(1);
+    setTimeout(() => {
+      document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }, [forceDistrict]);
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -175,38 +212,25 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const handleToggleShowFavorites = () => {
     const nextVal = !showFavorites;
-    setShowFavorites(nextVal);
-    setCurrentPage(1);
     if (nextVal) {
-      setFilters(initialFilters);
-      setTempFilters(initialFilters);
-      setActiveLoaiHinh("all");
+      activateFavorites();
+    } else {
+      setShowFavorites(false);
+      setCurrentPage(1);
     }
   };
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('showFavorites') === 'true') {
-        setShowFavorites(true);
-        setFilters(initialFilters);
-        setTempFilters(initialFilters);
-        setActiveLoaiHinh("all");
-        setCurrentPage(1);
-        window.history.replaceState({}, '', window.location.pathname);
-        setTimeout(() => {
-          document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 300);
-      }
-    }
-  }, [forceDistrict]);
-
+  // Các sự kiện lắng nghe (Tách riêng để mượt mà không lỗi)
   useEffect(() => {
     const handleOpenDrawer = () => {
       setTempFilters(filters);
       setIsDrawerOpen(true);
     };
-    
+    window.addEventListener('openFilterDrawer', handleOpenDrawer);
+    return () => window.removeEventListener('openFilterDrawer', handleOpenDrawer);
+  }, [filters]);
+
+  useEffect(() => {
     const handleSearch = (e: any) => {
       setSearchTerm(e.detail);
       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
@@ -214,30 +238,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setTempFilters(resetState);
       setCurrentPage(1); 
     };
-
-    const handleShowSaved = () => {
-      setShowFavorites(true);
-      const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
-      setFilters(resetState);
-      setTempFilters(resetState);
-      setActiveLoaiHinh("all");
-      setCurrentPage(1);
-      setTimeout(() => {
-        document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    };
-
-    window.addEventListener('openFilterDrawer', handleOpenDrawer);
     window.addEventListener('searchBds', handleSearch);
-    window.addEventListener('showSavedListings', handleShowSaved);
+    return () => window.removeEventListener('searchBds', handleSearch);
+  }, [forceDistrict]);
 
-    return () => {
-      window.removeEventListener('openFilterDrawer', handleOpenDrawer);
-      window.removeEventListener('searchBds', handleSearch);
-      window.removeEventListener('showSavedListings', handleShowSaved);
-    };
-  }, [filters, forceDistrict]);
+  useEffect(() => {
+    window.addEventListener('showSavedListings', activateFavorites);
+    return () => window.removeEventListener('showSavedListings', activateFavorites);
+  }, [activateFavorites]);
 
+  // Bộ nhớ đệm phân trang
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedPage = sessionStorage.getItem("bds_page");
@@ -251,18 +261,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  const closeDrawer = () => {
-    setIsDrawerOpen(false);
-  };
+  const closeDrawer = () => setIsDrawerOpen(false);
 
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      all: safeBdsItems.length,
-      "Đất nền": 0,
-      "Nhà phố": 0,
-      "Cho thuê": 0,
-    };
-
+    const counts: Record<string, number> = { all: safeBdsItems.length, "Đất nền": 0, "Nhà phố": 0, "Cho thuê": 0 };
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
       const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`);
@@ -270,7 +272,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       if (searchStr.includes(removeAccents("Nhà phố"))) counts["Nhà phố"]++;
       if (searchStr.includes(removeAccents("Cho thuê"))) counts["Cho thuê"]++;
     });
-
     return counts;
   }, [safeBdsItems]);
 
@@ -304,21 +305,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       const target = removeAccents(filters.khuVuc);
       result = result.filter(i => removeAccents(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
     }
-    
     if (!showFavorites && activeLoaiHinh !== "all") {
       const target = removeAccents(activeLoaiHinh);
       result = result.filter(i => removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`).includes(target));
     }
-    
     if (filters.khoangGia !== "all") {
       result = result.filter(i => {
         const gia = Number(i.soGia) || (i.gia ? parseFloat(i.gia.replace(/[^0-9.]/g, "")) : 0);
         return filters.khoangGia === "duoi3" ? gia < 3.0 : filters.khoangGia === "3to5" ? gia >= 3.0 && gia <= 5.0 : gia > 5.0;
       });
     }
-    
     if (filters.huong !== "all") result = result.filter(i => removeAccents(i.huong || "").includes(removeAccents(filters.huong)));
-    
     if (filters.tag !== "all") {
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
@@ -328,7 +325,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         return true;
       });
     }
-    
     return result;
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
@@ -351,6 +347,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   return (
     <>
+      {/* Nạp bộ thu sóng bắt URL ẩn mà không làm ảnh hưởng giao diện hay gây lỗi Suspense */}
+      <Suspense fallback={null}>
+        <FavoritesUrlHandler onTrigger={activateFavorites} />
+      </Suspense>
+
       <section className="w-full relative z-10 -mt-6 sm:-mt-10">
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
@@ -511,6 +512,11 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
+      scroll={false}
+      onClick={() => {
+        document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
+        setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 50);
+      }}
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
