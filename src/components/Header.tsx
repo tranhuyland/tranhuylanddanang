@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone, Heart } from 'lucide-react';
+import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -42,24 +42,9 @@ export default function Header() {
     }, 100);
   };
 
-  // 🔥 HÀM MỚI: Xử lý nút bấm "Tin đã lưu" cực kỳ ổn định
-  const handleOpenFavorites = () => {
-    setIsMenuOpen(false); // Đóng menu
-    sessionStorage.setItem("open_favorites_now", "true"); // Lưu tờ giấy note
-    
-    if (isHomePage) {
-      // Nếu đang ở trang chủ thì bắn tín hiệu mở luôn
-      window.dispatchEvent(new CustomEvent('showSavedListings'));
-    } else {
-      // Nếu ở trang chi tiết thì đẩy về trang chủ
-      router.push('/');
-    }
-  };
-
   return (
     <>
       <header className="sticky top-0 z-[55] bg-white/85 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
-        
         {isHomePage && (
           <div className={`flex items-center justify-center overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'h-0 opacity-0' : 'h-14 opacity-100'}`}>
             <Link href="/" className="relative h-10 w-40 mt-2 block">
@@ -69,7 +54,6 @@ export default function Header() {
         )}
 
         <div className="flex items-center justify-between px-3 py-2.5 min-h-[56px] gap-2">
-          
           {!isHomePage ? (
             <>
               <button onClick={() => router.back()} className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-full active:scale-95 transition-all">
@@ -136,20 +120,10 @@ export default function Header() {
               <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
                 <Home size={18} className="text-orange-500" /> Trang chủ
               </Link>
-              
-              {/* 🔥 ĐÃ GẮN HÀM XỬ LÝ VÀO ĐÂY */}
-              <button 
-                onClick={handleOpenFavorites} 
-                className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-red-50 hover:text-red-600 rounded-2xl font-bold transition-colors w-full text-left"
-              >
-                <Heart size={18} className="text-red-500" /> Tin yêu thích đã lưu
-              </button>
-
               <Link href="/dang-tin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
                 <PlusCircle size={18} className="text-orange-500" /> Úp sản phẩm mới
               </Link>
               <div className="border-t border-slate-100 my-2"></div>
-              
               <a href="tel:0905778852" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
                 <Phone size={18} className="text-orange-500" /> 0905 778 852
               </a>
