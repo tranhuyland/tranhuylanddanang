@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import Link from "next/link"; // 🔥 ĐÃ THÊM THẺ LINK CỦA NEXT.JS ĐỂ CHUYỂN TRANG SIÊU TỐC
-import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, Bath } from "lucide-react";
+import Link from "next/link";
+import { MapPin, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, BedDouble, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
 
@@ -17,10 +17,6 @@ const TAB_OPTIONS = [
   { id: "Nhà phố", label: "🏠 Nhà phố" },
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
-
-// ==========================================
-// 🛠️ CÁC HÀM TIỆN ÍCH (HELPERS) ĐỘC LẬP
-// ==========================================
 
 const removeAccents = (str: string) => {
   if (!str) return "";
@@ -86,12 +82,9 @@ const calculateGiaM2 = (item: any) => {
             }
         } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
             const match = giaStr.match(/([\d,.]+)/);
-            if (match) {
-                giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
-            }
+            if (match) giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
         }
     }
-    
     const dtStr = (item.dienTich || "").toLowerCase();
     const dtMatch = dtStr.match(/([\d,.]+)/); 
     let dtNum = 0;
@@ -99,7 +92,6 @@ const calculateGiaM2 = (item: any) => {
         let cleanDt = dtMatch[1].replace(/[.,]+$/, ''); 
         dtNum = parseFloat(cleanDt.replace(/,/g, '.'));
     }
-    
     if (giaTriTrieu > 0 && dtNum > 0) {
       const calc = giaTriTrieu / dtNum;
       return `${parseFloat(calc.toFixed(2)).toLocaleString('vi-VN')} tr/m²`;
@@ -111,20 +103,11 @@ const calculateGiaM2 = (item: any) => {
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
-  
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
   const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
   const matchWC = combinedText.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
-  
-  return {
-    pn: matchPhong ? matchPhong[1] : null,
-    wc: matchWC ? matchWC[1] : null
-  };
+  return { pn: matchPhong ? matchPhong[1] : null, wc: matchWC ? matchWC[1] : null };
 };
-
-// ==========================================
-// 🏢 COMPONENT CHÍNH: BỘ LỌC DANH SÁCH SẢN PHẨM
-// ==========================================
 
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
@@ -145,13 +128,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
-  // 🔥 BÙA CHÚ 1: Triệt tiêu hiệu ứng cuộn trang gây nhức mắt khi vuốt lui (Back)
   useEffect(() => {
     const handlePopState = () => {
       const html = document.documentElement;
-      // Ép trình duyệt phải nhảy cái "rụp" về vị trí cũ, vô hiệu hóa cuộn mượt
       html.style.setProperty('scroll-behavior', 'auto', 'important');
-      // Đợi 150ms khôi phục lại hiệu ứng cuộn cho các thao tác bình thường
       setTimeout(() => {
         html.style.removeProperty('scroll-behavior');
       }, 150);
@@ -168,7 +148,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, []);
 
-  const toggleFavorite = (id: string, e: any) => {
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     let newFavs;
     if (favoriteIds.includes(id)) {
@@ -470,10 +450,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
-// ==========================================
-// 🏡 SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
-// ==========================================
-
 function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
@@ -485,10 +461,10 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   const { isChinhChu, isSapHam, isChoThue, isMatTien, isKietHem } = useMemo(() => parsePropertyTags(item), [item]);
 
   return (
-    {/* 🔥 BÙA CHÚ 2: Đổi thẻ <a> thành thẻ <Link> giúp tải nhanh và chống giật vị trí */}
     <Link 
       href={`/nha-dat/${item.slug}`} 
-      className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full block transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]"
+      scroll={false}
+      className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <Image 
