@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "next/link"; // 🔥 ĐÃ THÊM THẺ LINK CỦA NEXT.JS ĐỂ CHUYỂN TRANG SIÊU TỐC
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -145,6 +145,21 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
+  // 🔥 BÙA CHÚ 1: Triệt tiêu hiệu ứng cuộn trang gây nhức mắt khi vuốt lui (Back)
+  useEffect(() => {
+    const handlePopState = () => {
+      const html = document.documentElement;
+      // Ép trình duyệt phải nhảy cái "rụp" về vị trí cũ, vô hiệu hóa cuộn mượt
+      html.style.setProperty('scroll-behavior', 'auto', 'important');
+      // Đợi 150ms khôi phục lại hiệu ứng cuộn cho các thao tác bình thường
+      setTimeout(() => {
+        html.style.removeProperty('scroll-behavior');
+      }, 150);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   useEffect(() => {
     setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
@@ -153,7 +168,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, []);
 
-  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+  const toggleFavorite = (id: string, e: any) => {
     e.preventDefault();
     let newFavs;
     if (favoriteIds.includes(id)) {
@@ -455,7 +470,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   );
 }
 
-
 // ==========================================
 // 🏡 SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
 // ==========================================
@@ -471,6 +485,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   const { isChinhChu, isSapHam, isChoThue, isMatTien, isKietHem } = useMemo(() => parsePropertyTags(item), [item]);
 
   return (
+    {/* 🔥 BÙA CHÚ 2: Đổi thẻ <a> thành thẻ <Link> giúp tải nhanh và chống giật vị trí */}
     <Link 
       href={`/nha-dat/${item.slug}`} 
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full block transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]"
