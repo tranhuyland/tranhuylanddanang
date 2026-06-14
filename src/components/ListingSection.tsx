@@ -551,11 +551,11 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
-                window.location.href = 'tel:0900000000'; 
+                window.location.href = 'tel:0905778852'; 
               }}
             >
               <Phone size={13} className="fill-current" />
-              <span className="hidden min-[380px]:inline">0900 000 ***</span>
+              <span className="hidden min-[380px]:inline"> 0905.77.88.52</span>
               <span className="min-[380px]:hidden">Gọi</span>
             </button>
             
