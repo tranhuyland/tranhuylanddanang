@@ -180,13 +180,13 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full">
+    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full">
       
       {/* 🖼️ 1. GALLERY HÌNH ẢNH */}
       <div className="relative w-full max-w-full p-2 sm:p-3 pb-0">
         <PropertyGallery 
           images={tatCaAnhGallery} 
-          alt={item.tieude || item.Title} 
+          alt={item.tieude || item.Title || "Trần Huy Land"} 
           videoUrl={item.videoUrl || item.VideoUrl} 
           linkMap={item.linkMap || item.LinkMap || item.toado} 
         />
@@ -195,133 +195,135 @@ export default function PropertyClient({ item }: PropertyClientProps) {
       {/* 📝 2. NỘI DUNG SẢN PHẨM */}
       <div className="p-5 sm:p-8 w-full max-w-full">
         
-        {/* Tiêu đề & Cụm Action */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
-          <h1 className="text-[20px] sm:text-[22px] md:text-2xl font-bold text-[#2C2C2C] leading-[1.45] uppercase flex-1 pr-0 sm:pr-4">
-            {item.tieude || item.Tieude}
-          </h1>
-          <div className="flex items-center gap-2 shrink-0 self-start">
-            <button onClick={handleCopyLink} className="p-2 border border-slate-200 rounded-full text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all bg-white" title="Chia sẻ">
-              <Share2 size={18} />
-            </button>
-            <button onClick={handleToggleFavorite} className={`p-2 border rounded-full transition-all bg-white ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:bg-red-50'}`} title="Lưu tin">
-              <Heart size={18} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
-            </button>
+        <header>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-[1.3] tracking-tight flex-1 pr-0 sm:pr-4">
+              {item.tieude || item.Tieude}
+            </h1>
+            <div className="flex items-center gap-2 shrink-0 self-start">
+              <button onClick={handleCopyLink} className="p-2.5 border border-slate-200 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all bg-white shadow-sm active:scale-95" title="Chia sẻ">
+                <Share2 size={18} />
+              </button>
+              <button onClick={handleToggleFavorite} className={`p-2.5 border rounded-full transition-all bg-white shadow-sm active:scale-95 ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-500 hover:text-red-500 hover:bg-red-50'}`} title="Lưu tin">
+                <Heart size={18} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Địa chỉ & Thời gian */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-[#505050] text-[14px] mb-6">
-          <span className="flex items-start gap-1.5 leading-snug max-w-full">
-            <MapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
-            <span className="break-words">{displayLocation}</span>
-          </span>
-          <span className="flex items-center gap-1.5 shrink-0">
-            <Calendar size={16} className="text-slate-400 shrink-0" />Đăng ngày: {item.ngayDang || item.NgayDang || "Gần đây"}
-          </span>
-        </div>
+          <div className="flex flex-wrap items-start gap-x-6 gap-y-3 text-slate-600 text-[14px] sm:text-[15px] mb-6 font-medium">
+            <span className="flex items-start gap-1.5 leading-snug max-w-full">
+              <MapPin size={18} className="text-amber-500 shrink-0 mt-0.5" />
+              <span className="break-words leading-relaxed">{displayLocation}</span>
+            </span>
+            <span className="flex items-center gap-1.5 shrink-0">
+              <Calendar size={18} className="text-slate-400 shrink-0" />Ngày đăng: {item.ngayDang || item.NgayDang || "Gần đây"}
+            </span>
+          </div>
+        </header>
 
         <hr className="border-slate-100 mb-6" />
 
         {/* Mức Giá & Diện Tích */}
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4 mb-6">
           <div>
-            <div className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">Mức giá</div>
-            <div className="text-[#E03C31] font-bold text-3xl">{item.gia || item.Gia || "Thỏa thuận"}</div>
+            <div className="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-wider">Mức giá</div>
+            <div className="text-[#E03C31] font-black text-3xl tracking-tight">{item.gia || item.Gia || "Thỏa thuận"}</div>
           </div>
           {item.dienTich && (
             <div>
-              <div className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">Diện tích</div>
-              <div className="text-[#E03C31] font-bold text-2xl">{item.dienTich || item.DienTich}</div>
+              <div className="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-wider">Diện tích</div>
+              <div className="text-[#E03C31] font-black text-2xl tracking-tight">{item.dienTich || item.DienTich}</div>
             </div>
           )}
           {giaM2 && (
             <div className="pb-1">
-              <div className="text-[#777] font-medium text-base">{giaM2}</div>
+              <div className="text-slate-500 font-bold text-base">{giaM2}</div>
             </div>
           )}
         </div>
 
-        {/* Bảng Thông số Kỹ thuật (Grid) - Đã cấu hình ẩn PN/WC nếu rỗng */}
+        {/* Bảng Thông số Kỹ thuật */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-slate-100 mb-8">
           {pn && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
                 <BedDouble size={18} className="text-slate-500" />
               </div>
               <div>
-                <div className="text-slate-400 text-[11px] uppercase tracking-wide">Phòng ngủ</div>
-                <div className="text-[#2C2C2C] font-semibold text-[15px]">{pn}</div>
+                <div className="text-slate-400 text-[11px] uppercase tracking-wider font-bold">Phòng ngủ</div>
+                <div className="text-slate-800 font-bold text-[15px]">{pn}</div>
               </div>
             </div>
           )}
           {wc && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
                 <Bath size={18} className="text-slate-500" />
               </div>
               <div>
-                <div className="text-slate-400 text-[11px] uppercase tracking-wide">Phòng tắm</div>
-                <div className="text-[#2C2C2C] font-semibold text-[15px]">{wc}</div>
+                <div className="text-slate-400 text-[11px] uppercase tracking-wider font-bold">Phòng tắm</div>
+                <div className="text-slate-800 font-bold text-[15px]">{wc}</div>
               </div>
             </div>
           )}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
               <Compass size={18} className="text-slate-500" />
             </div>
             <div>
-              <div className="text-slate-400 text-[11px] uppercase tracking-wide">Hướng nhà</div>
-              <div className="text-[#2C2C2C] font-semibold text-[15px]">{item.huong || item.Huong || 'Chưa rõ'}</div>
+              <div className="text-slate-400 text-[11px] uppercase tracking-wider font-bold">Hướng nhà</div>
+              <div className="text-slate-800 font-bold text-[15px]">{item.huong || item.Huong || 'Chưa rõ'}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100">
               <ShieldCheck size={18} className="text-emerald-500" />
             </div>
-            <div>
-              <div className="text-slate-400 text-[11px] uppercase tracking-wide">Pháp lý</div>
-              <div className="text-emerald-700 font-semibold text-[15px] truncate">{item.phapLy || item.PhapLy || 'Sổ đỏ/Sổ hồng'}</div>
+            <div className="min-w-0">
+              <div className="text-emerald-600/70 text-[11px] uppercase tracking-wider font-bold">Pháp lý</div>
+              <div className="text-emerald-700 font-bold text-[15px] truncate">{item.phapLy || item.PhapLy || 'Sổ đỏ/Sổ hồng'}</div>
             </div>
           </div>
         </div>
 
-        {/* 🔥 Nút Xem Bản Đồ & Sổ Đỏ - Bản Đồ Đã Được Làm Nổi Bật Tối Đa */}
+        {/* 🔥 NÚT BẤM ĐÃ ĐƯỢC ÉP NẰM TRÊN 1 DÒNG (WHITESPACE-NOWRAP) */}
         {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
-          <div className={`grid gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-2.5 sm:gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
               <a 
                 href={item.linkMap || item.LinkMap} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="bg-[#0068FF] hover:bg-[#0055D4] text-white font-bold rounded-lg py-3 px-4 text-center text-[14px] flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border border-[#0068FF]"
+                className="bg-[#0068FF] hover:bg-[#0055D4] text-white font-bold rounded-xl py-3 sm:py-3.5 px-2 text-center text-[12px] min-[390px]:text-[13px] sm:text-[14px] whitespace-nowrap tracking-tight flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 border border-[#0068FF]"
               >
-                <Map size={18} className="text-white" /> Xem vị trí bản đồ
+                <Map className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-white shrink-0" /> <span className="truncate">Xem vị trí bản đồ</span>
               </a>
             )}
             {!!anhSoDoGoc && (
               <button 
                 onClick={() => setIsPopupOpen(true)} 
-                className="bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold border border-orange-200 rounded-lg py-3 px-4 text-center text-[14px] flex items-center justify-center gap-2 transition-colors cursor-pointer w-full"
+                className="bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold border border-orange-200 rounded-xl py-3 sm:py-3.5 px-2 text-center text-[12px] min-[390px]:text-[13px] sm:text-[14px] whitespace-nowrap tracking-tight flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full shadow-sm active:scale-95"
               >
-                <FileText size={18} /> Xem sổ đỏ / Bản vẽ
+                <FileText className="w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0" /> <span className="truncate">Xem sổ đỏ / Bản vẽ</span>
               </button>
             )}
           </div>
         )}
 
         {/* Cấu trúc Mô tả (Markdown) */}
-        <h4 className="font-bold text-[#2C2C2C] text-lg mb-4">Mô tả chi tiết</h4>
-        <div className="text-[#505050] text-[15px] sm:text-[16px] leading-relaxed w-full prose max-w-none text-justify">
+        <h4 className="font-extrabold text-slate-900 text-lg mb-4 flex items-center gap-2">
+          Mô tả chi tiết
+        </h4>
+        <div className="text-slate-700 text-[15px] sm:text-[16px] leading-relaxed w-full prose max-w-none text-justify">
           <ReactMarkdown
             components={{
-              h1: ({node, ...props}) => <h1 className="text-xl font-bold text-[#2C2C2C] mt-6 mb-3" {...props} />,
-              h2: ({node, ...props}) => <h2 className="text-lg font-bold text-[#2C2C2C] mt-5 mb-2" {...props} />,
-              h3: ({node, ...props}) => <h3 className="text-base font-bold text-[#2C2C2C] mt-4 mb-2" {...props} />,
+              h1: ({node, ...props}) => <h1 className="text-xl font-bold text-slate-900 mt-6 mb-3" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-lg font-bold text-slate-900 mt-5 mb-2" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-base font-bold text-slate-900 mt-4 mb-2" {...props} />,
               p: ({node, ...props}) => <p className="mb-4 whitespace-pre-wrap" {...props} />,
               ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5" {...props} />,
               li: ({node, ...props}) => <li className="" {...props} />,
-              strong: ({node, ...props}) => <strong className="font-bold text-[#2C2C2C]" {...props} />,
+              strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
             }}
           >
             {noiDungMoTa}
@@ -386,6 +388,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           )}
         </div>
       )}
-    </div>
+    </article>
   );
 }
