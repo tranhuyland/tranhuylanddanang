@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import Link from "next/link"; // 🔥 ĐÃ THÊM IMPORT LINK CỦA NEXT.JS
+import Link from "next/link";
 import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -471,7 +471,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   const { isChinhChu, isSapHam, isChoThue, isMatTien, isKietHem } = useMemo(() => parsePropertyTags(item), [item]);
 
   return (
-    {/* 🔥 ĐÃ ĐỔI THÀNH THẺ LINK CỦA NEXTJS GIÚP CHỐNG RESET CUỘN TRANG */}
     <Link 
       href={`/nha-dat/${item.slug}`} 
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full block transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]"
