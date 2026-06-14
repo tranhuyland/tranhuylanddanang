@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-// Đã bổ sung đầy đủ các Icon mới (Phone, Heart, ImageIcon)
-import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon } from "lucide-react";
+// 🔥 Đã bổ sung đầy đủ các Icon mới bao gồm cả Bath (WC)
+import { MapPin, Compass, Clock, Square, ChevronRight, BedDouble, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, Bath } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
 
@@ -43,7 +43,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   
-  // 🔥 THAY ĐỔI Ở ĐÂY: Hiển thị 10 sản phẩm mỗi trang
+  // 🔥 Hiển thị 10 sản phẩm mỗi trang
   const itemsPerPage = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -303,36 +303,73 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
 // ==========================================
 // THẺ SẢN PHẨM BĐS - GIAO DIỆN CHUẨN BATDONGSAN.COM.VN
-// Đã tích hợp nguyên vẹn thuật toán của Trần Huy Land
+// Đã nâng cấp: Màu M2 đỏ, thêm Giá/M2, thêm Icon WC, Sửa đếm ảnh, Fix Avatar
 // ==========================================
 function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
-  // 🔥 1. LOGIC NHẬN DIỆN NHÃN DÁN (Giữ nguyên thuật toán xịn của anh)
+  // 🔥 THUẬT TOÁN ĐẾM ẢNH CHÍNH XÁC TỪ GOOGLE SHEETS
+  const soLuongAnhChinhXac = useMemo(() => {
+    if (item.soLuongAnh) return item.soLuongAnh; 
+    if (typeof item.anh === 'string') {
+      const links = item.anh.split(/[\n,]/).filter((link: string) => link.trim() !== '');
+      return links.length > 0 ? links.length : 1;
+    }
+    if (Array.isArray(item.anh)) return item.anh.length;
+    return 1;
+  }, [item]);
+
+  // 🔥 TÍNH TOÁN GIÁ TRÊN MÉT VUÔNG (VD: 100 tr/m²)
+  const giaM2 = useMemo(() => {
+    if (item.giaM2) return item.giaM2; 
+    try {
+      const giaStr = (item.gia || "").toLowerCase();
+      const dtStr = (item.dienTich || "").toLowerCase();
+      let giaTriTrieu = 0;
+      
+      if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
+        giaTriTrieu = parseFloat(giaStr.replace(/[^0-9,.]/g, '').replace(',', '.')) * 1000;
+      } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
+        giaTriTrieu = parseFloat(giaStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      }
+      
+      const dtNum = parseFloat(dtStr.replace(/[^0-9,.]/g, '').replace(',', '.'));
+      
+      if (giaTriTrieu > 0 && dtNum > 0) {
+        const result = Math.round(giaTriTrieu / dtNum);
+        return `${result} tr/m²`;
+      }
+    } catch(e) {}
+    return null;
+  }, [item]);
+
+  // 🔥 TÁCH PHÒNG NGỦ VÀ WC
+  const cauTrucPhong = useMemo(() => {
+    const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
+    if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
+    
+    const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
+    const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
+    const matchWC = combinedText.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
+    
+    return {
+      pn: matchPhong ? matchPhong[1] : null,
+      wc: matchWC ? matchWC[1] : null
+    };
+  }, [item]);
+
+  // Logic Nhận Diện Nhãn Dán 
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
-  
   const strictTextChoThue = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
-
   const strictTextViTri = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isMatTienFake = strictTextViTri.includes("cach mat tien") || strictTextViTri.includes("sau lung can mat tien") || strictTextViTri.includes("sau lung mat tien") || strictTextViTri.includes("sau mat tien") || strictTextViTri.includes("gan mat tien");
   const isKietHem = strictTextViTri.includes("kiet") || strictTextViTri.includes("hem") || isMatTienFake;
   const isMatTien = strictTextViTri.includes("mat tien") && !isKietHem;
-
-  // 🔥 2. THUẬT TOÁN TÁCH PHÒNG
-  const cauTrucPhong = useMemo(() => {
-    const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
-    if (removeAccents(currentLoaiHinh).includes("dat")) return null; 
-    const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
-    const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
-    
-    if (matchPhong) return matchPhong[1];
-    return null;
-  }, [item]);
 
   return (
     <a 
@@ -350,16 +387,11 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           priority={false} 
         />
         
-        {/* Bóng đen gradient dưới đáy ảnh */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Nhãn dán Độc Quyền Góc Trái */}
+        {/* Nhãn dán Độc Quyền */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
-          {rank && (
-            <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">
-              VIP {rank}
-            </span>
-          )}
+          {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">VIP {rank}</span>}
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
@@ -367,62 +399,80 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           {isKietHem && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Kiệt/Hẻm</span>}
         </div>
 
-        {/* Cụm đếm ảnh ảo góc phải dưới */}
+        {/* Số lượng ảnh ĐÃ FIX */}
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
           <ImageIcon size={12} />
-          <span>{Math.floor(Math.random() * 10) + 5}</span> {/* Có thể đổi thành item.soLuongAnh nếu có */}
+          <span>{soLuongAnhChinhXac}</span>
         </div>
       </div>
 
       {/* 📝 KHỐI NỘI DUNG */}
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
-          {/* Tiêu đề in hoa */}
           <h3 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
             {item.tieude}
           </h3>
 
-          {/* Dòng Thông số: Giá · Diện tích · Phòng ngủ */}
+          {/* 🔥 Dòng Thông số ĐÃ NÂNG CẤP */}
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
+            {/* Giá Bán */}
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">
               {item.gia || "Thỏa thuận"}
             </span>
-            
+
+            {/* Diện tích (ĐỔI SANG MÀU ĐỎ) */}
             {item.dienTich && (
               <>
                 <span className="text-slate-300 text-[10px]">●</span>
-                <span className="whitespace-nowrap font-medium">{item.dienTich}</span>
+                <span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span>
+              </>
+            )}
+            
+            {/* Giá/M2 */}
+            {giaM2 && (
+              <>
+                <span className="text-slate-300 text-[10px]">●</span>
+                <span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span>
               </>
             )}
 
-            {cauTrucPhong && (
+            {/* Phòng Ngủ */}
+            {cauTrucPhong.pn && (
               <>
                 <span className="text-slate-300 text-[10px]">●</span>
                 <span className="flex items-center gap-1 whitespace-nowrap font-medium">
-                  {cauTrucPhong} <BedDouble size={14} className="text-slate-400" />
+                  {cauTrucPhong.pn} <BedDouble size={14} className="text-slate-400" />
+                </span>
+              </>
+            )}
+
+            {/* Số WC */}
+            {cauTrucPhong.wc && (
+              <>
+                <span className="text-slate-300 text-[10px]">●</span>
+                <span className="flex items-center gap-1 whitespace-nowrap font-medium">
+                  {cauTrucPhong.wc} <Bath size={14} className="text-slate-400" />
                 </span>
               </>
             )}
           </div>
 
-          {/* Vị trí */}
           <div className="flex items-center gap-1.5 text-[13px] text-[#666] mb-4">
             <MapPin size={14} className="text-slate-400 shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
-        {/* 👤 KHỐI FOOTER: Avatar Người đăng & Nút gọi */}
+        {/* 👤 KHỐI FOOTER */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex items-center gap-2 max-w-[50%]">
-            <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-              <Image 
+            {/* 🔥 ĐÃ FIX AVATAR BẰNG THẺ <img> TIÊU CHUẨN */}
+            <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
+              <img 
                 src="https://tranhuyland.vn/logo.png" 
                 alt="Trần Huy Land"
-                width={32}
-                height={32}
-                className="object-cover"
-                onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=TH&background=random'; }}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=TH&background=random&color=fff&bold=true'; }}
               />
             </div>
             <div className="flex flex-col min-w-0">
@@ -432,12 +482,11 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0 pl-1">
-            {/* Nút Gọi Điện Xanh Ngọc */}
             <button 
               className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm"
               onClick={(e) => { 
                 e.preventDefault(); 
-                window.location.href = 'tel:0900000000'; // 🚨 THAY BẰNG SĐT CỦA ANH
+                window.location.href = 'tel:0900000000'; // 🚨 Anh nhớ đổi số điện thoại ở đây nhé
               }}
             >
               <Phone size={13} className="fill-current" />
@@ -445,7 +494,6 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
               <span className="min-[380px]:hidden">Gọi</span>
             </button>
             
-            {/* Nút Yêu Thích (Trái tim) */}
             <button 
               className="p-1.5 border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50 active:scale-95 transition-all"
               onClick={(e) => {
