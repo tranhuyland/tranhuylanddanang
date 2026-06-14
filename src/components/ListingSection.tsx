@@ -308,6 +308,7 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
 
+  // Vẫn quét toàn bộ cho Sập hầm và Chính chủ
   const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
   const isChinhChu = textLower.includes("chinh chu");
   const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
@@ -315,21 +316,24 @@ function BdsCard({ item, rank }: { item: any, rank?: number }) {
   const strictTextChoThue = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const isChoThue = strictTextChoThue.includes("cho thue");
 
-  // 🔥 1. ĐỊNH NGHĨA CÁC CỤM TỪ LÀM "GIẢ" MẶT TIỀN
+  // 🔥 SỬA LỖI TẠI ĐÂY: Quét Nhãn Vị Trí TUYỆT ĐỐI BỎ QUA Mô Tả (để không bị dính so sánh giá nhà kiệt)
+  const strictTextViTri = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+
+  // 🔥 1. ĐỊNH NGHĨA CÁC CỤM TỪ LÀM "GIẢ" MẶT TIỀN (Chỉ quét trên text nghiêm ngặt)
   const isMatTienFake = 
-    textLower.includes("cach mat tien") || 
-    textLower.includes("sau lung can mat tien") || 
-    textLower.includes("sau lung mat tien") || 
-    textLower.includes("sau mat tien") ||
-    textLower.includes("gan mat tien");
+    strictTextViTri.includes("cach mat tien") || 
+    strictTextViTri.includes("sau lung can mat tien") || 
+    strictTextViTri.includes("sau lung mat tien") || 
+    strictTextViTri.includes("sau mat tien") ||
+    strictTextViTri.includes("gan mat tien");
 
   // 🔥 2. ĐIỀU KIỆN ĐỂ LÀ KIỆT/HẺM:
   // Có chữ kiệt/hẻm, HOẶC dính các từ khoá fake mặt tiền ở trên
-  const isKietHem = textLower.includes("kiet") || textLower.includes("hem") || isMatTienFake;
+  const isKietHem = strictTextViTri.includes("kiet") || strictTextViTri.includes("hem") || isMatTienFake;
 
   // 🔥 3. ĐIỀU KIỆN ĐỂ LÀ MẶT TIỀN CHUẨN: 
   // Có chữ mặt tiền VÀ KHÔNG mang cờ Kiệt/Hẻm (đảm bảo tính loại trừ lẫn nhau)
-  const isMatTien = textLower.includes("mat tien") && !isKietHem;
+  const isMatTien = strictTextViTri.includes("mat tien") && !isKietHem;
 
   const cauTrucPhong = useMemo(() => {
     const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
