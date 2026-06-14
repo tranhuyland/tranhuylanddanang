@@ -153,6 +153,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Đọc danh sách yêu thích
   useEffect(() => {
     setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
@@ -184,6 +185,27 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   };
 
+  // 🔥 ĐÂY LÀ ĐOẠN ĐỌC MẬT MÃ TỪ TRANG CHI TIẾT ĐỂ TỰ ĐỘNG BẬT "TIN ĐÃ LƯU"
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('showFavorites') === 'true') {
+        setShowFavorites(true);
+        setFilters(initialFilters);
+        setTempFilters(initialFilters);
+        setActiveLoaiHinh("all");
+        setCurrentPage(1);
+        
+        // Xóa mật mã khỏi URL cho đẹp link
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        setTimeout(() => {
+          document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 300);
+      }
+    }
+  }, [forceDistrict]);
+
   useEffect(() => {
     const handleOpenDrawer = () => {
       setTempFilters(filters);
@@ -198,7 +220,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setCurrentPage(1); 
     };
 
-    // 🔥 NÂNG CẤP TÍNH NĂNG 1: Lắng nghe tín hiệu từ nút "Tin đã lưu" trên Header
+    // Lắng nghe sự kiện từ Header (khi khách đang đứng ở Trang chủ)
     const handleShowSaved = () => {
       setShowFavorites(true);
       const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
@@ -206,7 +228,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       setTempFilters(resetState);
       setActiveLoaiHinh("all");
       setCurrentPage(1);
-      // Tự động cuộn xuống danh sách sản phẩm đã lưu
       document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
@@ -495,7 +516,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
     <Link 
       href={`/nha-dat/${item.slug}`} 
       onClick={() => {
-        // 🔥 NÂNG CẤP TÍNH NĂNG 2: ÉP VỀ ĐẦU TRANG - Tạm thời tắt hiệu ứng trôi khi load trang chi tiết để nó mở thẳng ở trên cùng
+        // Tạm thời tắt hiệu ứng trôi khi load trang chi tiết để nó mở thẳng ở trên cùng
         document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
         setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 50);
       }}
