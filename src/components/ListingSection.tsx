@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, SlidersHorizontal, Check, RotateCcw, X, Phone, Heart, ImageIcon, BedDouble, Bath } from "lucide-react";
+import { 
+  MapPin, SlidersHorizontal, Check, RotateCcw, X, 
+  Phone, Heart, ImageIcon, BedDouble, Bath 
+} from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
 
@@ -68,35 +71,37 @@ const calculateGiaM2 = (item: any) => {
   try {
     let giaTriTrieu = 0;
     if (item.soGia && !isNaN(Number(item.soGia))) {
-        const so = Number(item.soGia);
-        giaTriTrieu = so < 1000 ? so * 1000 : so;
+      const so = Number(item.soGia);
+      giaTriTrieu = so < 1000 ? so * 1000 : so;
     } else {
-        const giaStr = (item.gia || "").toLowerCase().replace(/x/g, '0');
-        if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
-            const match = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
-            if (match) {
-                const ty = parseFloat(match[1].replace(/,/g, '.'));
-                let trieu = 0;
-                if (match[2]) {
-                    const trieuStr = match[2];
-                    if (trieuStr.length === 1) trieu = parseInt(trieuStr) * 100;
-                    else if (trieuStr.length === 2) trieu = parseInt(trieuStr) * 10;
-                    else trieu = parseInt(trieuStr.substring(0, 3)); 
-                }
-                giaTriTrieu = ty * 1000 + trieu;
-            }
-        } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
-            const match = giaStr.match(/([\d,.]+)/);
-            if (match) giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
+      const giaStr = (item.gia || "").toLowerCase().replace(/x/g, '0');
+      if (giaStr.includes('tỷ') || giaStr.includes('ty')) {
+        const match = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
+        if (match) {
+          const ty = parseFloat(match[1].replace(/,/g, '.'));
+          let trieu = 0;
+          if (match[2]) {
+            const trieuStr = match[2];
+            if (trieuStr.length === 1) trieu = parseInt(trieuStr) * 100;
+            else if (trieuStr.length === 2) trieu = parseInt(trieuStr) * 10;
+            else trieu = parseInt(trieuStr.substring(0, 3)); 
+          }
+          giaTriTrieu = ty * 1000 + trieu;
         }
+      } else if (giaStr.includes('triệu') || giaStr.includes('trieu')) {
+        const match = giaStr.match(/([\d,.]+)/);
+        if (match) giaTriTrieu = parseFloat(match[1].replace(/,/g, '.'));
+      }
     }
+    
     const dtStr = (item.dienTich || "").toLowerCase();
     const dtMatch = dtStr.match(/([\d,.]+)/); 
     let dtNum = 0;
     if (dtMatch) {
-        let cleanDt = dtMatch[1].replace(/[.,]+$/, ''); 
-        dtNum = parseFloat(cleanDt.replace(/,/g, '.'));
+      let cleanDt = dtMatch[1].replace(/[.,]+$/, ''); 
+      dtNum = parseFloat(cleanDt.replace(/,/g, '.'));
     }
+    
     if (giaTriTrieu > 0 && dtNum > 0) {
       const calc = giaTriTrieu / dtNum;
       return `${parseFloat(calc.toFixed(2)).toLocaleString('vi-VN')} tr/m²`;
@@ -108,9 +113,11 @@ const calculateGiaM2 = (item: any) => {
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
+  
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
   const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
   const matchWC = combinedText.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
+  
   return { 
     pn: matchPhong && matchPhong[1] !== "0" ? matchPhong[1] : null, 
     wc: matchWC && matchWC[1] !== "0" ? matchWC[1] : null 
@@ -137,10 +144,22 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [isClient, setIsClient] = useState(false);
 
   const itemsPerPage = 10;
+  const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
-  // Khởi tạo danh sách từ Local Storage
+  // Xử lý chống giật trang khi Back
+  useEffect(() => {
+    const handlePopState = () => {
+      const html = document.documentElement;
+      html.style.setProperty('scroll-behavior', 'auto', 'important');
+      setTimeout(() => html.style.removeProperty('scroll-behavior'), 150);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Khởi tạo danh sách yêu thích từ LocalStorage
   useEffect(() => {
     setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
@@ -149,59 +168,21 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, []);
 
-  // Hàm chuyên dụng để bật chế độ Tin đã lưu
-  const activateFavoritesView = useCallback(() => {
-    setShowFavorites(true);
-    const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
-    setFilters(resetState);
-    setTempFilters(resetState);
-    setActiveLoaiHinh("all");
-    setCurrentPage(1);
-    setTimeout(() => {
-      document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
-  }, [forceDistrict]);
-
-  // 🔥 KIỂM TRA TỜ GIẤY NOTE KHI VỪA TẢI TRANG
+  // Quản lý bộ nhớ tạm phân trang
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const shouldOpen = sessionStorage.getItem("open_favorites_now");
-      if (shouldOpen === "true") {
-        sessionStorage.removeItem("open_favorites_now"); // Đọc xong thì xé bỏ
-        activateFavoritesView();
-      }
+      const savedPage = sessionStorage.getItem("bds_page");
+      if (savedPage) setCurrentPage(parseInt(savedPage, 10));
     }
-  }, [activateFavoritesView]);
+  }, []);
 
-  // 🔥 Lắng nghe tín hiệu khi đang đứng ở trang chủ
   useEffect(() => {
-    window.addEventListener('showSavedListings', activateFavoritesView);
-    return () => window.removeEventListener('showSavedListings', activateFavoritesView);
-  }, [activateFavoritesView]);
-
-  const toggleFavorite = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    let newFavs;
-    if (favoriteIds.includes(id)) {
-      newFavs = favoriteIds.filter(f => f !== id);
-    } else {
-      newFavs = [...favoriteIds, id];
+    if (typeof window !== "undefined" && currentPage > 0) {
+      sessionStorage.setItem("bds_page", currentPage.toString());
     }
-    setFavoriteIds(newFavs);
-    localStorage.setItem('thl_favorites', JSON.stringify(newFavs));
-  };
+  }, [currentPage]);
 
-  const handleToggleShowFavorites = () => {
-    const nextVal = !showFavorites;
-    if (nextVal) {
-      activateFavoritesView();
-    } else {
-      setShowFavorites(false);
-      setCurrentPage(1);
-    }
-  };
-
+  // Lắng nghe sự kiện mở Bộ lọc và Tìm kiếm
   useEffect(() => {
     const handleOpenDrawer = () => {
       setTempFilters(filters);
@@ -225,42 +206,68 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     };
   }, [filters, forceDistrict]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedPage = sessionStorage.getItem("bds_page");
-      if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+  // Tương tác Yêu Thích
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    let newFavs;
+    if (favoriteIds.includes(id)) {
+      newFavs = favoriteIds.filter(f => f !== id);
+    } else {
+      newFavs = [...favoriteIds, id];
     }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && currentPage > 0) {
-      sessionStorage.setItem("bds_page", currentPage.toString());
-    }
-  }, [currentPage]);
-
-  const closeDrawer = () => {
-    setIsDrawerOpen(false);
+    
+    setFavoriteIds(newFavs);
+    localStorage.setItem('thl_favorites', JSON.stringify(newFavs));
   };
 
+  const handleToggleShowFavorites = () => {
+    const nextVal = !showFavorites;
+    setShowFavorites(nextVal);
+    setCurrentPage(1);
+    if (nextVal) {
+      setFilters(initialFilters);
+      setTempFilters(initialFilters);
+      setActiveLoaiHinh("all");
+    }
+  };
+
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setCurrentPage(1);
+    setIsDrawerOpen(false);
+    setTimeout(() => document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
+
+  const handleResetFilters = () => {
+    const resetState = { ...initialFilters, khuVuc: forceDistrict || "all" };
+    setTempFilters(resetState); 
+    setFilters(resetState); 
+    setActiveLoaiHinh("all"); 
+    setCurrentPage(1);
+  };
+
+  // Tối ưu thuật toán đếm Tab
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      all: safeBdsItems.length,
-      "Đất nền": 0,
-      "Nhà phố": 0,
-      "Cho thuê": 0,
-    };
+    const counts: Record<string, number> = { all: safeBdsItems.length, "Đất nền": 0, "Nhà phố": 0, "Cho thuê": 0 };
+    
+    const keywordDatNen = removeAccents("Đất nền");
+    const keywordNhaPho = removeAccents("Nhà phố");
+    const keywordChoThue = removeAccents("Cho thuê");
 
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
       const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`);
-      if (searchStr.includes(removeAccents("Đất nền"))) counts["Đất nền"]++;
-      if (searchStr.includes(removeAccents("Nhà phố"))) counts["Nhà phố"]++;
-      if (searchStr.includes(removeAccents("Cho thuê"))) counts["Cho thuê"]++;
+      if (searchStr.includes(keywordDatNen)) counts["Đất nền"]++;
+      if (searchStr.includes(keywordNhaPho)) counts["Nhà phố"]++;
+      if (searchStr.includes(keywordChoThue)) counts["Cho thuê"]++;
     });
-
+    
     return counts;
   }, [safeBdsItems]);
 
+  // Tối ưu thuật toán lọc Danh sách
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems];
 
@@ -268,6 +275,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => favoriteIds.includes(i.id?.toString() || i.slug));
     }
 
+    // Sắp xếp ưu tiên thời gian và ID
     result.sort((a: any, b: any) => {
       const getTime = (d: string) => {
         if (!d) return 0;
@@ -300,11 +308,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     if (filters.khoangGia !== "all") {
       result = result.filter(i => {
         const gia = Number(i.soGia) || (i.gia ? parseFloat(i.gia.replace(/[^0-9.]/g, "")) : 0);
-        return filters.khoangGia === "duoi3" ? gia < 3.0 : filters.khoangGia === "3to5" ? gia >= 3.0 && gia <= 5.0 : gia > 5.0;
+        if (filters.khoangGia === "duoi3") return gia < 3.0;
+        if (filters.khoangGia === "3to5") return gia >= 3.0 && gia <= 5.0;
+        return gia > 5.0;
       });
     }
     
-    if (filters.huong !== "all") result = result.filter(i => removeAccents(i.huong || "").includes(removeAccents(filters.huong)));
+    if (filters.huong !== "all") {
+      const target = removeAccents(filters.huong);
+      result = result.filter(i => removeAccents(i.huong || "").includes(target));
+    }
     
     if (filters.tag !== "all") {
       result = result.filter(i => {
@@ -319,25 +332,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return result;
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
-  const handleApplyFilters = () => {
-    setFilters(tempFilters);
-    setCurrentPage(1);
-    closeDrawer();
-    setTimeout(() => document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-  };
-
-  const handleResetFilters = () => {
-    const resetState = { ...initialFilters, khuVuc: forceDistrict || "all" };
-    setTempFilters(resetState); 
-    setFilters(resetState); 
-    setActiveLoaiHinh("all"); 
-    setCurrentPage(1);
-  };
-
-  const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
-
   return (
     <>
+      {/* 🟢 KHU VỰC BỘ LỌC */}
       <section className="w-full relative z-10 -mt-6 sm:-mt-10">
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
@@ -346,6 +343,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               {TAB_OPTIONS.map((tab, index) => {
                 const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
                 const isFirst = index === 0;
+                const isActive = !showFavorites && activeLoaiHinh === tab.id;
                 
                 return (
                   <button 
@@ -353,33 +351,31 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); 
                       setShowFavorites(false); 
-                      const resetState = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
-                      setFilters(resetState);
-                      setTempFilters(resetState);
+                      setFilters(initialFilters); 
+                      setTempFilters(initialFilters); 
                       setCurrentPage(1); 
                     }}
-                    className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative ${isFirst ? 'rounded-tl-[2rem] sm:rounded-none' : ''} ${
-                      !showFavorites && activeLoaiHinh === tab.id 
-                        ? "text-orange-600 bg-white" 
-                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"
-                    }`}
+                    className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative 
+                      ${isFirst ? 'rounded-tl-[2rem] sm:rounded-none' : ''} 
+                      ${isActive ? "text-orange-600 bg-white" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"}
+                    `}
                   >
                     <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
                       {tab.label}
                     </span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${!showFavorites && activeLoaiHinh === tab.id ? "text-orange-500" : "text-slate-400"}`}>
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-500" : "text-slate-400"}`}>
                       ({currentCount} SP)
                     </span>
-                    {!showFavorites && activeLoaiHinh === tab.id && (
-                      <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />
-                    )}
+                    {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
                 );
               })}
 
               <button 
                 onClick={handleToggleShowFavorites}
-                className={`hidden sm:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}`}
+                className={`hidden sm:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
+                  ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}
+                `}
               >
                 <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold flex items-center gap-1.5">
                   <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
@@ -393,8 +389,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
             <div className="px-4 sm:px-8">
               <div className="md:hidden flex gap-2 mb-2">
-                <button onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-3 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95">
+                <button 
+                  onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-3 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95"
+                >
                   <SlidersHorizontal size={18} />
                   Bộ lọc chi tiết 
                   {activeFiltersCount > 0 && (
@@ -404,16 +402,22 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   )}
                 </button>
                 
-                <button onClick={handleToggleShowFavorites}
-                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-2xl text-sm font-bold border transition-all active:scale-95 ${showFavorites ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                <button 
+                  onClick={handleToggleShowFavorites}
+                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-2xl text-sm font-bold border transition-all active:scale-95 
+                    ${showFavorites ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 text-red-500 border-red-100'}
+                  `}
+                >
                   <Heart size={20} fill={showFavorites ? "currentColor" : "none"} className={showFavorites ? "text-white" : "text-red-500"} />
                   <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({isClient ? favoriteIds.length : 0})</span>
                 </button>
               </div>
 
               {activeFiltersCount > 0 && !showFavorites && (
-                <button onClick={handleResetFilters}
-                  className="md:hidden w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95 mb-2">
+                <button 
+                  onClick={handleResetFilters}
+                  className="md:hidden w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95 mb-2"
+                >
                   <X size={18} /> Hủy bỏ bộ lọc đang áp dụng
                 </button>
               )}
@@ -423,7 +427,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 handleFilterChange={handleFilterChange} 
                 forceDistrict={forceDistrict}
                 isDrawerOpen={isDrawerOpen}
-                closeDrawer={closeDrawer}
+                closeDrawer={() => setIsDrawerOpen(false)}
                 handleResetFilters={handleResetFilters}
                 handleApplyFilters={handleApplyFilters}
               />
@@ -431,8 +435,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
                 <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
                 <div className="flex items-center gap-3">
-                  {activeFiltersCount > 0 && <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50"><RotateCcw size={16} className="inline mr-2" />Xóa lọc</button>}
-                  <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all"><Check size={16} className="inline mr-2" />Tìm kiếm ngay</button>
+                  {activeFiltersCount > 0 && (
+                    <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50">
+                      <RotateCcw size={16} className="inline mr-2" />Xóa lọc
+                    </button>
+                  )}
+                  <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all">
+                    <Check size={16} className="inline mr-2" />Tìm kiếm ngay
+                  </button>
                 </div>
               </div>
             </div>
@@ -441,6 +451,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
+      {/* 🟢 KHU VỰC DANH SÁCH SẢN PHẨM */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -468,11 +479,24 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         )}
         
+        {/* KHU VỰC PHÂN TRANG */}
         {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
-          <div className="flex justify-center gap-2 mt-16">
+          <div className="flex justify-center flex-wrap gap-2 mt-16">
             {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
-              <button key={idx} onClick={() => { setCurrentPage(idx + 1); document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" }); }}
-                className={`w-10 h-10 rounded-xl font-bold ${currentPage === idx + 1 ? "bg-orange-500 text-white" : "bg-white border text-slate-600"}`}>{idx + 1}</button>
+              <button 
+                key={idx} 
+                onClick={() => { 
+                  setCurrentPage(idx + 1); 
+                  document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" }); 
+                }}
+                className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                  currentPage === idx + 1 
+                    ? "bg-orange-500 text-white shadow-md" 
+                    : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300"
+                }`}
+              >
+                {idx + 1}
+              </button>
             ))}
           </div>
         )}
@@ -485,7 +509,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 // 🏡 SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
 // ==========================================
 
-function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void }) {
+function BdsCard({ 
+  item, 
+  rank, 
+  isFavorite, 
+  onToggleFavorite 
+}: { 
+  item: any, 
+  rank?: number, 
+  isFavorite: boolean, 
+  onToggleFavorite: (e: React.MouseEvent) => void 
+}) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const displayTime = item.ngayDang || item.ngay || "";
@@ -613,11 +647,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             
             <button 
               className={`p-1.5 border rounded active:scale-95 transition-all shadow-sm ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50'}`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleFavorite(e);
-              }}
+              onClick={onToggleFavorite}
             >
               <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
             </button>
