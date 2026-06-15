@@ -15,10 +15,12 @@ interface ListingSectionProps {
   forceDistrict?: string;
 }
 
+// 🔥 CẬP NHẬT TAB BỘ LỌC
 const TAB_OPTIONS = [
   { id: "all", label: "Tất cả" },
-  { id: "Đất nền", label: "⛳ Đất nền" },
+  { id: "Đất", label: "⛳ Đất" },
   { id: "Nhà phố", label: "🏠 Nhà phố" },
+  { id: "Căn hộ", label: "🏢 Căn hộ" },
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
 
@@ -40,20 +42,30 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
+// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE MỚI (Nhà / Đất / Căn hộ)
 const parsePropertyTags = (item: any) => {
-  const textLower = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.tag || ""} ${item.loaiHinh || ""}`);
-  const isChinhChu = textLower.includes("chinh chu");
-  const isSapHam = textLower.includes("sap ham") || textLower.includes("gia re");
+  const fullText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+  const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
+  
+  const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
+  const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
+  const isChoThue = fullText.includes("cho thue") || moTaText.includes("cho thue");
 
-  const strictTextChoThue = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
-  const isChoThue = strictTextChoThue.includes("cho thue");
+  const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
+  
+  // Các badge Đất
+  const isDatKiet = fullText.includes("dat kiet") || (fullText.includes("dat") && fullText.includes("kiet"));
+  const isDatMatTien = fullText.includes("dat mat tien") || (fullText.includes("dat") && fullText.includes("mat tien") && !isMatTienFake);
+  const isDatNen = fullText.includes("dat nen") || (fullText.includes("dat") && !isDatKiet && !isDatMatTien);
+  
+  // Các badge Nhà
+  const isNhaKiet = (fullText.includes("kiet") || fullText.includes("hem") || isMatTienFake) && !isDatKiet && !isDatMatTien && !isDatNen;
+  const isNhaMatTien = fullText.includes("mat tien") && !isNhaKiet && !isMatTienFake && !isDatKiet && !isDatMatTien && !isDatNen;
 
-  const strictTextViTri = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
-  const isMatTienFake = strictTextViTri.includes("cach mat tien") || strictTextViTri.includes("sau lung can mat tien") || strictTextViTri.includes("sau lung mat tien") || strictTextViTri.includes("sau mat tien") || strictTextViTri.includes("gan mat tien");
-  const isKietHem = strictTextViTri.includes("kiet") || strictTextViTri.includes("hem") || isMatTienFake;
-  const isMatTien = strictTextViTri.includes("mat tien") && !isKietHem;
+  // Căn hộ
+  const isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
 
-  return { isChinhChu, isSapHam, isChoThue, isKietHem, isMatTien };
+  return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo };
 };
 
 const countImages = (item: any) => {
@@ -111,7 +123,7 @@ const calculateGiaM2 = (item: any) => {
 };
 
 const extractRooms = (item: any) => {
-  const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
+  const currentLoaiHinh = `${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`;
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
   
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
@@ -148,7 +160,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const handleFilterChange = (key: string, value: string) => setTempFilters(prev => ({ ...prev, [key]: value }));
 
-  // Xử lý chống giật trang khi Back
   useEffect(() => {
     const handlePopState = () => {
       const html = document.documentElement;
@@ -159,7 +170,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Khởi tạo danh sách yêu thích từ LocalStorage
   useEffect(() => {
     setIsClient(true);
     const saved = localStorage.getItem("thl_favorites");
@@ -168,7 +178,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, []);
 
-  // Quản lý bộ nhớ tạm phân trang
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedPage = sessionStorage.getItem("bds_page");
@@ -182,7 +191,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     }
   }, [currentPage]);
 
-  // Lắng nghe sự kiện mở Bộ lọc và Tìm kiếm
   useEffect(() => {
     const handleOpenDrawer = () => {
       setTempFilters(filters);
@@ -206,7 +214,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     };
   }, [filters, forceDistrict]);
 
-  // Tương tác Yêu Thích
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -248,26 +255,28 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
-  // Tối ưu thuật toán đếm Tab
+  // 🔥 TỐI ƯU THUẬT TOÁN ĐẾM TAB
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: safeBdsItems.length, "Đất nền": 0, "Nhà phố": 0, "Cho thuê": 0 };
+    const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     
-    const keywordDatNen = removeAccents("Đất nền");
     const keywordNhaPho = removeAccents("Nhà phố");
     const keywordChoThue = removeAccents("Cho thuê");
+    const keywordCanHo = removeAccents("Căn hộ");
+    const keywordChungCu = removeAccents("Chung cư");
 
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
-      const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`);
-      if (searchStr.includes(keywordDatNen)) counts["Đất nền"]++;
+      const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""} ${i.tag || ""}`);
+      if (searchStr.includes("dat")) counts["Đất"]++;
       if (searchStr.includes(keywordNhaPho)) counts["Nhà phố"]++;
       if (searchStr.includes(keywordChoThue)) counts["Cho thuê"]++;
+      if (searchStr.includes(keywordCanHo) || searchStr.includes(keywordChungCu) || searchStr.includes("apartment")) counts["Căn hộ"]++;
     });
     
     return counts;
   }, [safeBdsItems]);
 
-  // Tối ưu thuật toán lọc Danh sách
+  // 🔥 TỐI ƯU LỌC DANH SÁCH SẢN PHẨM THEO TAB MỚI
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems];
 
@@ -275,7 +284,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => favoriteIds.includes(i.id?.toString() || i.slug));
     }
 
-    // Sắp xếp ưu tiên thời gian và ID
     result.sort((a: any, b: any) => {
       const getTime = (d: string) => {
         if (!d) return 0;
@@ -302,7 +310,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     
     if (!showFavorites && activeLoaiHinh !== "all") {
       const target = removeAccents(activeLoaiHinh);
-      result = result.filter(i => removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""}`).includes(target));
+      result = result.filter(i => {
+        const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""} ${i.tag || ""}`);
+        if (target === "dat") {
+            return searchStr.includes("dat");
+        }
+        if (target === "can ho") {
+            return searchStr.includes("can ho") || searchStr.includes("chung cu") || searchStr.includes("apartment");
+        }
+        return searchStr.includes(target);
+      });
     }
     
     if (filters.khoangGia !== "all") {
@@ -322,7 +339,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     if (filters.tag !== "all") {
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
-        if (filters.tag === "mattien") return i.isMatTien || tags.isMatTien;
+        if (filters.tag === "mattien") return i.isMatTien || tags.isNhaMatTien || tags.isDatMatTien;
         if (filters.tag === "chinhchu") return tags.isChinhChu;
         if (filters.tag === "chothue") return tags.isChoThue;
         return true;
@@ -339,7 +356,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
             
-            <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none overflow-hidden">
+            <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none overflow-hidden overflow-x-auto custom-scrollbar">
               {TAB_OPTIONS.map((tab, index) => {
                 const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
                 const isFirst = index === 0;
@@ -355,16 +372,16 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                       setTempFilters(initialFilters); 
                       setCurrentPage(1); 
                     }}
-                    className={`flex-1 flex flex-col justify-center items-center py-4 px-1 transition-all relative 
+                    className={`flex-1 min-w-[80px] flex flex-col justify-center items-center py-4 px-2 transition-all relative 
                       ${isFirst ? 'rounded-tl-[2rem] sm:rounded-none' : ''} 
                       ${isActive ? "text-orange-600 bg-white" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"}
                     `}
                   >
-                    <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold">
+                    <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">
                       {tab.label}
                     </span>
                     <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-500" : "text-slate-400"}`}>
-                      ({currentCount} SP)
+                      ({currentCount})
                     </span>
                     {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
@@ -373,7 +390,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
               <button 
                 onClick={handleToggleShowFavorites}
-                className={`hidden sm:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
+                className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
                   ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}
                 `}
               >
@@ -381,7 +398,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
                 </span>
                 <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-400'}`}>
-                  ({isClient ? favoriteIds.length : 0} SP)
+                  ({isClient ? favoriteIds.length : 0})
                 </span>
                 {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
               </button>
@@ -527,14 +544,14 @@ function BdsCard({
   const soLuongAnhChinhXac = useMemo(() => countImages(item), [item]);
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
-  const { isChinhChu, isSapHam, isChoThue, isMatTien, isKietHem } = useMemo(() => parsePropertyTags(item), [item]);
+  
+  // NẠP BỘ TAG MỚI ĐÃ PHÂN LOẠI
+  const { isChinhChu, isSapHam, isChoThue, isNhaMatTien, isNhaKiet, isDatKiet, isDatMatTien, isDatNen, isCanHo } = useMemo(() => parsePropertyTags(item), [item]);
 
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
-      /* 🔥 ĐÃ XÓA scroll={false} Ở ĐÂY CHÍNH LÀ NGUYÊN NHÂN LỖI 🔥 */
       onClick={() => {
-        // Tạm thời tắt hiệu ứng trượt của CSS hệ thống để trang nhảy thẳng lên đầu tiên
         document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
         setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300);
       }}
@@ -551,13 +568,25 @@ function BdsCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* 🔥 KHU VỰC HIỂN THỊ BADGE (NHÃN) THÔNG MINH */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
+          
           {isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
           {isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
-          {isMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Mặt Tiền</span>}
-          {isKietHem && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Kiệt/Hẻm</span>}
+          
+          {/* Nhãn NHÀ */}
+          {isNhaMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Nhà Mặt Tiền</span>}
+          {isNhaKiet && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Nhà Kiệt</span>}
+          
+          {/* Nhãn ĐẤT */}
+          {isDatNen && <span className="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Nền</span>}
+          {isDatMatTien && <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Mặt Tiền</span>}
+          {isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
+          
+          {/* Nhãn CĂN HỘ */}
+          {isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
         </div>
 
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
