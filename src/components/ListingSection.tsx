@@ -36,7 +36,7 @@ const removeAccents = (str: string) => {
 
 // 🔥 HÀM MỚI: Bóc tách chính xác Ngày (dd/mm/yy), Giờ và tính khoảng cách
 const parseDateInfo = (dateStr: string) => {
-  if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "Vừa xong" };
+  if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "vừa xong" };
 
   try {
     const [datePart, timePart = ""] = dateStr.trim().split(/\s+/);
@@ -53,7 +53,9 @@ const parseDateInfo = (dateStr: string) => {
     const formattedDate = `${day < 10 ? '0'+day : day}/${month < 9 ? '0'+(month+1) : month+1}/${shortYear}`;
 
     const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
-    const relative = diffDays <= 0 ? "Hôm nay" : `Cách đây ${diffDays} ngày`;
+    
+    // Đã chuyển thành chữ thường và format: "1 ngày trước"
+    const relative = diffDays <= 0 ? "hôm nay" : `${diffDays} ngày trước`;
 
     const shortTime = timePart ? timePart.split(":").slice(0, 2).join(":") : "";
 
@@ -486,7 +488,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
   const tags = useMemo(() => parsePropertyTags(item), [item]);
   
-  // Lấy ra thông tin ngày, giờ và thời gian tương đối siêu xịn
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
   return (
@@ -502,7 +503,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* CHỈ CÓ NHÃN CỦA TAB ĐỘC QUYỀN ĐƯỢC HIỂN THỊ */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -537,25 +537,24 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ ĐƯỢC CHUYỂN SANG MÀU CAM NỔI BẬT */}
-          <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-orange-600 font-bold mb-4 bg-orange-50 border border-orange-100 w-fit px-2.5 py-1 rounded-md shadow-sm">
-            <MapPin size={14} className="text-orange-500 shrink-0" />
+          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ BỎ VIỀN, BỎ NỀN, ĐỔI THÀNH MÀU XANH LÁ ĐẬM */}
+          <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-green-700 font-bold mb-4 w-fit py-1">
+            <MapPin size={14} className="text-green-700 shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           
-          {/* 🔥 KHU VỰC THỜI GIAN ĐÃ LOẠI BỎ LOGO, THÊM NGÀY/GIỜ RÕ RÀNG */}
+          {/* 🔥 KHU VỰC THỜI GIAN ĐƯỢC CHIA THÀNH 2 DÒNG (Đồng hồ + Ngày đăng / Cách bao nhiêu ngày) */}
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <span className="text-[12px] sm:text-[13px] font-bold text-slate-700 truncate">
-              {dateInfo.fullDate} <span className="text-slate-400 font-normal mx-0.5">-</span> <span className="text-orange-600 font-semibold">{dateInfo.relative}</span>
+            <div className="flex items-center gap-1 text-[11px] sm:text-[12px] text-slate-600 font-medium truncate">
+              <Clock size={13} strokeWidth={1.5} className="shrink-0" />
+              <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
+            </div>
+            <span className="text-[11px] sm:text-[12px] text-black italic mt-0.5 truncate pl-[18px]">
+              {dateInfo.relative}
             </span>
-            {dateInfo.time && (
-              <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                <Clock size={10} /> {dateInfo.time}
-              </span>
-            )}
           </div>
           
           <div className="flex items-center gap-1.5 shrink-0">
