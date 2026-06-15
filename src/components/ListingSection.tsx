@@ -63,38 +63,49 @@ const parseDateInfo = (dateStr: string) => {
   }
 };
 
+// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB SIÊU CHUẨN (LOẠI BỎ SAI SÓT TỪ ĐỒNG ÂM)
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
-  const fullText = removeAccents(rawTitleTag);
-  const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
-  const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
-
-  const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
-  const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
+  const rawMota = `${item.mota || item.moTa || ""}`.toLowerCase();
   
-  let isChoThue = strictChoThueText.includes("cho thue");
-  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
-  const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
-  const hasDat = fullText.includes("dat");
+  // Bọc khoảng trắng để xét từng từ độc lập (VD: " dat " không bắt nhầm vào " thanh dat ")
+  const cleanStr = removeAccents(rawTitleTag).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ');
+  const paddedFullText = ` ${cleanStr} `; 
+  const paddedMota = ` ${removeAccents(rawMota).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
+
+  const isChinhChu = paddedFullText.includes(" chinh chu ") || paddedMota.includes(" chinh chu ");
+  const isSapHam = paddedFullText.includes(" sap ham ") || paddedFullText.includes(" gia re ") || paddedMota.includes(" sap ham ");
+  
+  let isChoThue = paddedFullText.includes(" cho thue ");
+  let isCanHo = paddedFullText.includes(" can ho ") || paddedFullText.includes(" chung cu ") || paddedFullText.includes(" apartment ");
+  const isMatTienFake = paddedFullText.includes(" cach mat tien ") || paddedFullText.includes(" sau lung ") || paddedFullText.includes(" gan mat tien ");
+  
+  // KIỂM TRA ĐẤT/NHÀ RẤT KHẮT KHE
+  const hasDatWord = rawTitleTag.includes("đất") || paddedFullText.includes(" dat ");
+  const hasNhaWord = rawTitleTag.includes("nhà") || paddedFullText.includes(" nha ");
+
+  // Gọi là "Đất" nếu có chữ Đất nhưng không có chữ Nhà, HOẶC khai báo rõ là "đất nền", "lô đất", "bán đất"
+  const hasDat = (hasDatWord && !hasNhaWord) || paddedFullText.includes(" dat nen ") || paddedFullText.includes(" lo dat ") || rawTitleTag.includes("bán đất");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
   let isNhaMatTien = false, isNhaKiet = false;
 
-  if (hasDat) {
-    isCanHo = false;
+  if (hasDat && !isCanHo) {
     isChoThue = false;
-    isNhaMatTien = false;
-    isNhaKiet = false;
     
-    if (fullText.includes("mat tien") && !isMatTienFake) {
+    // Bắt buộc phải đúng cụm "đất nền" hoặc "lô nền" mới lên thẻ Đất Nền
+    const hasNenStrict = rawTitleTag.includes("đất nền") || paddedFullText.includes(" dat nen ") || rawTitleTag.includes("lô nền") || paddedFullText.includes(" lo nen ");
+
+    if (paddedFullText.includes(" mat tien ") && !isMatTienFake) {
       isDatMatTien = true;
-    } else if (fullText.includes("dat nen") || fullText.includes("lo nen") || rawTitleTag.includes("nền")) {
+    } else if (hasNenStrict) {
       isDatNen = true;
     } else {
       isDatKiet = true;
     }
   } else if (!isCanHo) {
-    if (fullText.includes("mat tien") && !isMatTienFake) {
+    // Thuộc về Nhà phố
+    if (paddedFullText.includes(" mat tien ") && !isMatTienFake) {
       isNhaMatTien = true;
     } else {
       isNhaKiet = true;
@@ -102,9 +113,9 @@ const parsePropertyTags = (item: any) => {
   }
 
   let primaryTab = "Nhà phố"; 
-  if (hasDat) primaryTab = "Đất";
-  else if (isCanHo) primaryTab = "Căn hộ";
+  if (isCanHo) primaryTab = "Căn hộ";
   else if (isChoThue) primaryTab = "Cho thuê";
+  else if (hasDat) primaryTab = "Đất";
 
   return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo, primaryTab };
 };
@@ -149,33 +160,26 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ ĐƯỢC NÂNG CẤP SIÊU THÔNG MINH)
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ FIX LỖI HTML GÂY NHIỄU)
 const extractRooms = (item: any) => {
-  const typeText = removeAccents(`${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`);
-  // Đất trống thì bỏ qua không cần quét phòng
-  if (typeText.includes("dat") && !typeText.includes("nha") && !typeText.includes("can ho")) {
-    return { pn: null, wc: null }; 
-  }
-  
-  // 1. Quét trước xem nếu trên Sheet anh có chèn riêng cột thì ưu tiên lấy
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  const fullText = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""}`);
-  
-  // 2. Quét tự động bằng siêu Regex cả 2 chiều (Trước ra sau và Sau ra trước)
+  // XÓA MỌI THẺ HTML (như <strong>02</strong>) ĐỂ GHÉP LẠI THÀNH CỤM CHỮ SỐ THÔNG THƯỜNG
+  const rawText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
+  const textWithoutHtml = rawText.replace(/<[^>]+>/g, ' '); 
+  const fullText = removeAccents(textWithoutHtml).toLowerCase();
+
   if (!pn) {
-    // Tìm các cụm như: "3 pn", "3 phong ngu", "3 ngu", "phong ngu: 3", "pn: 3"...
     const matchPhong = fullText.match(/(\d+)\s*(pn|phong ngu|p ngu|ngu|p\.ngu)/i) || 
                        fullText.match(/(?:pn|phong ngu|p ngu|ngu|p\.ngu)[\s:-]*(\d+)/i);
-    if (matchPhong && matchPhong[1] !== "0") pn = matchPhong[1];
+    if (matchPhong && parseInt(matchPhong[1]) > 0) pn = parseInt(matchPhong[1]).toString();
   }
 
   if (!wc) {
-    // Tìm các cụm như: "4 wc", "4 phong tam", "4 nvs", "toilet: 2", "wc 3"...
     const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|toilet|nvs)/i) || 
                     fullText.match(/(?:wc|phong tam|nha ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
-    if (matchWC && matchWC[1] !== "0") wc = matchWC[1];
+    if (matchWC && parseInt(matchWC[1]) > 0) wc = parseInt(matchWC[1]).toString();
   }
 
   return { pn, wc };
@@ -519,7 +523,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* CHỈ CÓ NHÃN CỦA TAB ĐỘC QUYỀN ĐƯỢC HIỂN THỊ */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -554,7 +557,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG CHỮ MÀU ĐEN, IN THƯỜNG, TO RÕ */}
           <div className="flex items-center gap-1.5 text-[13px] sm:text-[14px] text-[#2C2C2C] mb-4">
             <MapPin size={15} className="text-slate-500 shrink-0" />
             <span className="truncate">{displayLocation}</span>
@@ -563,19 +565,17 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
 
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           
-          {/* 🔥 KHU VỰC THỜI GIAN: BỎ TÊN NGƯỜI ĐĂNG, NGÀY ĐĂNG IN ĐẬM TO HƠN, CÁCH ĐÂY X NGÀY IN NGHIÊNG BÊN DƯỚI */}
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
+            <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[19px]">
+            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
               {dateInfo.relative}
             </span>
           </div>
           
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Nút Lưu Tin Thông Minh */}
             <button 
               className={`px-3 py-1.5 sm:px-4 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1.5 ${
                 isFavorite 
