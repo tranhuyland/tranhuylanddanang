@@ -50,50 +50,57 @@ const parsePropertyTags = (item: any) => {
   // Chỉ quét "cho thuê" trên tiêu đề và phân loại (bỏ qua mô tả để chống nhiễu)
   const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
 
-  const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
-  const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
-  const isChoThue = strictChoThueText.includes("cho thue");
+  let isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
+  let isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
+  let isChoThue = strictChoThueText.includes("cho thue");
 
   const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
   const hasDat = fullText.includes("dat");
-  const isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
+  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
 
-  // 1. CHIA BADGE ĐẤT (ĐỘC QUYỀN: Chỉ được 1 trong 3 nhãn Đất)
+  // 1. CHIA BADGE ĐỘC QUYỀN
   let isDatMatTien = false;
   let isDatKiet = false;
   let isDatNen = false;
-
-  if (hasDat) {
-    if (fullText.includes("dat mat tien") || (fullText.includes("mat tien") && !isMatTienFake)) {
-      isDatMatTien = true;
-    } else if (fullText.includes("dat nen")) {
-      isDatNen = true;
-    } else {
-      // Mặc định cứ có chữ Đất mà không phải nền/mặt tiền thì là Đất kiệt
-      isDatKiet = true;
-    }
-  }
-
-  // 2. CHIA BADGE NHÀ (Chỉ gán nếu không phải Đất và không phải Căn Hộ)
   let isNhaMatTien = false;
   let isNhaKiet = false;
 
-  if (!hasDat && !isCanHo) {
+  if (hasDat) {
+    // LUẬT THÉP: Đã có Đất thì triệt tiêu Căn hộ, Cho thuê, Nhà
+    isCanHo = false;
+    isChoThue = false;
+    isNhaMatTien = false;
+    isNhaKiet = false;
+    
+    // Phân loại Đất
     if (fullText.includes("mat tien") && !isMatTienFake) {
-      isNhaMatTien = true;
+      isDatMatTien = true;
+    } else if (fullText.includes("nen")) {
+      // Chỉ khi có dữ liệu "nền" mới hiện Đất Nền
+      isDatNen = true;
     } else {
-      isNhaKiet = true;
+      // Có Đất nhưng Không mặt tiền, Không nền -> Mặc định là Đất kiệt
+      isDatKiet = true;
+    }
+  } else {
+    // NẾU KHÔNG PHẢI ĐẤT VÀ KHÔNG PHẢI CĂN HỘ THÌ LÀ NHÀ PHỐ
+    if (!isCanHo) {
+      if (fullText.includes("mat tien") && !isMatTienFake) {
+        isNhaMatTien = true;
+      } else {
+        isNhaKiet = true;
+      }
     }
   }
 
-  // 3. XÁC ĐỊNH TAB BỘ LỌC ĐỘC QUYỀN (1 SẢN PHẨM CHỈ XUẤT HIỆN Ở 1 TAB DUY NHẤT)
+  // 2. XÁC ĐỊNH TAB BỘ LỌC ĐỘC QUYỀN (1 SẢN PHẨM CHỈ XUẤT HIỆN Ở 1 TAB DUY NHẤT)
   let primaryTab = "Nhà phố"; // Mặc định
-  if (isChoThue) {
-    primaryTab = "Cho thuê"; // Ưu tiên số 1
+  if (hasDat) {
+    primaryTab = "Đất";
   } else if (isCanHo) {
-    primaryTab = "Căn hộ";   // Ưu tiên số 2
-  } else if (hasDat) {
-    primaryTab = "Đất";      // Ưu tiên số 3
+    primaryTab = "Căn hộ";
+  } else if (isChoThue) {
+    primaryTab = "Cho thuê";
   }
 
   return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo, primaryTab };
@@ -286,14 +293,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
-  // 🔥 TỐI ƯU THUẬT TOÁN ĐẾM TAB VÀ CHIA DANH SÁCH ĐỘC QUYỀN
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
       const tags = parsePropertyTags(i);
-      // Gán đếm chính xác vào Tab Độc Quyền của sản phẩm
       if (counts[tags.primaryTab] !== undefined) {
         counts[tags.primaryTab]++;
       }
@@ -333,7 +338,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => removeAccents(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
     }
     
-    // 🔥 LỌC TAB ĐỘC QUYỀN
     if (!showFavorites && activeLoaiHinh !== "all") {
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
