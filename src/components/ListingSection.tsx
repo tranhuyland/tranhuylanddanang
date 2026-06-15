@@ -149,12 +149,10 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ ĐƯỢC NÂNG CẤP SIÊU CHUẨN)
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  // Lọc sạch mọi thẻ HTML (như bôi đậm <strong>, <b>) và ký tự khoảng trắng thừa
   const rawText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
   const textWithoutHtml = rawText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF]/g, ' '); 
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
@@ -329,7 +327,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
         if (filters.tag === "mattien") return tags.isNhaMatTien || tags.isDatMatTien;
-        if (filters.tag === "chinhchu") return tags.isChinhChu; // SỬA CHỮ C Ở ĐÂY RỒI ANH NHÉ
+        if (filters.tag === "chinhchu") return tags.isChinhChu;
         if (filters.tag === "chothue") return tags.isChoThue;
         return true;
       });
@@ -443,7 +441,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      {/* 🔥 KHU VỰC MAIN ĐƯỢC THÊM MIN-H ĐỂ TRÁNH GIẬT TRANG */}
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28 min-h-[80vh]">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -476,7 +473,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 key={idx} 
                 onClick={() => { 
                   setCurrentPage(idx + 1); 
-                  // Sử dụng window.scrollTo bằng tọa độ chính xác thay vì scrollIntoView để mượt hơn
                   setTimeout(() => {
                     const section = document.getElementById("listing-section");
                     if (section) {
@@ -557,13 +553,13 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
             {giaM2 && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span></>}
             
-            {/* 🔥 Chỉ hiển thị icon phòng ngủ và WC nếu nó KHÔNG phải là thẻ Đất */}
             {tags.primaryTab !== "Đất" && pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
             {tags.primaryTab !== "Đất" && wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          <div className="flex items-center gap-1.5 text-[13px] sm:text-[14px] text-[#2C2C2C] mb-4">
-            <MapPin size={15} className="text-slate-500 shrink-0" />
+          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ ĐƯỢC CHỈNH THÀNH MÀU XANH DƯƠNG ĐẬM VÀ TO HƠN 1 CHÚT */}
+          <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-bold text-blue-900 mb-4">
+            <MapPin size={16} className="text-blue-900 shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
