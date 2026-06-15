@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
-  Phone, Heart, ImageIcon, BedDouble, Bath 
+  Heart, ImageIcon, BedDouble, Bath 
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -43,74 +43,49 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
-// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB ĐỘC QUYỀN (SIÊU CHUẨN XÁC)
+// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB ĐỘC QUYỀN
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
-  const rawMota = `${item.mota || item.moTa || ""}`.toLowerCase();
-  
-  // Khử dấu, loại bỏ dấu câu và thêm khoảng trắng 2 đầu để bắt ĐÚNG TỪ
-  const fullText = ` ${removeAccents(rawTitleTag).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
-  const moTaText = ` ${removeAccents(rawMota).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
-  const strictChoThueText = fullText;
+  const fullText = removeAccents(rawTitleTag);
+  const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
+  const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
 
-  const isChinhChu = fullText.includes(" chinh chu ") || moTaText.includes(" chinh chu ");
-  const isSapHam = fullText.includes(" sap ham ") || fullText.includes(" gia re ") || moTaText.includes(" sap ham ");
+  const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
+  const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
   
-  let isChoThue = strictChoThueText.includes(" cho thue ");
-  let isCanHo = fullText.includes(" can ho ") || fullText.includes(" chung cu ") || fullText.includes(" apartment ");
-  const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ");
-  
-  // Bắt chữ Đất (ưu tiên bắt có dấu hoặc chính xác từ "dat")
-  const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat ") || fullText.includes(" lo dat ") || fullText.includes(" ban dat ");
+  let isChoThue = strictChoThueText.includes("cho thue");
+  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
+  const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
+  const hasDat = fullText.includes("dat");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
   let isNhaMatTien = false, isNhaKiet = false;
 
-  // QUY TẮC ĐỘC QUYỀN VÀ TAB
-  let primaryTab = "Nhà phố"; 
-
   if (hasDat) {
-    // LUẬT THÉP: Đã có Đất thì triệt tiêu hoàn toàn Căn hộ, Cho thuê, Nhà
     isCanHo = false;
     isChoThue = false;
-    primaryTab = "Đất";
+    isNhaMatTien = false;
+    isNhaKiet = false;
     
-    // PHÂN LOẠI ĐẤT THEO THỨ TỰ ƯU TIÊN: MẶT TIỀN -> KIỆT -> NỀN
-    if (fullText.includes(" mat tien ") && !isMatTienFake) {
+    if (fullText.includes("mat tien") && !isMatTienFake) {
       isDatMatTien = true;
-    } 
-    else if (fullText.includes(" kiet ") || fullText.includes(" hem ") || isMatTienFake) {
-      // ƯU TIÊN 1: Nếu có chữ kiệt/hẻm thì chốt hạ là Đất Kiệt, không quan tâm các chữ khác
+    } else if (fullText.includes("dat nen") || fullText.includes("lo nen") || rawTitleTag.includes("nền")) {
+      isDatNen = true;
+    } else {
       isDatKiet = true;
-    } 
-    else {
-      // ƯU TIÊN 2: Bắt buộc phải có đúng chữ "nền" (có dấu) hoặc "dat nen" / "lo nen" mới là Đất Nền
-      const hasNenStrict = rawTitleTag.includes("nền") || fullText.includes(" dat nen ") || fullText.includes(" lo nen ");
-      
-      if (hasNenStrict) {
-        isDatNen = true;
-      } else {
-        // MẶC ĐỊNH: Bán đất không kiệt, không mặt tiền, không nền -> Trả về Đất Kiệt
-        isDatKiet = true;
-      }
     }
-  } 
-  else if (isCanHo) {
-    primaryTab = "Căn hộ";
-    isChoThue = false; 
-  } 
-  else if (isChoThue) {
-    primaryTab = "Cho thuê";
-  } 
-  else {
-    // NẾU KHÔNG LÀ ĐẤT, KHÔNG CĂN HỘ, KHÔNG CHO THUÊ -> LÀ NHÀ PHỐ
-    primaryTab = "Nhà phố";
-    if (fullText.includes(" mat tien ") && !isMatTienFake) {
+  } else if (!isCanHo) {
+    if (fullText.includes("mat tien") && !isMatTienFake) {
       isNhaMatTien = true;
     } else {
       isNhaKiet = true;
     }
   }
+
+  let primaryTab = "Nhà phố"; 
+  if (hasDat) primaryTab = "Đất";
+  else if (isCanHo) primaryTab = "Căn hộ";
+  else if (isChoThue) primaryTab = "Cho thuê";
 
   return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo, primaryTab };
 };
@@ -156,14 +131,9 @@ const calculateGiaM2 = (item: any) => {
 };
 
 const extractRooms = (item: any) => {
-  const currentLoaiHinh = `${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`;
-  const rawText = currentLoaiHinh.toLowerCase();
-  const cleanText = ` ${removeAccents(rawText).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
-  
-  if (rawText.includes("đất") || cleanText.includes(" dat ")) {
+  if (removeAccents(`${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`).includes("dat")) {
     return { pn: null, wc: null }; 
   }
-  
   const text = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
   const matchPhong = text.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
   const matchWC = text.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
@@ -193,7 +163,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const itemsPerPage = 10;
   const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
 
-  // Khởi tạo các trạng thái Browser
   useEffect(() => {
     setIsClient(true);
     try {
@@ -216,7 +185,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     if (currentPage > 0) sessionStorage.setItem("bds_page", currentPage.toString());
   }, [currentPage]);
 
-  // Lắng nghe sự kiện từ Header
   useEffect(() => {
     const handleOpenDrawer = () => {
       setTempFilters(filters);
@@ -237,7 +205,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     };
   }, [filters, initialFilters]);
 
-  // Quản lý Yêu thích & Bộ lọc
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -270,7 +237,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
-  // Đếm số lượng sản phẩm mỗi Tab chuẩn độc quyền
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     safeBdsItems.forEach(i => {
@@ -281,11 +247,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return counts;
   }, [safeBdsItems]);
 
-  // Bộ máy lọc và sắp xếp trung tâm
   const filteredItems = useMemo(() => {
     let result = safeBdsItems.filter(i => showFavorites ? favoriteIds.includes(i.id?.toString() || i.slug) : true);
 
-    // Sắp xếp
     result.sort((a: any, b: any) => {
       const getTime = (d: string) => {
         if (!d) return 0;
@@ -306,7 +270,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => removeAccents(`${i.diaChiFull} ${i.khuVuc}`).includes(target));
     }
     
-    // 🔥 LỌC TAB ĐỘC QUYỀN
     if (!showFavorites && activeLoaiHinh !== "all") {
       result = result.filter(i => parsePropertyTags(i).primaryTab === activeLoaiHinh);
     }
@@ -516,7 +479,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* CHỈ CÓ NHÃN CỦA TAB ĐỘC QUYỀN ĐƯỢC HIỂN THỊ */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -555,22 +517,36 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           </div>
         </div>
 
+        {/* 🔥 KHU VỰC THÔNG TIN VÀ NÚT LIÊN HỆ ĐÃ BỎ GỌI ĐIỆN THEO YÊU CẦU */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 max-w-[50%]">
-            <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
+          <div className="flex items-center gap-2 overflow-hidden mr-1">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
               <img src="https://tranhuyland.vn/logo.png" alt="Trần Huy Land" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=TH&background=random&color=fff&bold=true'; }} />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[12px] font-bold text-[#2C2C2C] truncate">Trần Huy Land</span>
-              <span className="text-[11px] text-[#999] truncate">{formatTimeAgo(item.ngayDang || item.ngay || "")}</span>
+              <span className="text-[11px] sm:text-[12px] font-bold text-[#2C2C2C] truncate">Trần Huy Land</span>
+              <span className="text-[10px] sm:text-[11px] text-[#999] truncate">{formatTimeAgo(item.ngayDang || item.ngay || "")}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0 pl-1">
-            <button className="bg-[#009177] text-white text-[12px] sm:text-[13px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5 hover:bg-[#007a64] active:scale-95 transition-all shadow-sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = 'tel:0905778852'; }}>
-              <Phone size={13} className="fill-current" /><span className="hidden min-[380px]:inline">0905 778 852</span><span className="min-[380px]:hidden">Gọi</span>
-            </button>
-            <button className={`p-1.5 border rounded active:scale-95 transition-all shadow-sm ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 hover:bg-red-50'}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(e); }}>
-              <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
+          
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Nút Lưu Tin Thông Minh (Rộng rãi hơn) */}
+            <button 
+              className={`px-3 py-1.5 sm:px-4 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1.5 ${
+                isFavorite 
+                  ? 'border-red-200 text-red-500 bg-red-50' 
+                  : 'border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-300 hover:bg-red-50'
+              }`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavorite(e);
+              }}
+            >
+              <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "scale-110 transition-transform" : "transition-transform"} />
+              <span className="text-[11px] sm:text-[13px] font-bold whitespace-nowrap">
+                {isFavorite ? 'Đã lưu' : 'Lưu tin +'}
+              </span>
             </button>
           </div>
         </div>
