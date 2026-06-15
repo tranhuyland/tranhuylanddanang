@@ -34,7 +34,6 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 HÀM MỚI: Bóc tách chính xác Ngày (dd/mm/yy), Giờ và tính khoảng cách
 const parseDateInfo = (dateStr: string) => {
   if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "vừa xong" };
 
@@ -54,7 +53,6 @@ const parseDateInfo = (dateStr: string) => {
 
     const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
     
-    // Đã chuyển thành chữ thường và format: "1 ngày trước"
     const relative = diffDays <= 0 ? "hôm nay" : `${diffDays} ngày trước`;
 
     const shortTime = timePart ? timePart.split(":").slice(0, 2).join(":") : "";
@@ -65,7 +63,6 @@ const parseDateInfo = (dateStr: string) => {
   }
 };
 
-// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB ĐỘC QUYỀN
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
   const fullText = removeAccents(rawTitleTag);
@@ -152,17 +149,36 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ ĐƯỢC NÂNG CẤP SIÊU THÔNG MINH)
 const extractRooms = (item: any) => {
-  if (removeAccents(`${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`).includes("dat")) {
+  const typeText = removeAccents(`${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`);
+  // Đất trống thì bỏ qua không cần quét phòng
+  if (typeText.includes("dat") && !typeText.includes("nha") && !typeText.includes("can ho")) {
     return { pn: null, wc: null }; 
   }
-  const text = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
-  const matchPhong = text.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
-  const matchWC = text.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
-  return { 
-    pn: matchPhong && matchPhong[1] !== "0" ? matchPhong[1] : null, 
-    wc: matchWC && matchWC[1] !== "0" ? matchWC[1] : null 
-  };
+  
+  // 1. Quét trước xem nếu trên Sheet anh có chèn riêng cột thì ưu tiên lấy
+  let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
+  let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
+
+  const fullText = removeAccents(`${item.tieude || ""} ${item.mota || item.moTa || ""}`);
+  
+  // 2. Quét tự động bằng siêu Regex cả 2 chiều (Trước ra sau và Sau ra trước)
+  if (!pn) {
+    // Tìm các cụm như: "3 pn", "3 phong ngu", "3 ngu", "phong ngu: 3", "pn: 3"...
+    const matchPhong = fullText.match(/(\d+)\s*(pn|phong ngu|p ngu|ngu|p\.ngu)/i) || 
+                       fullText.match(/(?:pn|phong ngu|p ngu|ngu|p\.ngu)[\s:-]*(\d+)/i);
+    if (matchPhong && matchPhong[1] !== "0") pn = matchPhong[1];
+  }
+
+  if (!wc) {
+    // Tìm các cụm như: "4 wc", "4 phong tam", "4 nvs", "toilet: 2", "wc 3"...
+    const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|toilet|nvs)/i) || 
+                    fullText.match(/(?:wc|phong tam|nha ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+    if (matchWC && matchWC[1] !== "0") wc = matchWC[1];
+  }
+
+  return { pn, wc };
 };
 
 // ==========================================
@@ -503,6 +519,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* CHỈ CÓ NHÃN CỦA TAB ĐỘC QUYỀN ĐƯỢC HIỂN THỊ */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -537,22 +554,22 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ BỎ VIỀN, BỎ NỀN, ĐỔI THÀNH MÀU XANH LÁ ĐẬM */}
-          <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-green-700 font-bold mb-4 w-fit py-1">
-            <MapPin size={14} className="text-green-700 shrink-0" />
+          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG CHỮ MÀU ĐEN, IN THƯỜNG, TO RÕ */}
+          <div className="flex items-center gap-1.5 text-[13px] sm:text-[14px] text-[#2C2C2C] mb-4">
+            <MapPin size={15} className="text-slate-500 shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           
-          {/* 🔥 KHU VỰC THỜI GIAN ĐƯỢC CHIA THÀNH 2 DÒNG (Đồng hồ + Ngày đăng / Cách bao nhiêu ngày) */}
+          {/* 🔥 KHU VỰC THỜI GIAN: BỎ TÊN NGƯỜI ĐĂNG, NGÀY ĐĂNG IN ĐẬM TO HƠN, CÁCH ĐÂY X NGÀY IN NGHIÊNG BÊN DƯỚI */}
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <div className="flex items-center gap-1 text-[11px] sm:text-[12px] text-slate-600 font-medium truncate">
-              <Clock size={13} strokeWidth={1.5} className="shrink-0" />
+            <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
+              <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            <span className="text-[11px] sm:text-[12px] text-black italic mt-0.5 truncate pl-[18px]">
+            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[19px]">
               {dateInfo.relative}
             </span>
           </div>
