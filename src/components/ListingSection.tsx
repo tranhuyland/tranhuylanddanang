@@ -42,28 +42,44 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
-// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE MỚI (Nhà / Đất / Căn hộ)
+// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE MỚI
 const parsePropertyTags = (item: any) => {
   const fullText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
   
+  // 1. CHỈ QUÉT "CHO THUÊ" TRÊN TIÊU ĐỀ VÀ THỂ LOẠI (BỎ QUA MÔ TẢ)
+  const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+
   const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
   const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
-  const isChoThue = fullText.includes("cho thue") || moTaText.includes("cho thue");
+  const isChoThue = strictChoThueText.includes("cho thue");
 
   const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
   
+  const hasDat = fullText.includes("dat");
+
   // Các badge Đất
-  const isDatKiet = fullText.includes("dat kiet") || (fullText.includes("dat") && fullText.includes("kiet"));
-  const isDatMatTien = fullText.includes("dat mat tien") || (fullText.includes("dat") && fullText.includes("mat tien") && !isMatTienFake);
-  const isDatNen = fullText.includes("dat nen") || (fullText.includes("dat") && !isDatKiet && !isDatMatTien);
-  
-  // Các badge Nhà
-  const isNhaKiet = (fullText.includes("kiet") || fullText.includes("hem") || isMatTienFake) && !isDatKiet && !isDatMatTien && !isDatNen;
-  const isNhaMatTien = fullText.includes("mat tien") && !isNhaKiet && !isMatTienFake && !isDatKiet && !isDatMatTien && !isDatNen;
+  let isDatMatTien = fullText.includes("dat mat tien") || (hasDat && fullText.includes("mat tien") && !isMatTienFake);
+  let isDatNen = fullText.includes("dat nen");
+  let isDatKiet = fullText.includes("dat kiet") || (hasDat && (fullText.includes("kiet") || fullText.includes("hem")));
+
+  // 2. MẶC ĐỊNH BÁN ĐẤT (KHÔNG MẶT TIỀN, KHÔNG NỀN) -> ĐẤT KIỆT
+  if (hasDat && !isDatMatTien && !isDatNen) {
+    isDatKiet = true;
+  }
 
   // Căn hộ
-  const isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
+  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
+
+  // 3. ĐỘC QUYỀN ĐẤT KIỆT: Đã là Đất kiệt thì hủy badge Đất nền và Căn hộ
+  if (isDatKiet) {
+    isDatNen = false;
+    isCanHo = false;
+  }
+
+  // Các badge Nhà
+  const isNhaKiet = (fullText.includes("kiet") || fullText.includes("hem") || isMatTienFake) && !hasDat;
+  const isNhaMatTien = fullText.includes("mat tien") && !isNhaKiet && !isMatTienFake && !hasDat;
 
   return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo };
 };
@@ -255,7 +271,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
-  // 🔥 TỐI ƯU THUẬT TOÁN ĐẾM TAB
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     
@@ -276,7 +291,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return counts;
   }, [safeBdsItems]);
 
-  // 🔥 TỐI ƯU LỌC DANH SÁCH SẢN PHẨM THEO TAB MỚI
   const filteredItems = useMemo(() => {
     let result = [...safeBdsItems];
 
