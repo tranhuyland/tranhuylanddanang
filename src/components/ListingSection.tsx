@@ -329,7 +329,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
         if (filters.tag === "mattien") return tags.isNhaMatTien || tags.isDatMatTien;
-        if (filters.tag === "chinhchu") return tags.isChinhchu;
+        if (filters.tag === "chinhchu") return tags.isChinhChu; // SỬA CHỮ C Ở ĐÂY RỒI ANH NHÉ
         if (filters.tag === "chothue") return tags.isChoThue;
         return true;
       });
