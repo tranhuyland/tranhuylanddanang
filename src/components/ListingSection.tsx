@@ -63,49 +63,38 @@ const parseDateInfo = (dateStr: string) => {
   }
 };
 
-// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB SIÊU CHUẨN (LOẠI BỎ SAI SÓT TỪ ĐỒNG ÂM)
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
-  const rawMota = `${item.mota || item.moTa || ""}`.toLowerCase();
-  
-  // Bọc khoảng trắng để xét từng từ độc lập (VD: " dat " không bắt nhầm vào " thanh dat ")
-  const cleanStr = removeAccents(rawTitleTag).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ');
-  const paddedFullText = ` ${cleanStr} `; 
-  const paddedMota = ` ${removeAccents(rawMota).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
+  const fullText = removeAccents(rawTitleTag);
+  const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
+  const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
 
-  const isChinhChu = paddedFullText.includes(" chinh chu ") || paddedMota.includes(" chinh chu ");
-  const isSapHam = paddedFullText.includes(" sap ham ") || paddedFullText.includes(" gia re ") || paddedMota.includes(" sap ham ");
+  const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
+  const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
   
-  let isChoThue = paddedFullText.includes(" cho thue ");
-  let isCanHo = paddedFullText.includes(" can ho ") || paddedFullText.includes(" chung cu ") || paddedFullText.includes(" apartment ");
-  const isMatTienFake = paddedFullText.includes(" cach mat tien ") || paddedFullText.includes(" sau lung ") || paddedFullText.includes(" gan mat tien ");
-  
-  // KIỂM TRA ĐẤT/NHÀ RẤT KHẮT KHE
-  const hasDatWord = rawTitleTag.includes("đất") || paddedFullText.includes(" dat ");
-  const hasNhaWord = rawTitleTag.includes("nhà") || paddedFullText.includes(" nha ");
-
-  // Gọi là "Đất" nếu có chữ Đất nhưng không có chữ Nhà, HOẶC khai báo rõ là "đất nền", "lô đất", "bán đất"
-  const hasDat = (hasDatWord && !hasNhaWord) || paddedFullText.includes(" dat nen ") || paddedFullText.includes(" lo dat ") || rawTitleTag.includes("bán đất");
+  let isChoThue = strictChoThueText.includes("cho thue");
+  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
+  const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
+  const hasDat = fullText.includes("dat");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
   let isNhaMatTien = false, isNhaKiet = false;
 
-  if (hasDat && !isCanHo) {
+  if (hasDat) {
+    isCanHo = false;
     isChoThue = false;
+    isNhaMatTien = false;
+    isNhaKiet = false;
     
-    // Bắt buộc phải đúng cụm "đất nền" hoặc "lô nền" mới lên thẻ Đất Nền
-    const hasNenStrict = rawTitleTag.includes("đất nền") || paddedFullText.includes(" dat nen ") || rawTitleTag.includes("lô nền") || paddedFullText.includes(" lo nen ");
-
-    if (paddedFullText.includes(" mat tien ") && !isMatTienFake) {
+    if (fullText.includes("mat tien") && !isMatTienFake) {
       isDatMatTien = true;
-    } else if (hasNenStrict) {
+    } else if (fullText.includes("dat nen") || fullText.includes("lo nen") || rawTitleTag.includes("nền")) {
       isDatNen = true;
     } else {
       isDatKiet = true;
     }
   } else if (!isCanHo) {
-    // Thuộc về Nhà phố
-    if (paddedFullText.includes(" mat tien ") && !isMatTienFake) {
+    if (fullText.includes("mat tien") && !isMatTienFake) {
       isNhaMatTien = true;
     } else {
       isNhaKiet = true;
@@ -113,9 +102,9 @@ const parsePropertyTags = (item: any) => {
   }
 
   let primaryTab = "Nhà phố"; 
-  if (isCanHo) primaryTab = "Căn hộ";
+  if (hasDat) primaryTab = "Đất";
+  else if (isCanHo) primaryTab = "Căn hộ";
   else if (isChoThue) primaryTab = "Cho thuê";
-  else if (hasDat) primaryTab = "Đất";
 
   return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo, primaryTab };
 };
@@ -160,14 +149,14 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ FIX LỖI HTML GÂY NHIỄU)
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ ĐƯỢC NÂNG CẤP SIÊU CHUẨN)
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  // XÓA MỌI THẺ HTML (như <strong>02</strong>) ĐỂ GHÉP LẠI THÀNH CỤM CHỮ SỐ THÔNG THƯỜNG
+  // Lọc sạch mọi thẻ HTML (như bôi đậm <strong>, <b>) và ký tự khoảng trắng thừa
   const rawText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
-  const textWithoutHtml = rawText.replace(/<[^>]+>/g, ' '); 
+  const textWithoutHtml = rawText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF]/g, ' '); 
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
   if (!pn) {
@@ -269,7 +258,13 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setFilters(tempFilters);
     setCurrentPage(1);
     setIsDrawerOpen(false);
-    setTimeout(() => document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    setTimeout(() => {
+      const section = document.getElementById("listing-section");
+      if (section) {
+        const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: topPosition, behavior: 'smooth' });
+      }
+    }, 50);
   };
 
   const handleResetFilters = () => {
@@ -334,7 +329,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
         if (filters.tag === "mattien") return tags.isNhaMatTien || tags.isDatMatTien;
-        if (filters.tag === "chinhchu") return tags.isChinhChu;
+        if (filters.tag === "chinhchu") return tags.isChinhchu;
         if (filters.tag === "chothue") return tags.isChoThue;
         return true;
       });
@@ -448,7 +443,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         </div>
       </section>
 
-      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28">
+      {/* 🔥 KHU VỰC MAIN ĐƯỢC THÊM MIN-H ĐỂ TRÁNH GIẬT TRANG */}
+      <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28 min-h-[80vh]">
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => {
@@ -480,7 +476,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 key={idx} 
                 onClick={() => { 
                   setCurrentPage(idx + 1); 
-                  document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" }); 
+                  // Sử dụng window.scrollTo bằng tọa độ chính xác thay vì scrollIntoView để mượt hơn
+                  setTimeout(() => {
+                    const section = document.getElementById("listing-section");
+                    if (section) {
+                      const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
+                      window.scrollTo({ top: topPosition, behavior: 'smooth' });
+                    }
+                  }, 10);
                 }}
                 className={`w-10 h-10 rounded-xl font-bold transition-all ${
                   currentPage === idx + 1 ? "bg-orange-500 text-white shadow-md" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300"
@@ -553,8 +556,10 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item.gia || "Thỏa thuận"}</span>
             {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
             {giaM2 && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span></>}
-            {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
-            {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
+            
+            {/* 🔥 Chỉ hiển thị icon phòng ngủ và WC nếu nó KHÔNG phải là thẻ Đất */}
+            {tags.primaryTab !== "Đất" && pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
+            {tags.primaryTab !== "Đất" && wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
           <div className="flex items-center gap-1.5 text-[13px] sm:text-[14px] text-[#2C2C2C] mb-4">
@@ -564,13 +569,12 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
-          
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
+            <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
+            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[19px]">
               {dateInfo.relative}
             </span>
           </div>
