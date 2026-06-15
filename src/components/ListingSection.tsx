@@ -48,7 +48,7 @@ const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
   const rawMota = `${item.mota || item.moTa || ""}`.toLowerCase();
   
-  // Khử dấu, loại bỏ dấu câu (.,!?) và thêm khoảng trắng 2 đầu để bắt ĐÚNG TỪ, không bắt từ nối (VD: bắt "dat", không bắt "dat" trong "thanh dat")
+  // Khử dấu, loại bỏ dấu câu và thêm khoảng trắng 2 đầu để bắt ĐÚNG TỪ
   const fullText = ` ${removeAccents(rawTitleTag).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
   const moTaText = ` ${removeAccents(rawMota).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
   const strictChoThueText = fullText;
@@ -58,47 +58,59 @@ const parsePropertyTags = (item: any) => {
   
   let isChoThue = strictChoThueText.includes(" cho thue ");
   let isCanHo = fullText.includes(" can ho ") || fullText.includes(" chung cu ") || fullText.includes(" apartment ");
-  const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ") || fullText.includes(" kiet ") || fullText.includes(" hem ");
+  const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ");
   
-  // 1. KIỂM TRA ĐẤT: Phải chính xác có chữ "đất" (có dấu) HOẶC cụm "dat nen", "lo dat" (để chống lỗi chữ "đặt" cọc, "đạt" chuẩn bị biến thành "dat")
-  const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat nen ") || fullText.includes(" lo dat ");
+  // Bắt chữ Đất (ưu tiên bắt có dấu hoặc chính xác từ "dat")
+  const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat ") || fullText.includes(" lo dat ") || fullText.includes(" ban dat ");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
   let isNhaMatTien = false, isNhaKiet = false;
 
+  // QUY TẮC ĐỘC QUYỀN VÀ TAB
+  let primaryTab = "Nhà phố"; 
+
   if (hasDat) {
-    // LUẬT THÉP: Đã có Đất thì triệt tiêu Căn hộ, Cho thuê, Nhà
+    // LUẬT THÉP: Đã có Đất thì triệt tiêu hoàn toàn Căn hộ, Cho thuê, Nhà
     isCanHo = false;
     isChoThue = false;
-    isNhaMatTien = false;
-    isNhaKiet = false;
+    primaryTab = "Đất";
     
-    // 2. KIỂM TRA ĐẤT NỀN CHÍNH XÁC: Bắt buộc phải là nguyên cụm "đất nền" / "dat nen" hoặc "lô nền" / "lo nen"
-    // Chống lỗi khách viết "nhà NỀN cao" bị dính nhãn Đất nền
-    const hasNenStrict = rawTitleTag.includes("đất nền") || fullText.includes(" dat nen ") || rawTitleTag.includes("lô nền") || fullText.includes(" lo nen ");
-
+    // PHÂN LOẠI ĐẤT THEO THỨ TỰ ƯU TIÊN: MẶT TIỀN -> KIỆT -> NỀN
     if (fullText.includes(" mat tien ") && !isMatTienFake) {
       isDatMatTien = true;
-    } else if (hasNenStrict) {
-      isDatNen = true;
-    } else {
-      // Có Đất nhưng Không mặt tiền, Không có cụm "đất nền" -> Mặc định 100% là Đất kiệt
+    } 
+    else if (fullText.includes(" kiet ") || fullText.includes(" hem ") || isMatTienFake) {
+      // ƯU TIÊN 1: Nếu có chữ kiệt/hẻm thì chốt hạ là Đất Kiệt, không quan tâm các chữ khác
       isDatKiet = true;
+    } 
+    else {
+      // ƯU TIÊN 2: Bắt buộc phải có đúng chữ "nền" (có dấu) hoặc "dat nen" / "lo nen" mới là Đất Nền
+      const hasNenStrict = rawTitleTag.includes("nền") || fullText.includes(" dat nen ") || fullText.includes(" lo nen ");
+      
+      if (hasNenStrict) {
+        isDatNen = true;
+      } else {
+        // MẶC ĐỊNH: Bán đất không kiệt, không mặt tiền, không nền -> Trả về Đất Kiệt
+        isDatKiet = true;
+      }
     }
-  } else if (!isCanHo) {
-    // NẾU KHÔNG PHẢI ĐẤT VÀ KHÔNG PHẢI CĂN HỘ THÌ LÀ NHÀ PHỐ
+  } 
+  else if (isCanHo) {
+    primaryTab = "Căn hộ";
+    isChoThue = false; 
+  } 
+  else if (isChoThue) {
+    primaryTab = "Cho thuê";
+  } 
+  else {
+    // NẾU KHÔNG LÀ ĐẤT, KHÔNG CĂN HỘ, KHÔNG CHO THUÊ -> LÀ NHÀ PHỐ
+    primaryTab = "Nhà phố";
     if (fullText.includes(" mat tien ") && !isMatTienFake) {
       isNhaMatTien = true;
     } else {
       isNhaKiet = true;
     }
   }
-
-  // 3. XÁC ĐỊNH TAB BỘ LỌC ĐỘC QUYỀN
-  let primaryTab = "Nhà phố"; // Mặc định
-  if (hasDat) primaryTab = "Đất";
-  else if (isCanHo) primaryTab = "Căn hộ";
-  else if (isChoThue) primaryTab = "Cho thuê";
 
   return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo, primaryTab };
 };
@@ -258,7 +270,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
-  // Đếm số lượng sản phẩm mỗi Tab
+  // Đếm số lượng sản phẩm mỗi Tab chuẩn độc quyền
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     safeBdsItems.forEach(i => {
@@ -294,6 +306,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => removeAccents(`${i.diaChiFull} ${i.khuVuc}`).includes(target));
     }
     
+    // 🔥 LỌC TAB ĐỘC QUYỀN
     if (!showFavorites && activeLoaiHinh !== "all") {
       result = result.filter(i => parsePropertyTags(i).primaryTab === activeLoaiHinh);
     }
@@ -503,16 +516,20 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* CHỈ CÓ NHÃN CỦA TAB ĐỘC QUYỀN ĐƯỢC HIỂN THỊ */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {tags.isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
           {tags.isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
+          
           {tags.isNhaMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Nhà Mặt Tiền</span>}
           {tags.isNhaKiet && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Nhà Kiệt</span>}
+          
           {tags.isDatNen && <span className="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Nền</span>}
           {tags.isDatMatTien && <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Mặt Tiền</span>}
           {tags.isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
+          
           {tags.isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
         </div>
 
