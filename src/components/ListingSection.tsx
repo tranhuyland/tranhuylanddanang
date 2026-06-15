@@ -149,6 +149,7 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC CHUẨN XÁC CHỐNG NHIỄU HTML
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
@@ -553,13 +554,14 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
             {giaM2 && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span></>}
             
-            {tags.primaryTab !== "Đất" && pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
-            {tags.primaryTab !== "Đất" && wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
+            {/* 🔥 FIX: Gỡ bỏ hoàn toàn điều kiện check Thẻ Đất để phòng ngủ/WC luôn được hiện lên khi tìm thấy dữ liệu */}
+            {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
+            {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ ĐƯỢC CHỈNH THÀNH MÀU XANH DƯƠNG ĐẬM VÀ TO HƠN 1 CHÚT */}
-          <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-bold text-blue-900 mb-4">
-            <MapPin size={16} className="text-blue-900 shrink-0" />
+          {/* 🔥 FIX: VÙNG HIỂN THỊ PHƯỜNG ĐÃ ĐƯỢC CHỈNH THÀNH CHỮ THƯỜNG, MÀU XANH LÁ ĐẬM, TO RÕ */}
+          <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-700 mb-4">
+            <MapPin size={16} className="text-green-700 shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
