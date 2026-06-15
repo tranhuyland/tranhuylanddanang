@@ -34,9 +34,9 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 HÀM BÓC TÁCH NGÀY GIỜ
+// 🔥 HÀM MỚI: Bóc tách chính xác Ngày (dd/mm/yy), Giờ và tính khoảng cách
 const parseDateInfo = (dateStr: string) => {
-  if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "Vừa xong" };
+  if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "vừa xong" };
 
   try {
     const [datePart, timePart = ""] = dateStr.trim().split(/\s+/);
@@ -54,8 +54,8 @@ const parseDateInfo = (dateStr: string) => {
 
     const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
     
-    // Đổi thành "Cách đây X ngày" cực kỳ lịch sự
-    const relative = diffDays <= 0 ? "Hôm nay" : `Cách đây ${diffDays} ngày`;
+    // Đã chuyển thành chữ thường và format: "1 ngày trước"
+    const relative = diffDays <= 0 ? "hôm nay" : `${diffDays} ngày trước`;
 
     const shortTime = timePart ? timePart.split(":").slice(0, 2).join(":") : "";
 
@@ -537,22 +537,22 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG CHỮ MÀU ĐEN, IN THƯỜNG, TO RÕ */}
-          <div className="flex items-center gap-1.5 text-[13px] sm:text-[14px] text-[#2C2C2C] mb-4">
-            <MapPin size={15} className="text-slate-500 shrink-0" />
+          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ BỎ VIỀN, BỎ NỀN, ĐỔI THÀNH MÀU XANH LÁ ĐẬM */}
+          <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-green-700 font-bold mb-4 w-fit py-1">
+            <MapPin size={14} className="text-green-700 shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           
-          {/* 🔥 KHU VỰC THỜI GIAN: BỎ TÊN NGƯỜI ĐĂNG, NGÀY ĐĂNG IN ĐẬM TO HƠN, CÁCH ĐÂY X NGÀY IN NGHIÊNG BÊN DƯỚI */}
+          {/* 🔥 KHU VỰC THỜI GIAN ĐƯỢC CHIA THÀNH 2 DÒNG (Đồng hồ + Ngày đăng / Cách bao nhiêu ngày) */}
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
-              <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
+            <div className="flex items-center gap-1 text-[11px] sm:text-[12px] text-slate-600 font-medium truncate">
+              <Clock size={13} strokeWidth={1.5} className="shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[19px]">
+            <span className="text-[11px] sm:text-[12px] text-black italic mt-0.5 truncate pl-[18px]">
               {dateInfo.relative}
             </span>
           </div>
