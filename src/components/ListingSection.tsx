@@ -42,12 +42,12 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
-// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE MỚI
+// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB ĐỘC QUYỀN
 const parsePropertyTags = (item: any) => {
   const fullText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
   const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
   
-  // 1. CHỈ QUÉT "CHO THUÊ" TRÊN TIÊU ĐỀ VÀ THỂ LOẠI (BỎ QUA MÔ TẢ)
+  // Chỉ quét "cho thuê" trên tiêu đề và phân loại (bỏ qua mô tả để chống nhiễu)
   const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
 
   const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
@@ -55,33 +55,48 @@ const parsePropertyTags = (item: any) => {
   const isChoThue = strictChoThueText.includes("cho thue");
 
   const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
-  
   const hasDat = fullText.includes("dat");
+  const isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
 
-  // Các badge Đất
-  let isDatMatTien = fullText.includes("dat mat tien") || (hasDat && fullText.includes("mat tien") && !isMatTienFake);
-  let isDatNen = fullText.includes("dat nen");
-  let isDatKiet = fullText.includes("dat kiet") || (hasDat && (fullText.includes("kiet") || fullText.includes("hem")));
+  // 1. CHIA BADGE ĐẤT (ĐỘC QUYỀN: Chỉ được 1 trong 3 nhãn Đất)
+  let isDatMatTien = false;
+  let isDatKiet = false;
+  let isDatNen = false;
 
-  // 2. MẶC ĐỊNH BÁN ĐẤT (KHÔNG MẶT TIỀN, KHÔNG NỀN) -> ĐẤT KIỆT
-  if (hasDat && !isDatMatTien && !isDatNen) {
-    isDatKiet = true;
+  if (hasDat) {
+    if (fullText.includes("dat mat tien") || (fullText.includes("mat tien") && !isMatTienFake)) {
+      isDatMatTien = true;
+    } else if (fullText.includes("dat nen")) {
+      isDatNen = true;
+    } else {
+      // Mặc định cứ có chữ Đất mà không phải nền/mặt tiền thì là Đất kiệt
+      isDatKiet = true;
+    }
   }
 
-  // Căn hộ
-  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
+  // 2. CHIA BADGE NHÀ (Chỉ gán nếu không phải Đất và không phải Căn Hộ)
+  let isNhaMatTien = false;
+  let isNhaKiet = false;
 
-  // 3. ĐỘC QUYỀN ĐẤT KIỆT: Đã là Đất kiệt thì hủy badge Đất nền và Căn hộ
-  if (isDatKiet) {
-    isDatNen = false;
-    isCanHo = false;
+  if (!hasDat && !isCanHo) {
+    if (fullText.includes("mat tien") && !isMatTienFake) {
+      isNhaMatTien = true;
+    } else {
+      isNhaKiet = true;
+    }
   }
 
-  // Các badge Nhà
-  const isNhaKiet = (fullText.includes("kiet") || fullText.includes("hem") || isMatTienFake) && !hasDat;
-  const isNhaMatTien = fullText.includes("mat tien") && !isNhaKiet && !isMatTienFake && !hasDat;
+  // 3. XÁC ĐỊNH TAB BỘ LỌC ĐỘC QUYỀN (1 SẢN PHẨM CHỈ XUẤT HIỆN Ở 1 TAB DUY NHẤT)
+  let primaryTab = "Nhà phố"; // Mặc định
+  if (isChoThue) {
+    primaryTab = "Cho thuê"; // Ưu tiên số 1
+  } else if (isCanHo) {
+    primaryTab = "Căn hộ";   // Ưu tiên số 2
+  } else if (hasDat) {
+    primaryTab = "Đất";      // Ưu tiên số 3
+  }
 
-  return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo };
+  return { isChinhChu, isSapHam, isChoThue, isNhaKiet, isNhaMatTien, isDatKiet, isDatMatTien, isDatNen, isCanHo, primaryTab };
 };
 
 const countImages = (item: any) => {
@@ -271,21 +286,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
+  // 🔥 TỐI ƯU THUẬT TOÁN ĐẾM TAB VÀ CHIA DANH SÁCH ĐỘC QUYỀN
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     
-    const keywordNhaPho = removeAccents("Nhà phố");
-    const keywordChoThue = removeAccents("Cho thuê");
-    const keywordCanHo = removeAccents("Căn hộ");
-    const keywordChungCu = removeAccents("Chung cư");
-
     safeBdsItems.forEach((i: any) => {
       if (!i) return;
-      const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""} ${i.tag || ""}`);
-      if (searchStr.includes("dat")) counts["Đất"]++;
-      if (searchStr.includes(keywordNhaPho)) counts["Nhà phố"]++;
-      if (searchStr.includes(keywordChoThue)) counts["Cho thuê"]++;
-      if (searchStr.includes(keywordCanHo) || searchStr.includes(keywordChungCu) || searchStr.includes("apartment")) counts["Căn hộ"]++;
+      const tags = parsePropertyTags(i);
+      // Gán đếm chính xác vào Tab Độc Quyền của sản phẩm
+      if (counts[tags.primaryTab] !== undefined) {
+        counts[tags.primaryTab]++;
+      }
     });
     
     return counts;
@@ -322,17 +333,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => removeAccents(`${i.diaChi || ""} ${i.diaChiFull || ""} ${i.khuVuc || ""}`).includes(target));
     }
     
+    // 🔥 LỌC TAB ĐỘC QUYỀN
     if (!showFavorites && activeLoaiHinh !== "all") {
-      const target = removeAccents(activeLoaiHinh);
       result = result.filter(i => {
-        const searchStr = removeAccents(`${i.phanLoai || ""} ${i.loaiHinh || ""} ${i.tieude || ""} ${i.tag || ""}`);
-        if (target === "dat") {
-            return searchStr.includes("dat");
-        }
-        if (target === "can ho") {
-            return searchStr.includes("can ho") || searchStr.includes("chung cu") || searchStr.includes("apartment");
-        }
-        return searchStr.includes(target);
+        const tags = parsePropertyTags(i);
+        return tags.primaryTab === activeLoaiHinh;
       });
     }
     
@@ -353,7 +358,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     if (filters.tag !== "all") {
       result = result.filter(i => {
         const tags = parsePropertyTags(i);
-        if (filters.tag === "mattien") return i.isMatTien || tags.isNhaMatTien || tags.isDatMatTien;
+        if (filters.tag === "mattien") return tags.isNhaMatTien || tags.isDatMatTien;
         if (filters.tag === "chinhchu") return tags.isChinhChu;
         if (filters.tag === "chothue") return tags.isChoThue;
         return true;
