@@ -55,6 +55,7 @@ const parsePropertyTags = (item: any) => {
   let isChoThue = strictChoThueText.includes("cho thue");
   let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
   const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
+  
   const hasDat = fullText.includes("dat");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
@@ -62,16 +63,23 @@ const parsePropertyTags = (item: any) => {
 
   // Xử lý logic Độc quyền: Đất vs Nhà vs Căn hộ
   if (hasDat) {
+    // LUẬT THÉP: Đã có chữ Đất thì tuyệt đối gạch bỏ các thẻ khác
     isCanHo = false;
     isChoThue = false;
     isNhaMatTien = false;
     isNhaKiet = false;
     
+    // 🔥 FIX LỖI NHẬN DIỆN "ĐẤT NÊN MUA" THÀNH "ĐẤT NỀN":
+    // Bắt buộc phải có chữ "nền" (có dấu) hoặc danh mục được gõ rõ là "dat nen"
+    const tagVaLoaiHinh = removeAccents(`${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+    const hasNenStrict = rawTitleTag.includes("nền") || tagVaLoaiHinh.includes("dat nen") || tagVaLoaiHinh.includes("lo nen");
+
     if (fullText.includes("mat tien") && !isMatTienFake) {
       isDatMatTien = true;
-    } else if (fullText.includes("dat nen") || fullText.includes("lo nen") || rawTitleTag.includes("nền")) {
+    } else if (hasNenStrict) {
       isDatNen = true;
     } else {
+      // Có Đất nhưng Không mặt tiền, Không có chữ "nền" chuẩn -> Mặc định là Đất kiệt
       isDatKiet = true;
     }
   } else if (!isCanHo) {
@@ -82,6 +90,7 @@ const parsePropertyTags = (item: any) => {
     }
   }
 
+  // Chia Tab Bộ Lọc
   let primaryTab = "Nhà phố"; 
   if (hasDat) primaryTab = "Đất";
   else if (isCanHo) primaryTab = "Căn hộ";
