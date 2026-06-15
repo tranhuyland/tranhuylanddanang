@@ -205,7 +205,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       window.removeEventListener('openFilterDrawer', handleOpenDrawer);
       window.removeEventListener('searchBds', handleSearch);
     };
-  }, [filters]);
+  }, [filters, initialFilters]);
 
   // Quản lý Yêu thích & Bộ lọc
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
@@ -385,7 +385,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
               <FilterWidget 
                 tempFilters={tempFilters} 
-                handleFilterChange={(k,v) => setTempFilters(p => ({...p, [k]: v}))} 
+                handleFilterChange={(k: string, v: string) => setTempFilters(p => ({...p, [k]: v}))} 
                 forceDistrict={forceDistrict}
                 isDrawerOpen={isDrawerOpen}
                 closeDrawer={() => setIsDrawerOpen(false)}
@@ -423,7 +423,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                    item={item} 
                    rank={(currentPage - 1) * itemsPerPage + index + 1} 
                    isFavorite={favoriteIds.includes(bdsId)}
-                   onToggleFavorite={(e) => toggleFavorite(bdsId, e)}
+                   onToggleFavorite={(e: React.MouseEvent) => toggleFavorite(bdsId, e)}
                  />
                );
             })}
