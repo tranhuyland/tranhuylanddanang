@@ -34,6 +34,7 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
+// 🔥 NÂNG CẤP THỜI GIAN: "hôm nay", "hôm qua", "X ngày trước"
 const parseDateInfo = (dateStr: string) => {
   if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "vừa xong" };
 
@@ -53,7 +54,12 @@ const parseDateInfo = (dateStr: string) => {
 
     const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
     
-    const relative = diffDays <= 0 ? "hôm nay" : `${diffDays} ngày trước`;
+    let relative = "hôm nay";
+    if (diffDays === 1) {
+      relative = "hôm qua";
+    } else if (diffDays > 1) {
+      relative = `${diffDays} ngày trước`;
+    }
 
     const shortTime = timePart ? timePart.split(":").slice(0, 2).join(":") : "";
 
@@ -149,12 +155,15 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC CHUẨN XÁC CHỐNG NHIỄU HTML
+// 🔥 NÂNG CẤP SIÊU QUÉT PHÒNG: Quét MỌI trường dữ liệu chứa text trên server
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  const rawText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
+  // Gom toàn bộ tiêu đề, mô tả ngắn, VÀ ĐẶC BIỆT LÀ NỘI DUNG BÀI VIẾT CHI TIẾT (noiDung, content)
+  const rawText = `${item.tieude || ""} ${item.mota || item.moTa || ""} ${item.noiDung || item.noidung || item.content || item.chiTiet || ""}`;
+  
+  // Xóa mọi thẻ bôi đậm HTML (<strong>02</strong>, <b>02</b>...) để chữ hòa vào số
   const textWithoutHtml = rawText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF]/g, ' '); 
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
@@ -554,25 +563,23 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
             {giaM2 && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span></>}
             
-            {/* 🔥 FIX: Gỡ bỏ hoàn toàn điều kiện check Thẻ Đất để phòng ngủ/WC luôn được hiện lên khi tìm thấy dữ liệu */}
-            {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
-            {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
+            {tags.primaryTab !== "Đất" && pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
+            {tags.primaryTab !== "Đất" && wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 FIX: VÙNG HIỂN THỊ PHƯỜNG ĐÃ ĐƯỢC CHỈNH THÀNH CHỮ THƯỜNG, MÀU XANH LÁ ĐẬM, TO RÕ */}
-          <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-700 mb-4">
-            <MapPin size={16} className="text-green-700 shrink-0" />
+          <div className="flex items-center gap-1.5 text-[13px] sm:text-[14px] text-[#2C2C2C] font-normal mb-4">
+            <MapPin size={15} className="text-[#2C2C2C] shrink-0" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex flex-col justify-center min-w-0 pr-2">
-            <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
+            <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[19px]">
+            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
               {dateInfo.relative}
             </span>
           </div>
