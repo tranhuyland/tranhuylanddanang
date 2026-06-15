@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
-  Heart, ImageIcon, BedDouble, Bath 
+  Heart, ImageIcon, BedDouble, Bath, Clock
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -34,13 +34,33 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-const formatTimeAgo = (dateStr: string) => {
-  if (!dateStr) return "Tin mới";
-  const parts = dateStr.split(/[-/]/);
-  if (parts.length !== 3) return "Hôm nay";
-  const day = parseInt(parts[0], 10), month = parseInt(parts[1], 10) - 1, year = parseInt(parts[2], 10);
-  const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
-  return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
+// 🔥 HÀM MỚI: Bóc tách chính xác Ngày (dd/mm/yy), Giờ và tính khoảng cách
+const parseDateInfo = (dateStr: string) => {
+  if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "Vừa xong" };
+
+  try {
+    const [datePart, timePart = ""] = dateStr.trim().split(/\s+/);
+    const parts = datePart.split(/[-/]/);
+
+    if (parts.length < 3) return { fullDate: dateStr, time: timePart, relative: "" };
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const yearRaw = parts[2];
+    const year = yearRaw.length === 2 ? 2000 + parseInt(yearRaw) : parseInt(yearRaw, 10);
+
+    const shortYear = year.toString().slice(-2);
+    const formattedDate = `${day < 10 ? '0'+day : day}/${month < 9 ? '0'+(month+1) : month+1}/${shortYear}`;
+
+    const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
+    const relative = diffDays <= 0 ? "Hôm nay" : `Cách đây ${diffDays} ngày`;
+
+    const shortTime = timePart ? timePart.split(":").slice(0, 2).join(":") : "";
+
+    return { fullDate: formattedDate, time: shortTime, relative };
+  } catch(e) {
+    return { fullDate: dateStr, time: "", relative: "" };
+  }
 };
 
 // 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB ĐỘC QUYỀN
@@ -465,6 +485,9 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
   const tags = useMemo(() => parsePropertyTags(item), [item]);
+  
+  // Lấy ra thông tin ngày, giờ và thời gian tương đối siêu xịn
+  const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
   return (
     <Link 
@@ -479,6 +502,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* CHỈ CÓ NHÃN CỦA TAB ĐỘC QUYỀN ĐƯỢC HIỂN THỊ */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -512,25 +536,30 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
-          <div className="flex items-center gap-1.5 text-[13px] text-[#666] mb-4">
-            <MapPin size={14} className="text-slate-400 shrink-0" /><span className="truncate">{displayLocation}</span>
+          
+          {/* 🔥 VÙNG HIỂN THỊ PHƯỜNG ĐÃ ĐƯỢC CHUYỂN SANG MÀU CAM NỔI BẬT */}
+          <div className="flex items-center gap-1.5 text-[12px] sm:text-[13px] text-orange-600 font-bold mb-4 bg-orange-50 border border-orange-100 w-fit px-2.5 py-1 rounded-md shadow-sm">
+            <MapPin size={14} className="text-orange-500 shrink-0" />
+            <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
-        {/* 🔥 KHU VỰC THÔNG TIN VÀ NÚT LIÊN HỆ ĐÃ BỎ GỌI ĐIỆN THEO YÊU CẦU */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 overflow-hidden mr-1">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
-              <img src="https://tranhuyland.vn/logo.png" alt="Trần Huy Land" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=TH&background=random&color=fff&bold=true'; }} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[11px] sm:text-[12px] font-bold text-[#2C2C2C] truncate">Trần Huy Land</span>
-              <span className="text-[10px] sm:text-[11px] text-[#999] truncate">{formatTimeAgo(item.ngayDang || item.ngay || "")}</span>
-            </div>
+          
+          {/* 🔥 KHU VỰC THỜI GIAN ĐÃ LOẠI BỎ LOGO, THÊM NGÀY/GIỜ RÕ RÀNG */}
+          <div className="flex flex-col justify-center min-w-0 pr-2">
+            <span className="text-[12px] sm:text-[13px] font-bold text-slate-700 truncate">
+              {dateInfo.fullDate} <span className="text-slate-400 font-normal mx-0.5">-</span> <span className="text-orange-600 font-semibold">{dateInfo.relative}</span>
+            </span>
+            {dateInfo.time && (
+              <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                <Clock size={10} /> {dateInfo.time}
+              </span>
+            )}
           </div>
           
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Nút Lưu Tin Thông Minh (Rộng rãi hơn) */}
+            {/* Nút Lưu Tin Thông Minh */}
             <button 
               className={`px-3 py-1.5 sm:px-4 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1.5 ${
                 isFavorite 
