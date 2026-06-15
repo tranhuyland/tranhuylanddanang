@@ -43,55 +43,59 @@ const formatTimeAgo = (dateStr: string) => {
   return diffDays <= 0 ? "Hôm nay" : diffDays === 1 ? "1 ngày trước" : diffDays < 7 ? `${diffDays} ngày trước` : `${Math.floor(diffDays / 7)} tuần trước`;
 };
 
+// 🔥 NÂNG CẤP THUẬT TOÁN NHẬN DIỆN BADGE & TAB ĐỘC QUYỀN (SIÊU CHUẨN XÁC)
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
-  const fullText = removeAccents(rawTitleTag);
-  const moTaText = removeAccents(`${item.mota || item.moTa || ""}`);
-  const strictChoThueText = removeAccents(`${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
+  const rawMota = `${item.mota || item.moTa || ""}`.toLowerCase();
+  
+  // Khử dấu, loại bỏ dấu câu (.,!?) và thêm khoảng trắng 2 đầu để bắt ĐÚNG TỪ, không bắt từ nối (VD: bắt "dat", không bắt "dat" trong "thanh dat")
+  const fullText = ` ${removeAccents(rawTitleTag).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
+  const moTaText = ` ${removeAccents(rawMota).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
+  const strictChoThueText = fullText;
 
-  const isChinhChu = fullText.includes("chinh chu") || moTaText.includes("chinh chu");
-  const isSapHam = fullText.includes("sap ham") || fullText.includes("gia re") || moTaText.includes("sap ham");
+  const isChinhChu = fullText.includes(" chinh chu ") || moTaText.includes(" chinh chu ");
+  const isSapHam = fullText.includes(" sap ham ") || fullText.includes(" gia re ") || moTaText.includes(" sap ham ");
   
-  let isChoThue = strictChoThueText.includes("cho thue");
-  let isCanHo = fullText.includes("can ho") || fullText.includes("chung cu") || fullText.includes("apartment");
-  const isMatTienFake = fullText.includes("cach mat tien") || fullText.includes("sau lung") || fullText.includes("gan mat tien");
+  let isChoThue = strictChoThueText.includes(" cho thue ");
+  let isCanHo = fullText.includes(" can ho ") || fullText.includes(" chung cu ") || fullText.includes(" apartment ");
+  const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ") || fullText.includes(" kiet ") || fullText.includes(" hem ");
   
-  const hasDat = fullText.includes("dat");
+  // 1. KIỂM TRA ĐẤT: Phải chính xác có chữ "đất" (có dấu) HOẶC cụm "dat nen", "lo dat" (để chống lỗi chữ "đặt" cọc, "đạt" chuẩn bị biến thành "dat")
+  const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat nen ") || fullText.includes(" lo dat ");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
   let isNhaMatTien = false, isNhaKiet = false;
 
-  // Xử lý logic Độc quyền: Đất vs Nhà vs Căn hộ
   if (hasDat) {
-    // LUẬT THÉP: Đã có chữ Đất thì tuyệt đối gạch bỏ các thẻ khác
+    // LUẬT THÉP: Đã có Đất thì triệt tiêu Căn hộ, Cho thuê, Nhà
     isCanHo = false;
     isChoThue = false;
     isNhaMatTien = false;
     isNhaKiet = false;
     
-    // 🔥 FIX LỖI NHẬN DIỆN "ĐẤT NÊN MUA" THÀNH "ĐẤT NỀN":
-    // Bắt buộc phải có chữ "nền" (có dấu) hoặc danh mục được gõ rõ là "dat nen"
-    const tagVaLoaiHinh = removeAccents(`${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`);
-    const hasNenStrict = rawTitleTag.includes("nền") || tagVaLoaiHinh.includes("dat nen") || tagVaLoaiHinh.includes("lo nen");
+    // 2. KIỂM TRA ĐẤT NỀN CHÍNH XÁC: Bắt buộc phải là nguyên cụm "đất nền" / "dat nen" hoặc "lô nền" / "lo nen"
+    // Chống lỗi khách viết "nhà NỀN cao" bị dính nhãn Đất nền
+    const hasNenStrict = rawTitleTag.includes("đất nền") || fullText.includes(" dat nen ") || rawTitleTag.includes("lô nền") || fullText.includes(" lo nen ");
 
-    if (fullText.includes("mat tien") && !isMatTienFake) {
+    if (fullText.includes(" mat tien ") && !isMatTienFake) {
       isDatMatTien = true;
     } else if (hasNenStrict) {
       isDatNen = true;
     } else {
-      // Có Đất nhưng Không mặt tiền, Không có chữ "nền" chuẩn -> Mặc định là Đất kiệt
+      // Có Đất nhưng Không mặt tiền, Không có cụm "đất nền" -> Mặc định 100% là Đất kiệt
       isDatKiet = true;
     }
   } else if (!isCanHo) {
-    if (fullText.includes("mat tien") && !isMatTienFake) {
+    // NẾU KHÔNG PHẢI ĐẤT VÀ KHÔNG PHẢI CĂN HỘ THÌ LÀ NHÀ PHỐ
+    if (fullText.includes(" mat tien ") && !isMatTienFake) {
       isNhaMatTien = true;
     } else {
       isNhaKiet = true;
     }
   }
 
-  // Chia Tab Bộ Lọc
-  let primaryTab = "Nhà phố"; 
+  // 3. XÁC ĐỊNH TAB BỘ LỌC ĐỘC QUYỀN
+  let primaryTab = "Nhà phố"; // Mặc định
   if (hasDat) primaryTab = "Đất";
   else if (isCanHo) primaryTab = "Căn hộ";
   else if (isChoThue) primaryTab = "Cho thuê";
@@ -140,9 +144,14 @@ const calculateGiaM2 = (item: any) => {
 };
 
 const extractRooms = (item: any) => {
-  if (removeAccents(`${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`).includes("dat")) {
+  const currentLoaiHinh = `${item.phân_loại || ""} ${item.loaiHinh || ""} ${item.tag || ""}`;
+  const rawText = currentLoaiHinh.toLowerCase();
+  const cleanText = ` ${removeAccents(rawText).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
+  
+  if (rawText.includes("đất") || cleanText.includes(" dat ")) {
     return { pn: null, wc: null }; 
   }
+  
   const text = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
   const matchPhong = text.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
   const matchWC = text.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
