@@ -16,7 +16,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE
+// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE & ZALO/FACEBOOK
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const data = await getBdsData();
@@ -33,7 +33,12 @@ export async function generateMetadata({ params }: Props) {
   const priceText = item.gia || item.Gia || "Liên hệ";
   const areaText = item.dienTich || item.DienTich || "Chưa rõ";
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
-  const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
+  
+  // 📸 Bóc tách ảnh đầu tiên làm Thumbnail cho Zalo/FB
+  const anhGoc = item.anh || item.Anh || "";
+  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
+  // Thay thế link ảnh mặc định nếu sản phẩm không có ảnh
+  const imageSeo = danhSachAnh.length > 0 ? layUrlAnhChuan(danhSachAnh[0]) : "https://tranhuyland.vn/logo.png";
 
   return {
     title: `${titleText} - Giá tốt: ${priceText} | Trần Huy Land`,
@@ -41,12 +46,22 @@ export async function generateMetadata({ params }: Props) {
     openGraph: {
       title: titleText,
       description: `Diện tích ${areaText} - Giá công khai ${priceText} tại khu vực ${locationText}.`,
-      images: [{ url: imageSeo }],
-      type: "article",
+      url: `https://tranhuyland.vn/nha-dat/${slug}`,
+      siteName: "Trần Huy Land",
+      images: [
+        {
+          url: imageSeo,
+          width: 1200,
+          height: 630,
+          alt: titleText,
+        }
+      ],
+      type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: titleText,
+      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại khu vực ${locationText}.`,
       images: [imageSeo],
     },
   };
