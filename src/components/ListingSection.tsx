@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
-  Heart, ImageIcon, BedDouble, Bath, Clock
+  Heart, ImageIcon, BedDouble, Bath, Clock, Share2
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -528,6 +528,29 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
+  // 🔥 Hàm Xử lý chức năng Chia sẻ mượt mà
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/nha-dat/${item.slug}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: item.tieude,
+          text: 'Xem bất động sản này trên website:',
+          url: url
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        alert("Đã sao chép đường dẫn chia sẻ!");
+      });
+    }
+  };
+
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
@@ -595,8 +618,21 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           </div>
           
           <div className="flex items-center gap-1.5 shrink-0">
+            
+            {/* 🆕 NÚT CHIA SẺ MỚI THÊM VÀO */}
             <button 
-              className={`px-3 py-1.5 sm:px-4 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1.5 ${
+              className="px-2 py-1.5 sm:px-3 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1 sm:gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+              onClick={handleShare}
+              title="Chia sẻ tin"
+            >
+              <Share2 size={14} className="sm:w-[15px] sm:h-[15px]" />
+              <span className="text-[11px] sm:text-[13px] font-bold whitespace-nowrap">
+                Chia sẻ
+              </span>
+            </button>
+
+            <button 
+              className={`px-2 py-1.5 sm:px-3 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1 sm:gap-1.5 ${
                 isFavorite 
                   ? 'border-red-200 text-red-500 bg-red-50' 
                   : 'border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-300 hover:bg-red-50'
@@ -607,11 +643,12 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
                 onToggleFavorite(e);
               }}
             >
-              <Heart size={15} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "scale-110 transition-transform" : "transition-transform"} />
+              <Heart size={14} fill={isFavorite ? "currentColor" : "none"} className={`sm:w-[15px] sm:h-[15px] ${isFavorite ? "scale-110 transition-transform" : "transition-transform"}`} />
               <span className="text-[11px] sm:text-[13px] font-bold whitespace-nowrap">
-                {isFavorite ? 'Đã lưu' : 'Lưu tin +'}
+                {isFavorite ? 'Đã lưu' : 'Lưu tin'}
               </span>
             </button>
+            
           </div>
         </div>
       </div>
