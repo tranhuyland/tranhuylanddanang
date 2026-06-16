@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'; // 🌟 Import kiểu dữ liệu Metadata của Next.js
 import { getBdsData } from "@/lib/googleSheets";
 import Script from "next/script"; // 🌟 Import component Script của Next.js
 import Header from "@/components/Header";
@@ -13,6 +14,28 @@ import AIChatbot from "@/components/AIChatbot";
 // 🚀 Bạn có thể thêm revalidate ở đây nếu muốn trang chủ tự động tải lại dữ liệu mới sau X giây
 // export const revalidate = 60; 
 
+// 🌐 BỔ SUNG METADATA: Khắc phục lỗi không hiện ảnh khi chia sẻ trang chủ lên Zalo, Facebook
+export const metadata: Metadata = {
+  title: 'Trần Huy Land - Kênh thông tin bất động sản uy tín',
+  description: 'Trần Huy Land - Chuyên cung cấp thông tin mua bán, cho thuê nhà đất, căn hộ uy tín và minh bạch tại Đà Nẵng.',
+  openGraph: {
+    title: 'Trần Huy Land - Kênh thông tin bất động sản',
+    description: 'Chuyên cung cấp thông tin mua bán, cho thuê nhà đất, căn hộ uy tín và nhanh chóng.',
+    url: 'https://tranhuyland.vn',
+    siteName: 'Trần Huy Land',
+    images: [
+      {
+        url: 'https://tranhuyland.vn/logo.png', // Tạm dùng logo, anh có thể đổi thành link ảnh bìa/banner web nhé
+        width: 1200,
+        height: 630,
+        alt: 'Trần Huy Land - Bất Động Sản',
+      }
+    ],
+    locale: 'vi_VN',
+    type: 'website',
+  },
+};
+
 export default async function Home() {
   const initialData = await getBdsData();
 
@@ -24,7 +47,7 @@ export default async function Home() {
     "image": "https://tranhuyland.vn/logo.png", // Thay bằng link logo thật của bạn
     "@id": "https://tranhuyland.vn",
     "url": "https://tranhuyland.vn",
-    "telephone": "0900000000", // Cập nhật số điện thoại hotline
+    "telephone": "0905778852", // Cập nhật số điện thoại hotline
     "priceRange": "$$", // Bắt buộc phải có với Local Business
     "address": {
       "@type": "PostalAddress",
