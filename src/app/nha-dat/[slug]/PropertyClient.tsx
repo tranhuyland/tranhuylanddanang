@@ -23,7 +23,7 @@ const extractRooms = (item: any) => {
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
   const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
-  const matchWC = combinedText.match(/(\d+)\s*(wc|phòng tắm|phong tam|nha ve sinh)/i);
+  const matchWC = combinedText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)/i);
   return { pn: matchPhong ? matchPhong[1] : null, wc: matchWC ? matchWC[1] : null };
 };
 
