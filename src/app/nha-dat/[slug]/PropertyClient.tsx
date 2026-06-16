@@ -18,13 +18,32 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
+// 🔥 ĐÃ ĐỒNG BỘ HÀM SIÊU QUÉT TỪ TRANG CHỦ (CÓ REMOVE ACCENTS & CHỐNG LỖI HTML)
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
-  const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`.toLowerCase();
-  const matchPhong = combinedText.match(/(\d+)\s*(pn|phòng ngủ|phong ngu)/i);
-  const matchWC = combinedText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)/i);
-  return { pn: matchPhong ? matchPhong[1] : null, wc: matchWC ? matchWC[1] : null };
+
+  let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
+  let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
+
+  // Gom toàn bộ text và xóa dấu tiếng Việt + HTML
+  const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
+  const textWithoutHtml = combinedText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' ');
+  const fullText = removeAccents(textWithoutHtml).toLowerCase();
+
+  if (!pn) {
+    const matchPhong = fullText.match(/(\d+)\s*(pn|phong ngu|p ngu|ngu|p\.ngu)/i) || 
+                       fullText.match(/(?:pn|phong ngu|p ngu|ngu|p\.ngu)[\s:-]*(\d+)/i);
+    if (matchPhong && parseInt(matchPhong[1]) > 0) pn = parseInt(matchPhong[1]).toString();
+  }
+
+  if (!wc) {
+    const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)/i) || 
+                    fullText.match(/(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+    if (matchWC && parseInt(matchWC[1]) > 0) wc = parseInt(matchWC[1]).toString();
+  }
+
+  return { pn, wc };
 };
 
 const calculateGiaM2 = (item: any) => {
@@ -127,7 +146,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     tatCaAnhGallery.push(anhSoDoGoc);
   }
 
-  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
+  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông diễn đang được cập nhật...";
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
 
