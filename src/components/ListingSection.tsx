@@ -163,7 +163,7 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (SIÊU QUÉT CHỐNG LỖI MỌI NGÓC NGÁCH)
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ BỔ SUNG "PHÒNG VỆ SINH")
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
@@ -182,9 +182,10 @@ const extractRooms = (item: any) => {
     if (matchPhong && parseInt(matchPhong[1]) > 0) pn = parseInt(matchPhong[1]).toString();
   }
 
+  // 🛠️ ĐÃ NÂNG CẤP: Bổ sung thêm "phong ve sinh" vào bộ quét
   if (!wc) {
-    const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|toilet|nvs)/i) || 
-                    fullText.match(/(?:wc|phong tam|nha ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+    const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)/i) || 
+                    fullText.match(/(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
     if (matchWC && parseInt(matchWC[1]) > 0) wc = parseInt(matchWC[1]).toString();
   }
 
