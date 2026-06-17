@@ -34,7 +34,7 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 TỐI ƯU HIỂN THỊ THỜI GIAN: "hôm nay", "hôm qua", "X ngày trước"
+// 🔥 TỐI ƯU HIỂN THỊ THỜI GIAN
 const parseDateInfo = (dateStr: string) => {
   if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "hôm nay" };
 
@@ -54,7 +54,6 @@ const parseDateInfo = (dateStr: string) => {
 
     const diffDays = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(year, month, day).setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
     
-    // Quy tắc thời gian tương đối
     let relative = "hôm nay";
     if (diffDays === 1) {
       relative = "hôm qua";
@@ -70,11 +69,10 @@ const parseDateInfo = (dateStr: string) => {
   }
 };
 
-// 🔥 BỘ LỌC ĐỘC QUYỀN: TÁCH BẠCH ĐẤT VÀ NHÀ, LOẠI BỎ SAI SÓT
+// 🔥 BỘ LỌC ĐỘC QUYỀN: TÁCH BẠCH ĐẤT VÀ NHÀ
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
   
-  // Dùng khoảng trắng bao quanh để chỉ quét ĐÚNG TỪ, tránh việc "thành đạt" bị nhận là "đất"
   const fullText = ` ${removeAccents(rawTitleTag).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
   const moTaText = ` ${removeAccents(`${item.mota || item.moTa || ""}`).replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ')} `;
   
@@ -85,7 +83,6 @@ const parsePropertyTags = (item: any) => {
   let isCanHo = fullText.includes(" can ho ") || fullText.includes(" chung cu ") || fullText.includes(" apartment ");
   const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ");
   
-  // Nhận diện chuẩn xác từ khóa "đất"
   const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat ") || fullText.includes(" lo dat ") || fullText.includes(" ban dat ");
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
@@ -97,7 +94,6 @@ const parsePropertyTags = (item: any) => {
     isNhaMatTien = false;
     isNhaKiet = false;
     
-    // Bắt buộc phải có chữ "nền" hoặc cụm "dat nen"
     const hasNenStrict = rawTitleTag.includes("nền") || fullText.includes(" dat nen ") || fullText.includes(" lo nen ");
 
     if (fullText.includes(" mat tien ") && !isMatTienFake) {
@@ -163,29 +159,68 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (ĐÃ BỔ SUNG "PHÒNG VỆ SINH")
+// 🔥 GIẢI MÃ GIÁ TIỀN THÔNG MINH CHO BỘ LỌC (Fix lỗi "3,350 tỷ" bị hiểu thành 3350)
+const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
+  if (soGiaRaw && !isNaN(Number(soGiaRaw))) {
+    const so = Number(soGiaRaw);
+    return so >= 100 ? so / 1000 : so; 
+  }
+  if (!giaRaw || typeof giaRaw !== 'string') return 0;
+  
+  let giaStr = giaRaw.toLowerCase().replace(/x/g, '0');
+  giaStr = giaStr.replace(/,/g, '.'); // Chuyển dấu phẩy thành chấm (3,350 -> 3.350)
+  
+  // Bắt "3.350 tỷ" hoặc "3 tỷ 350"
+  const tyMatch = giaStr.match(/([\d.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
+  if (tyMatch) {
+    let ty = parseFloat(tyMatch[1]);
+    let trieuStr = tyMatch[2];
+    if (trieuStr) {
+       let trieuNum = 0;
+       if (trieuStr.length === 1) trieuNum = parseInt(trieuStr) * 100;
+       else if (trieuStr.length === 2) trieuNum = parseInt(trieuStr) * 10;
+       else trieuNum = parseInt(trieuStr.substring(0,3));
+       ty += trieuNum / 1000;
+    }
+    return ty;
+  }
+  
+  // Bắt "800 triệu"
+  const trieuMatch = giaStr.match(/([\d.]+)\s*(?:triệu|trieu)/);
+  if (trieuMatch) {
+    return parseFloat(trieuMatch[1]) / 1000;
+  }
+  
+  // Bắt số thô
+  const numMatch = giaStr.match(/([\d.]+)/);
+  if (numMatch) {
+     const num = parseFloat(numMatch[1]);
+     return num >= 100 ? num / 1000 : num; // Ví dụ nhập "3350" thì web hiểu là 3.35 tỷ
+  }
+  return 0;
+};
+
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (Đã fix triệt để lỗi dính tên đường bằng \b)
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  // Lấy TOÀN BỘ GIÁ TRỊ CHỮ trong mọi ngóc ngách của sản phẩm, chống việc ẩn cột mô tả
   const allStringValues = Object.values(item).filter(val => typeof val === 'string').join(" ");
   
-  // Lọc sạch mọi thẻ HTML (như bôi đậm <strong>, <b>, xuống dòng)
   const textWithoutHtml = allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' '); 
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
-  // Nhận diện bằng công thức Regex mới nhất (Vd: "02 phong ngu", "wc 3", "2pn")
+  // 💡 NÂNG CẤP: Thêm \b vào quanh chữ pn và ngu để máy không bắt nhầm chữ nguyen
   if (!pn) {
-    const matchPhong = fullText.match(/(\d+)\s*(pn|phong ngu|p ngu|ngu|p\.ngu)/i) || 
-                       fullText.match(/(?:pn|phong ngu|p ngu|ngu|p\.ngu)[\s:-]*(\d+)/i);
+    const matchPhong = fullText.match(/(\d+)\s*(\bpn\b|phong ngu|p ngu|\bngu\b|p\.ngu)/i) || 
+                       fullText.match(/(?:\bpn\b|phong ngu|p ngu|\bngu\b|p\.ngu)[\s:-]*(\d+)/i);
     if (matchPhong && parseInt(matchPhong[1]) > 0) pn = parseInt(matchPhong[1]).toString();
   }
 
-  // 🛠️ ĐÃ NÂNG CẤP: Bổ sung thêm "phong ve sinh" vào bộ quét
+  // 💡 NÂNG CẤP: Tương tự với WC
   if (!wc) {
-    const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)/i) || 
-                    fullText.match(/(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+    const matchWC = fullText.match(/(\d+)\s*(\bwc\b|phong tam|nha ve sinh|phong ve sinh|toilet|\bnvs\b)/i) || 
+                    fullText.match(/(?:\bwc\b|phong tam|nha ve sinh|phong ve sinh|toilet|\bnvs\b)[\s:-]*(\d+)/i);
     if (matchWC && parseInt(matchWC[1]) > 0) wc = parseInt(matchWC[1]).toString();
   }
 
@@ -329,12 +364,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => parsePropertyTags(i).primaryTab === activeLoaiHinh);
     }
     
+    // 🔥 BỘ LỌC GIÁ TIỀN ĐÃ FIX LỖI THÔNG MINH
     if (filters.khoangGia !== "all") {
       result = result.filter(i => {
-        const gia = Number(i.soGia) || (i.gia ? parseFloat(i.gia.replace(/[^0-9.]/g, "")) : 0);
-        if (filters.khoangGia === "duoi3") return gia < 3.0;
-        if (filters.khoangGia === "3to5") return gia >= 3.0 && gia <= 5.0;
-        return gia > 5.0;
+        const giaTy = extractPriceInBillion(i.gia, i.soGia);
+        // giaTy > 0 để lọc bỏ những căn "Thỏa thuận" khỏi mục "Dưới 3 tỷ"
+        if (filters.khoangGia === "duoi3") return giaTy > 0 && giaTy < 3.0;
+        if (filters.khoangGia === "3to5") return giaTy >= 3.0 && giaTy <= 5.0;
+        return giaTy > 5.0;
       });
     }
     
