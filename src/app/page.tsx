@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'; // 🌟 Import kiểu dữ liệu Metadata của Next.js
 import { getBdsData } from "@/lib/googleSheets";
-import Script from "next/script"; // 🌟 Import component Script của Next.js
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ListingSection from "@/components/ListingSection";
@@ -11,8 +10,8 @@ import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import AIChatbot from "@/components/AIChatbot";
 
-// 🚀 Bạn có thể thêm revalidate ở đây nếu muốn trang chủ tự động tải lại dữ liệu mới sau X giây
-// export const revalidate = 60; 
+// 🚀 BẬT TÍNH NĂNG TỰ ĐỘNG CẬP NHẬT: Tải lại dữ liệu mới từ Google Sheet sau mỗi 60 giây
+export const revalidate = 60; 
 
 // 🌐 BỔ SUNG METADATA: Khắc phục lỗi không hiện ảnh khi chia sẻ trang chủ lên Zalo, Facebook
 export const metadata: Metadata = {
@@ -25,7 +24,8 @@ export const metadata: Metadata = {
     siteName: 'Trần Huy Land',
     images: [
       {
-        url: 'https://tranhuyland.vn/logo.png', // Tạm dùng logo, anh có thể đổi thành link ảnh bìa/banner web nhé
+        // 💡 Mẹo: Thêm ?v=1 để ép Zalo/Facebook xóa cache cũ và nhận diện ảnh mới ngay lập tức
+        url: 'https://tranhuyland.vn/logo.png?v=1', 
         width: 1200,
         height: 630,
         alt: 'Trần Huy Land - Bất Động Sản',
@@ -59,7 +59,7 @@ export default async function Home() {
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": 16.0544, // Tọa độ trung tâm Đà Nẵng (Có thể lấy tọa độ văn phòng trên Google Maps để thay vào)
+      "latitude": 16.0544, // Tọa độ trung tâm Đà Nẵng
       "longitude": 108.2022
     },
     "openingHoursSpecification": {
@@ -74,9 +74,8 @@ export default async function Home() {
 
   return (
     <>
-      {/* ⚡ Chèn Script SEO Doanh nghiệp ẩn vào cấu trúc trang */}
-      <Script
-        id="real-estate-agent-schema"
+      {/* ⚡ Chèn Script SEO Doanh nghiệp bằng thẻ HTML thường (Tối ưu nhất cho JSON-LD) */}
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
