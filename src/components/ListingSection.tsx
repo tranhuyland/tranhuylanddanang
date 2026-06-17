@@ -81,9 +81,14 @@ const parsePropertyTags = (item: any) => {
   
   let isChoThue = fullText.includes(" cho thue ");
   let isCanHo = fullText.includes(" can ho ") || fullText.includes(" chung cu ") || fullText.includes(" apartment ");
-  const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ");
+  
+  // NÂNG CẤP: Chặn thêm các từ khóa "cách MT", "gần MT"
+  const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ") || fullText.includes(" cach mt ") || fullText.includes(" gan mt ");
   
   const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat ") || fullText.includes(" lo dat ") || fullText.includes(" ban dat ");
+
+  // NÂNG CẤP: Nhận diện cả "mat tien" và "mt"
+  const isMatTienReal = (fullText.includes(" mat tien ") || fullText.includes(" mt ")) && !isMatTienFake;
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
   let isNhaMatTien = false, isNhaKiet = false;
@@ -96,7 +101,7 @@ const parsePropertyTags = (item: any) => {
     
     const hasNenStrict = rawTitleTag.includes("nền") || fullText.includes(" dat nen ") || fullText.includes(" lo nen ");
 
-    if (fullText.includes(" mat tien ") && !isMatTienFake) {
+    if (isMatTienReal) {
       isDatMatTien = true;
     } else if (hasNenStrict) {
       isDatNen = true;
@@ -104,7 +109,7 @@ const parsePropertyTags = (item: any) => {
       isDatKiet = true;
     }
   } else if (!isCanHo) {
-    if (fullText.includes(" mat tien ") && !isMatTienFake) {
+    if (isMatTienReal) {
       isNhaMatTien = true;
     } else {
       isNhaKiet = true;
