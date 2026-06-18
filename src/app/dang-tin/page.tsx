@@ -11,7 +11,7 @@ const INITIAL_FORM_STATE = {
   tieude: '',
   gia: '',
   dienTich: '',
-  soNha: '', // 💡 ĐÃ THÊM TRƯỜNG SỐ NHÀ
+  soNha: '', // 💡 TRƯỜNG SỐ NHÀ
   duong: '', 
   khuVuc: '', 
   huong: '',
@@ -111,12 +111,13 @@ export default function DangTinPage() {
 
   // 🗺️ HÀM TỰ TẠO LINK GOOGLE MAPS THEO CẤU TRÚC MỚI (Số nhà + Tên đường)
   const updateMapLink = (soNha: string, duong: string, phuong: string, currentLink: string) => {
-    if (currentLink && !currentLink.includes('maps.google.com/maps?q=')) {
+    // Bỏ qua nếu người dùng đã nhập tay link và link đó không chứa định dạng sinh tự động
+    if (currentLink && !currentLink.includes('maps.google.com/?q=')) {
       return currentLink;
     }
     if (duong && phuong) {
       const query = soNha ? `${soNha} ${duong}, ${phuong}, Đà Nẵng` : `${duong}, ${phuong}, Đà Nẵng`;
-      return `https://maps.google.com/maps?q=$${encodeURIComponent(query)}`;
+      return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
     }
     return currentLink;
   };
@@ -174,25 +175,22 @@ export default function DangTinPage() {
       const streetName = streetMatch[3].trim(); 
 
       newFormData.duong = streetName;
+      // Sửa lỗi: Chỉ lấy phần số, không thêm chữ 'k'
+      newFormData.soNha = num ? num.trim() : '';
 
-      if (prefix === 'k' || prefix === 'kiệt') {
-        newFormData.soNha = num ? `k${num}` : 'k'; 
-      } else if (prefix === 'mt' || prefix === 'mặt tiền') {
-        newFormData.soNha = num ? num : ''; 
+      if (prefix === 'mt' || prefix === 'mặt tiền') {
         newFormData.isMatTien = true; 
-      } else {
-        newFormData.soNha = num ? num : '';
       }
     }
 
     // 🔥 5. Quét Hướng (ĐÃ NÂNG CẤP)
     const directions = ['Đông Nam', 'Đông Bắc', 'Tây Nam', 'Tây Bắc', 'Đông', 'Tây', 'Nam', 'Bắc'];
-    // Bắt bao gồm cả dấu cách, phẩy, gạch ngang ở giữa các từ ghép. VD: "Đông - Nam", "Đông, Nam", "Đông   Nam"
-    const directionMatch = text.match(/hướng[\s\:\-\*\.\,]*\s*(đông\s*[\-\,]*\s*nam|đông\s*[\-\,]*\s*bắc|tây\s*[\-\,]*\s*nam|tây\s*[\-\,]*\s*bắc|đông|tây|nam|bắc)/i);
+    // Dọn dẹp sạch sẽ các ký tự gây nhiễu (*, _, ngoặc) trước khi quét
+    const cleanTextForDir = text.replace(/[*_()]/g, ' '); 
+    const directionMatch = cleanTextForDir.match(/hướng.*?(đông\s*nam|đông\s*bắc|tây\s*nam|tây\s*bắc|đông|tây|nam|bắc)/i);
     
     if (directionMatch) {
-      // Làm sạch chuỗi: xóa dấu phẩy/gạch ngang và đưa về chuẩn 1 khoảng trắng
-      const cleanMatchedDir = directionMatch[1].replace(/[\-\,]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+      const cleanMatchedDir = directionMatch[1].replace(/\s+/g, ' ').trim().toLowerCase();
       const dir = directions.find(d => d.toLowerCase() === cleanMatchedDir);
       if (dir) newFormData.huong = dir;
     }
