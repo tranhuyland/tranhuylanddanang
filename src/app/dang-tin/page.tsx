@@ -112,8 +112,8 @@ export default function DangTinPage() {
     const text = e.target.value;
     let newFormData = { ...formData, moTa: text };
 
-    // 1. Quét Giá (Bắt chính xác 8,5 tỷ / 8.5 tỷ / 3,x tỷ / 5,xx tỷ / 4 tỷ 350)
-    const priceMatch2 = text.match(/(\d+)\s*tỷ\s*(\d+)/i); // Kiểu "4 tỷ 350"
+    // 1. Quét Giá 
+    const priceMatch2 = text.match(/(\d+)\s*tỷ\s*(\d+)/i);
     const priceMatch1 = text.match(/(\d+)(?:\s*[.,]\s*([\dxX]+))?\s*(tỷ|triệu)/i); 
     
     if (priceMatch2) {
@@ -152,9 +152,10 @@ export default function DangTinPage() {
       newFormData.khuVuc = foundWard;
     }
 
-    // 4. Quét Hướng (ĐÃ CẬP NHẬT: Cho phép có dấu hai chấm, gạch ngang, khoảng trắng bất kỳ)
+    // 4. Quét Hướng (ĐÃ NÂNG CẤP: Bỏ qua mọi ký tự *, -, :, khoảng trắng...)
     const directions = ['Đông Nam', 'Đông Bắc', 'Tây Nam', 'Tây Bắc', 'Đông', 'Tây', 'Nam', 'Bắc'];
-    const directionMatch = text.match(/hướng\s*[:\-]?\s*(đông nam|đông bắc|tây nam|tây bắc|đông|tây|nam|bắc)/i);
+    // Biểu thức mới: [\s\:\-\*\.\,]* cho phép chứa vô số khoảng trắng, dấu hai chấm, gạch nối, dấu sao, chấm, phẩy giữa chữ "hướng" và phương hướng.
+    const directionMatch = text.match(/hướng[\s\:\-\*\.\,]*\s*(đông nam|đông bắc|tây nam|tây bắc|đông|tây|nam|bắc)/i);
     if (directionMatch) {
       const dir = directions.find(d => d.toLowerCase() === directionMatch[1].toLowerCase());
       if (dir) newFormData.huong = dir;
