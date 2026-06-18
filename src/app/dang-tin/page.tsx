@@ -124,10 +124,10 @@ export default function DangTinPage() {
       newFormData.gia = `${val} ${unit}`;
     }
 
-    // 2. Quét Diện Tích (VD: 100m2, 85.5 m²)
+    // 2. Quét Diện Tích (VD: 100m2, 85.5 m²) - Tự động thêm chữ m2
     const areaMatch = text.match(/([\d,\.]+)\s*(?:m2|m²)/i);
     if (areaMatch) {
-      newFormData.dienTich = areaMatch[1].replace(/\./g, ',');
+      newFormData.dienTich = `${areaMatch[1].replace(/\./g, ',')} m2`;
     }
 
     // 3. Quét Phường / Xã
@@ -219,8 +219,8 @@ export default function DangTinPage() {
               <input required type="text" value={formData.gia} onChange={(e) => setFormData({ ...formData, gia: e.target.value })} placeholder="Ví dụ: 4,35 tỷ" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Diện tích (m2)</label>
-              <input required type="text" value={formData.dienTich} onChange={(e) => setFormData({ ...formData, dienTich: e.target.value })} placeholder="Ví dụ: 100" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Diện tích</label>
+              <input required type="text" value={formData.dienTich} onChange={(e) => setFormData({ ...formData, dienTich: e.target.value })} placeholder="Ví dụ: 100 m2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
           </div>
 
