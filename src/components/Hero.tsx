@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import Image from 'next/image'; // 🚀 Khai báo thư viện tối ưu ảnh của Next.js
+import Image from 'next/image';
 import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
@@ -11,15 +11,15 @@ export default function Hero() {
   return (
     <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        {/* 🔥 Đã chèn 3 bùa chú mạnh nhất để trị dứt điểm lỗi LCP của Google */}
+        {/* 🚀 Đã tối ưu triệt để: ưu tiên tải cao nhất cho ảnh LCP */}
         <Image
           src="/hero-bg.jpg"
           alt="Toàn cảnh Đà Nẵng"
           fill
-          priority={true} // Bùa chú 1: Next.js ưu tiên tải
-          fetchPriority="high" // 🚀 Bùa chú 2: Ép Google nhận diện đây là ảnh Khẩn Cấp (High Priority)
-          loading="eager" // 🚀 Bùa chú 3: Cấm tuyệt đối trình duyệt dùng chế độ lười tải (lazy)
-          sizes="100vw"   
+          priority={true}           // Bùa chú 1: Ưu tiên tải
+          fetchPriority="high"      // Bùa chú 2: Ép tải trước mọi tài nguyên khác
+          loading="eager"           // Bùa chú 3: Cấm tuyệt đối "lazy loading"
+          sizes="100vw"
           className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-slate-900/20"></div>
@@ -38,10 +38,7 @@ export default function Hero() {
 
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật <br />
-            {/* 🔥 Đổi sang màu xám đen đồng bộ, bỏ hiệu ứng bóng đổ để chữ nét và sắc sảo nhất */}
-            <span className="text-slate-900">
-              Giao Dịch Minh Bạch
-            </span>
+            <span className="text-slate-900">Giao Dịch Minh Bạch</span>
           </h1>
 
           <p className="text-slate-900 font-medium text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
@@ -78,7 +75,6 @@ export default function Hero() {
                 <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Đầu Tư</span>
              </div>
           </div>
-
         </div>
       </div>
     </section>
