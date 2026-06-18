@@ -112,23 +112,37 @@ export default function DangTinPage() {
     const text = e.target.value;
     let newFormData = { ...formData, moTa: text };
 
-    // 1. Quét Giá (Bao trọn các trường hợp: 8.5 tỷ, 8,55 tỷ, 4 tỷ 350)
-    const priceMatch1 = text.match(/(\d+[.,]?\d*)\s*(tỷ|triệu)/i);
+    // 1. Quét Giá (Bắt chính xác 8,5 tỷ / 8.5 tỷ / 3,x tỷ / 5,xx tỷ / 4 tỷ 350)
     const priceMatch2 = text.match(/(\d+)\s*tỷ\s*(\d+)/i); // Kiểu "4 tỷ 350"
+    // Regex mới: Cho phép ký tự x/X ở phần thập phân (VD: [\dxX]+)
+    const priceMatch1 = text.match(/(\d+)(?:\s*[.,]\s*([\dxX]+))?\s*(tỷ|triệu)/i); 
     
     if (priceMatch2) {
       newFormData.gia = `${priceMatch2[1]},${priceMatch2[2]} tỷ`;
     } else if (priceMatch1) {
-      // Đảm bảo tất cả dấu "." đều biến thành "," cho chuẩn định dạng
-      let val = priceMatch1[1].replace(/\./g, ','); 
-      let unit = priceMatch1[2].toLowerCase();
-      newFormData.gia = `${val} ${unit}`;
+      let num1 = priceMatch1[1]; // Phần nguyên (VD: 8, 3, 5)
+      let num2 = priceMatch1[2]; // Phần thập phân hoặc chữ x (VD: 5, x, xx)
+      let unit = priceMatch1[3].toLowerCase(); // tỷ hoặc triệu
+      
+      if (num2) {
+        // Có phần thập phân -> luôn nối bằng dấu phẩy và đưa chữ x về in thường
+        newFormData.gia = `${num1},${num2.toLowerCase()} ${unit}`;
+      } else {
+        // Giá chẵn (VD: 8 tỷ)
+        newFormData.gia = `${num1} ${unit}`;
+      }
     }
 
-    // 2. Quét Diện Tích (VD: 100m2, 85.5 m²) - Tự động thêm chữ m2
-    const areaMatch = text.match(/(\d+[.,]?\d*)\s*(?:m2|m²)/i);
+    // 2. Quét Diện Tích (VD: 100m2, 85.5 m², 85,5 m2) - Cũng tự fix thành dấu phẩy
+    const areaMatch = text.match(/(\d+)(?:\s*[.,]\s*(\d+))?\s*(?:m2|m²)/i);
     if (areaMatch) {
-      newFormData.dienTich = `${areaMatch[1].replace(/\./g, ',')} m2`;
+      let num1 = areaMatch[1];
+      let num2 = areaMatch[2];
+      if (num2) {
+        newFormData.dienTich = `${num1},${num2} m2`;
+      } else {
+        newFormData.dienTich = `${num1} m2`;
+      }
     }
 
     // 3. Quét Phường / Xã (Khắc phục lỗi gõ "Hoà" và "Hòa")
