@@ -1,8 +1,30 @@
 import { MetadataRoute } from 'next';
 import { getBdsData } from '@/lib/googleSheets';
 
-// Ép buộc Next.js luôn chạy hàm này từ server để lấy data Google Sheets mới nhất, giúp render đúng cấu trúc XML
-export const dynamic = 'force-dynamic';
+// Tự động làm mới Sitemap mỗi 1 tiếng (3600s) giúp giảm tải tuyệt đối cho Google Sheet API.
+export const revalidate = 3600; 
+
+// Chuyển đổi chuỗi ngày DD/MM/YYYY chuẩn Việt Nam sang Date an toàn
+function parseVnDate(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  
+  const cleanStr = dateStr.trim();
+  const parts = cleanStr.split(/[-/]/);
+  
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    let year = parseInt(parts[2], 10);
+    
+    // Xử lý thông minh nếu người dùng chỉ nhập năm 2 số (vd: 24 -> 2024)
+    if (year < 100) year += 2000;
+    
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      return new Date(year, month - 1, day);
+    }
+  }
+  return new Date();
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://tranhuyland.vn';
@@ -10,28 +32,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const data = await getBdsData();
 
+    // Lọc sạch dữ liệu, loại bỏ sản phẩm không có slug
+    const safeData = Array.isArray(data) 
+      ? data.filter((item: any) => item && item.slug && item.slug.trim() !== '') 
+      : [];
+
     // 1. URL Sản phẩm Nhà Đất
-    const bdsUrls = data.map((item: any) => {
-      // Thử lấy ngày đăng thực tế từ Google Sheet, nếu không có mới dùng ngày hôm nay làm mặc định
-      const rawDate = item.ngayDang || item.NgayDang;
-      const parsedDate = rawDate ? new Date(rawDate) : new Date();
-      // Đảm bảo nếu ngày lỗi/không hợp lệ thì vẫn fallback về thời gian hiện tại
+    const bdsUrls: MetadataRoute.Sitemap = safeData.map((item: any) => {
+      const rawDate = item.ngayDang || item.NgayDang || item.ngay || '';
+      const parsedDate = parseVnDate(rawDate);
       const finalDate = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
 
       return {
-        url: `${baseUrl}/nha-dat/${item.slug}`,
+        // Mã hóa URI để an toàn tuyệt đối với mọi ký tự lạ
+        url: `${baseUrl}/nha-dat/${encodeURIComponent(item.slug.trim())}`,
         lastModified: finalDate,
-        changeFrequency: 'daily' as const, // Thêm as const để ép kiểu dữ liệu chuẩn cho Next.js
+        changeFrequency: 'daily' as const, // Thêm as const để chống lỗi TypeScript
         priority: 0.8,
       };
     });
 
-    // 2. URL Danh mục Vị trí
+    // Tìm ngày đăng của căn nhà MỚI NHẤT để gán cho Trang chủ và Danh mục
+    const latestPostDate = bdsUrls.length > 0 
+      ? new Date(Math.max(...bdsUrls.map(item => (item.lastModified as Date).getTime()))) 
+      : new Date();
+
+    // 2. URL Danh mục Vị trí (Phường/Quận trọng điểm)
     const locations = ['hai-chau', 'cam-le', 'thanh-khe', 'lien-chieu', 'son-tra', 'ngu-hanh-son'];
-    const locationUrls = locations.map((slug) => ({
+    const locationUrls: MetadataRoute.Sitemap = locations.map((slug) => ({
       url: `${baseUrl}/vi-tri/${slug}`,
-      lastModified: new Date(), // Các trang bộ lọc vị trí giữ ngày hiện tại vì dữ liệu thay đổi liên tục
-      changeFrequency: 'weekly' as const,
+      lastModified: latestPostDate, // Dùng ngày thực tế có bài mới
+      changeFrequency: 'weekly' as const, // Thêm as const
       priority: 0.7,
     }));
 
@@ -39,8 +70,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
       { 
         url: baseUrl, 
-        lastModified: new Date(), 
-        changeFrequency: 'daily' as const, // 🌟 Sửa lỗi thiếu 'as const' ở đây
+        lastModified: latestPostDate, // Dùng ngày thực tế có bài mới
+        changeFrequency: 'daily' as const, // Thêm as const
         priority: 1.0 
       },
       ...bdsUrls,
@@ -48,7 +79,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
   } catch (error) {
     console.error('Lỗi sitemap:', error);
-    // Trả về mặc định trang chủ nếu Google Sheets lỗi để web không bị sập
     return [
       { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 1.0 }
     ];
