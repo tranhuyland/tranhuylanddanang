@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Image from 'next/image'; // 🚀 Khai báo thư viện tối ưu ảnh của Next.js
 import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
@@ -10,10 +11,14 @@ export default function Hero() {
   return (
     <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <img
+        {/* 🚀 Đã thay thẻ img thường bằng Image của Next.js để fix triệt để lỗi điểm LCP */}
+        <Image
           src="/hero-bg.jpg"
           alt="Toàn cảnh Đà Nẵng"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          fill
+          priority={true} // Bùa chú 1: Ép tải ngay lập tức không cần chờ đợi
+          sizes="100vw"   // Bùa chú 2: Tự động tải ảnh nhẹ cho điện thoại, ảnh nét cho PC
+          className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-slate-900/20"></div>
       </div>
