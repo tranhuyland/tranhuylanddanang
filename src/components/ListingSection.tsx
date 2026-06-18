@@ -205,7 +205,7 @@ const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
   return 0;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC (Đã fix triệt để lỗi dính tên đường bằng \b)
+// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC ĐÃ ĐƯỢC FIX TRIỆT ĐỂ BẰNG NEGATIVE LOOKAHEAD
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
@@ -215,18 +215,28 @@ const extractRooms = (item: any) => {
   const textWithoutHtml = allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' '); 
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
-  // 💡 NÂNG CẤP: Thêm \b vào quanh chữ pn và ngu để máy không bắt nhầm chữ nguyen
   if (!pn) {
-    const matchPhong = fullText.match(/(\d+)\s*(\bpn\b|phong ngu|p ngu|\bngu\b|p\.ngu)/i) || 
-                       fullText.match(/(?:\bpn\b|phong ngu|p ngu|\bngu\b|p\.ngu)[\s:-]*(\d+)/i);
-    if (matchPhong && parseInt(matchPhong[1]) > 0) pn = parseInt(matchPhong[1]).toString();
+    // Regex 1: Số nằm trước chữ (VD: 3 pn, 3 phòng ngủ). Dùng (?![a-z]) để CHẮC CHẮN chặn chữ "nguyen" ngay sau đó.
+    const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
+    // Regex 2: Chữ nằm trước số (VD: pn: 3, phòng ngủ 3)
+    const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
+    
+    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) {
+      pn = parseInt(matchPhong1[1]).toString();
+    } else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) {
+      pn = parseInt(matchPhong2[1]).toString();
+    }
   }
 
-  // 💡 NÂNG CẤP: Tương tự với WC
   if (!wc) {
-    const matchWC = fullText.match(/(\d+)\s*(\bwc\b|phong tam|nha ve sinh|phong ve sinh|toilet|\bnvs\b)/i) || 
-                    fullText.match(/(?:\bwc\b|phong tam|nha ve sinh|phong ve sinh|toilet|\bnvs\b)[\s:-]*(\d+)/i);
-    if (matchWC && parseInt(matchWC[1]) > 0) wc = parseInt(matchWC[1]).toString();
+    const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
+    const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+    
+    if (matchWC1 && parseInt(matchWC1[1]) > 0) {
+      wc = parseInt(matchWC1[1]).toString();
+    } else if (matchWC2 && parseInt(matchWC2[1]) > 0) {
+      wc = parseInt(matchWC2[1]).toString();
+    }
   }
 
   return { pn, wc };
@@ -642,7 +652,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
           
-          {/* 🔥 VỊ TRÍ PHƯỜNG ĐÃ CHUYỂN SANG MÀU XANH LÁ ĐẬM NHƯNG KHÔNG IN ĐẬM */}
           <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-800 mb-4">
             <MapPin size={16} className="text-green-800 shrink-0" />
             <span className="truncate">{displayLocation}</span>
@@ -662,7 +671,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           
           <div className="flex items-center gap-1.5 shrink-0">
             
-            {/* 🆕 NÚT CHIA SẺ MỚI THÊM VÀO */}
             <button 
               className="px-2 py-1.5 sm:px-3 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1 sm:gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
               onClick={handleShare}
