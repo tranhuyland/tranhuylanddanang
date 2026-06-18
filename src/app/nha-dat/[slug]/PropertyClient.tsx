@@ -4,7 +4,7 @@ import PropertyGallery from "@/components/SlideBds";
 import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw, BedDouble, Bath, Compass, Heart, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { layUrlAnhChuan } from "@/lib/utils";
+// Đã gỡ bỏ import layUrlAnhChuan để Vercel không báo lỗi dư thừa biến
 
 interface PropertyClientProps {
   item: any;
@@ -18,7 +18,6 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 ĐÃ ĐỒNG BỘ HÀM SIÊU QUÉT TỪ TRANG CHỦ (CÓ REMOVE ACCENTS & CHỐNG LỖI HTML)
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
@@ -26,7 +25,6 @@ const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  // Gom toàn bộ text và xóa dấu tiếng Việt + HTML
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
   const textWithoutHtml = combinedText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' ');
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
@@ -95,9 +93,11 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const touchStartDist = useRef(0);
+  const touchStartPos = useRef({ x: 0, y: 0 }); // 🌟 THEO DÕI TỌA ĐỘ VUỐT ĐỂ ĐÓNG
 
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -143,31 +143,25 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const epWebP = (url: string) => {
     if (!url) return "";
     let link = url.trim();
-    // Chỉ ép f_auto nếu là ảnh Cloudinary và chưa có bùa chú
     if (link.includes("res.cloudinary.com") && !link.includes("f_auto")) {
         link = link.replace("/image/upload/", "/image/upload/f_auto,q_auto/");
     }
     return link;
   };
 
-  // 1. Tách và ép WebP toàn bộ ảnh Sản phẩm
   const chuoiAnhSp = item.anh || item.Anh || "";
   const mangAnhSp = chuoiAnhSp
-      .split(/[\n,]/) // Cắt bằng cả dấu phẩy và Enter
+      .split(/[\n,]/)
       .map((url: string) => epWebP(url))
       .filter((url: string) => url.startsWith("http"));
 
-  // 2. Tách và ép WebP toàn bộ ảnh Sổ đỏ
   const chuoiAnhSoDo = item.anhSoDo || item.AnhSoDo || "";
   const mangAnhSoDo = chuoiAnhSoDo
       .split(/[\n,]/)
       .map((url: string) => epWebP(url))
       .filter((url: string) => url.startsWith("http"));
 
-  // 3. Gom tất cả vào 1 danh sách trượt duy nhất và loại bỏ ảnh bị trùng
   const tatCaAnhGallery = Array.from(new Set([...mangAnhSp, ...mangAnhSoDo]));
-  
-  // 4. Lấy link sổ đỏ chuẩn xác nhất để hiện ngoài Popup
   const linkSodoChinh = mangAnhSoDo.length > 0 ? mangAnhSoDo[0] : "";
   // ========================================================
 
@@ -191,9 +185,11 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     return item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   }, [item]);
 
+  // HỆ THỐNG VUỐT / CHẠM CHO ẢNH SỔ ĐỎ
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.5, 4));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.5, 1));
   const handleResetZoom = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+  
   const handleMouseDown = (e: React.MouseEvent) => {
     if (scale === 1) return;
     isDragging.current = true;
@@ -203,23 +199,42 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     if (!isDragging.current) return;
     setPosition({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y });
   };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       touchStartDist.current = dist;
-    } else if (e.touches.length === 1 && scale > 1) {
-      isDragging.current = true;
-      dragStart.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
+    } else if (e.touches.length === 1) {
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; // Lưu tọa độ ban đầu
+      if (scale > 1) {
+        isDragging.current = true;
+        dragStart.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
+      }
     }
   };
+
   const handleTouchMove = (e: React.TouchEvent) => {
     if (e.touches.length === 2 && touchStartDist.current > 0) {
       const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       const factor = dist / touchStartDist.current;
       setScale(prev => Math.min(Math.max(prev * factor, 1), 4));
       touchStartDist.current = dist;
-    } else if (e.touches.length === 1 && isDragging.current) {
+    } else if (e.touches.length === 1 && isDragging.current && scale > 1) {
       setPosition({ x: e.touches[0].clientX - dragStart.current.x, y: e.touches[0].clientY - dragStart.current.y });
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    isDragging.current = false;
+    touchStartDist.current = 0;
+    
+    // 🌟 Nếu đang ở tỷ lệ gốc và khách vuốt dọc vượt 100px -> Đóng cửa sổ (UX cực mượt)
+    if (scale === 1 && e.changedTouches.length === 1) {
+      const touchEndY = e.changedTouches[0].clientY;
+      const distanceY = Math.abs(touchEndY - touchStartPos.current.y);
+      if (distanceY > 100) {
+        setIsPopupOpen(false);
+      }
     }
   };
 
@@ -411,7 +426,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             onMouseLeave={() => { isDragging.current = false; }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
-            onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
+            onTouchEnd={handleTouchEnd}
           >
             <img 
               src={linkSodoChinh}
@@ -427,7 +442,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
 
           {scale === 1 && (
             <div className="absolute bottom-6 text-white/50 text-xs font-medium bg-black/40 px-4 py-1.5 rounded-full pointer-events-none tracking-wider uppercase text-center">
-              Dùng 2 ngón tay hoặc bấm nút để phóng to bản vẽ
+              Dùng 2 ngón tay để phóng to, vuốt dọc để thoát
             </div>
           )}
         </div>
