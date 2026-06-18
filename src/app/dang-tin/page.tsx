@@ -13,12 +13,12 @@ const INITIAL_FORM_STATE = {
   dienTich: '',
   khuVuc: '', 
   huong: '',
-  loaiHinh: 'Nhà phố', // Giữ mặc định cho payload đẩy lên Google Sheet
+  loaiHinh: 'Nhà phố',
   anh: '', 
   anhSoDo: '', 
   linkMap: '', 
   moTa: '', 
-  tag: 'all', // Giữ mặc định cho payload đẩy lên Google Sheet
+  tag: 'all',
   isMatTien: false,
   ngayDang: ''
 };
@@ -112,28 +112,27 @@ export default function DangTinPage() {
     const text = e.target.value;
     let newFormData = { ...formData, moTa: text };
 
-    // 1. Quét Giá (VD: 4.35 tỷ, 4,35 tỷ, 4 tỷ 350)
-    const priceMatch1 = text.match(/([\d,\.]+)\s*(tỷ|triệu)/i);
+    // 1. Quét Giá (Bao trọn các trường hợp: 8.5 tỷ, 8,55 tỷ, 4 tỷ 350)
+    const priceMatch1 = text.match(/(\d+[.,]?\d*)\s*(tỷ|triệu)/i);
     const priceMatch2 = text.match(/(\d+)\s*tỷ\s*(\d+)/i); // Kiểu "4 tỷ 350"
     
     if (priceMatch2) {
       newFormData.gia = `${priceMatch2[1]},${priceMatch2[2]} tỷ`;
     } else if (priceMatch1) {
-      let val = priceMatch1[1].replace(/\./g, ','); // Đổi chấm thành phẩy cho chuẩn VN
+      // Đảm bảo tất cả dấu "." đều biến thành "," cho chuẩn định dạng
+      let val = priceMatch1[1].replace(/\./g, ','); 
       let unit = priceMatch1[2].toLowerCase();
       newFormData.gia = `${val} ${unit}`;
     }
 
     // 2. Quét Diện Tích (VD: 100m2, 85.5 m²) - Tự động thêm chữ m2
-    const areaMatch = text.match(/([\d,\.]+)\s*(?:m2|m²)/i);
+    const areaMatch = text.match(/(\d+[.,]?\d*)\s*(?:m2|m²)/i);
     if (areaMatch) {
       newFormData.dienTich = `${areaMatch[1].replace(/\./g, ',')} m2`;
     }
 
     // 3. Quét Phường / Xã (Khắc phục lỗi gõ "Hoà" và "Hòa")
     const wards = ['Hải Châu', 'Hòa Cường', 'Thanh Khê', 'An Khê', 'An Hải', 'Sơn Trà', 'Ngũ Hành Sơn', 'Hòa Khánh', 'Hải Vân', 'Liên Chiểu', 'Cẩm Lệ', 'Hòa Xuân', 'Hòa Vang', 'Bà Nà', 'Hòa Tiến', 'Hòa Phước', 'Hòa Bắc', 'Hòa Liên', 'Hòa Ninh'];
-    
-    // Hàm loại bỏ dấu tiếng Việt để so sánh tuyệt đối (Hoà = Hòa = hoa)
     const normalizeVN = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const normalizedText = normalizeVN(text);
 
