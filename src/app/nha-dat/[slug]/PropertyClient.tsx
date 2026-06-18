@@ -18,7 +18,7 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 ĐÃ ĐỒNG BỘ HÀM SIÊU QUÉT TỪ TRANG CHỦ (CÓ REMOVE ACCENTS & CHỐNG LỖI HTML)
+// 🔥 ĐÃ CẬP NHẬT HÀM BÓC TÁCH PHÒNG NGỦ/WC VỚI NEGATIVE LOOKAHEAD CHỐNG LỖI
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
@@ -32,15 +32,27 @@ const extractRooms = (item: any) => {
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
   if (!pn) {
-    const matchPhong = fullText.match(/(\d+)\s*(pn|phong ngu|p ngu|ngu|p\.ngu)/i) || 
-                       fullText.match(/(?:pn|phong ngu|p ngu|ngu|p\.ngu)[\s:-]*(\d+)/i);
-    if (matchPhong && parseInt(matchPhong[1]) > 0) pn = parseInt(matchPhong[1]).toString();
+    // Regex 1: Số nằm trước chữ (VD: 3 pn, 3 phòng ngủ). Dùng (?![a-z]) để CHẮC CHẮN chặn chữ "nguyen" ngay sau đó.
+    const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
+    // Regex 2: Chữ nằm trước số (VD: pn: 3, phòng ngủ 3)
+    const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
+    
+    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) {
+      pn = parseInt(matchPhong1[1]).toString();
+    } else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) {
+      pn = parseInt(matchPhong2[1]).toString();
+    }
   }
 
   if (!wc) {
-    const matchWC = fullText.match(/(\d+)\s*(wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)/i) || 
-                    fullText.match(/(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
-    if (matchWC && parseInt(matchWC[1]) > 0) wc = parseInt(matchWC[1]).toString();
+    const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
+    const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+    
+    if (matchWC1 && parseInt(matchWC1[1]) > 0) {
+      wc = parseInt(matchWC1[1]).toString();
+    } else if (matchWC2 && parseInt(matchWC2[1]) > 0) {
+      wc = parseInt(matchWC2[1]).toString();
+    }
   }
 
   return { pn, wc };
