@@ -137,16 +137,41 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     alert("Đã sao chép đường dẫn sản phẩm!");
   };
 
-  const anhGoc = item.anh || item.Anh || "";
-  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
-  const anhSoDoGoc = item.anhSoDo || item.AnhSoDo || "";
-  
-  const tatCaAnhGallery = [...danhSachAnh];
-  if (anhSoDoGoc && anhSoDoGoc.startsWith("http") && !tatCaAnhGallery.includes(anhSoDoGoc)) {
-    tatCaAnhGallery.push(anhSoDoGoc);
-  }
+  // ========================================================
+  // 💡 THUẬT TOÁN TÁCH VÀ ÉP WEBP 100% CHO MỌI LOẠI ẢNH
+  // ========================================================
+  const epWebP = (url: string) => {
+    if (!url) return "";
+    let link = url.trim();
+    // Chỉ ép f_auto nếu là ảnh Cloudinary và chưa có bùa chú
+    if (link.includes("res.cloudinary.com") && !link.includes("f_auto")) {
+        link = link.replace("/image/upload/", "/image/upload/f_auto,q_auto/");
+    }
+    return link;
+  };
 
-  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông diễn đang được cập nhật...";
+  // 1. Tách và ép WebP toàn bộ ảnh Sản phẩm
+  const chuoiAnhSp = item.anh || item.Anh || "";
+  const mangAnhSp = chuoiAnhSp
+      .split(/[\n,]/) // Cắt bằng cả dấu phẩy và Enter
+      .map((url: string) => epWebP(url))
+      .filter((url: string) => url.startsWith("http"));
+
+  // 2. Tách và ép WebP toàn bộ ảnh Sổ đỏ
+  const chuoiAnhSoDo = item.anhSoDo || item.AnhSoDo || "";
+  const mangAnhSoDo = chuoiAnhSoDo
+      .split(/[\n,]/)
+      .map((url: string) => epWebP(url))
+      .filter((url: string) => url.startsWith("http"));
+
+  // 3. Gom tất cả vào 1 danh sách trượt duy nhất và loại bỏ ảnh bị trùng
+  const tatCaAnhGallery = Array.from(new Set([...mangAnhSp, ...mangAnhSoDo]));
+  
+  // 4. Lấy link sổ đỏ chuẩn xác nhất để hiện ngoài Popup
+  const linkSodoChinh = mangAnhSoDo.length > 0 ? mangAnhSoDo[0] : "";
+  // ========================================================
+
+  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
 
@@ -306,8 +331,8 @@ export default function PropertyClient({ item }: PropertyClientProps) {
         </div>
 
         {/* 🔥 NÚT BẤM ĐÃ ĐƯỢC ÉP NẰM TRÊN 1 DÒNG (WHITESPACE-NOWRAP) */}
-        {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
-          <div className={`grid gap-2.5 sm:gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {((item.linkMap || item.LinkMap) || !!linkSodoChinh) && (
+          <div className={`grid gap-2.5 sm:gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!linkSodoChinh ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
               <a 
                 href={item.linkMap || item.LinkMap} 
@@ -318,7 +343,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
                 <Map className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-white shrink-0" /> <span className="truncate">Xem vị trí bản đồ</span>
               </a>
             )}
-            {!!anhSoDoGoc && (
+            {!!linkSodoChinh && (
               <button 
                 onClick={() => setIsPopupOpen(true)} 
                 className="bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold border border-orange-200 rounded-xl py-3 sm:py-3.5 px-2 text-center text-[12px] min-[390px]:text-[13px] sm:text-[14px] whitespace-nowrap tracking-tight flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full shadow-sm active:scale-95"
@@ -389,7 +414,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
             onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
           >
             <img 
-              src={layUrlAnhChuan(anhSoDoGoc)}
+              src={linkSodoChinh}
               alt="Sổ hồng bản vẽ chi tiết" 
               draggable={false}
               style={{
