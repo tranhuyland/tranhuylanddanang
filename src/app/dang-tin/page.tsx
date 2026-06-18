@@ -130,9 +130,14 @@ export default function DangTinPage() {
       newFormData.dienTich = `${areaMatch[1].replace(/\./g, ',')} m2`;
     }
 
-    // 3. Quét Phường / Xã
+    // 3. Quét Phường / Xã (Khắc phục lỗi gõ "Hoà" và "Hòa")
     const wards = ['Hải Châu', 'Hòa Cường', 'Thanh Khê', 'An Khê', 'An Hải', 'Sơn Trà', 'Ngũ Hành Sơn', 'Hòa Khánh', 'Hải Vân', 'Liên Chiểu', 'Cẩm Lệ', 'Hòa Xuân', 'Hòa Vang', 'Bà Nà', 'Hòa Tiến', 'Hòa Phước', 'Hòa Bắc', 'Hòa Liên', 'Hòa Ninh'];
-    const foundWard = wards.find(w => text.toLowerCase().includes(w.toLowerCase()));
+    
+    // Hàm loại bỏ dấu tiếng Việt để so sánh tuyệt đối (Hoà = Hòa = hoa)
+    const normalizeVN = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const normalizedText = normalizeVN(text);
+
+    const foundWard = wards.find(w => normalizedText.includes(normalizeVN(w)));
     if (foundWard) {
       newFormData.khuVuc = foundWard;
     }
