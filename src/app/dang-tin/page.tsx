@@ -114,26 +114,23 @@ export default function DangTinPage() {
 
     // 1. Quét Giá (Bắt chính xác 8,5 tỷ / 8.5 tỷ / 3,x tỷ / 5,xx tỷ / 4 tỷ 350)
     const priceMatch2 = text.match(/(\d+)\s*tỷ\s*(\d+)/i); // Kiểu "4 tỷ 350"
-    // Regex mới: Cho phép ký tự x/X ở phần thập phân (VD: [\dxX]+)
     const priceMatch1 = text.match(/(\d+)(?:\s*[.,]\s*([\dxX]+))?\s*(tỷ|triệu)/i); 
     
     if (priceMatch2) {
       newFormData.gia = `${priceMatch2[1]},${priceMatch2[2]} tỷ`;
     } else if (priceMatch1) {
-      let num1 = priceMatch1[1]; // Phần nguyên (VD: 8, 3, 5)
-      let num2 = priceMatch1[2]; // Phần thập phân hoặc chữ x (VD: 5, x, xx)
-      let unit = priceMatch1[3].toLowerCase(); // tỷ hoặc triệu
+      let num1 = priceMatch1[1];
+      let num2 = priceMatch1[2];
+      let unit = priceMatch1[3].toLowerCase();
       
       if (num2) {
-        // Có phần thập phân -> luôn nối bằng dấu phẩy và đưa chữ x về in thường
         newFormData.gia = `${num1},${num2.toLowerCase()} ${unit}`;
       } else {
-        // Giá chẵn (VD: 8 tỷ)
         newFormData.gia = `${num1} ${unit}`;
       }
     }
 
-    // 2. Quét Diện Tích (VD: 100m2, 85.5 m², 85,5 m2) - Cũng tự fix thành dấu phẩy
+    // 2. Quét Diện Tích
     const areaMatch = text.match(/(\d+)(?:\s*[.,]\s*(\d+))?\s*(?:m2|m²)/i);
     if (areaMatch) {
       let num1 = areaMatch[1];
@@ -145,7 +142,7 @@ export default function DangTinPage() {
       }
     }
 
-    // 3. Quét Phường / Xã (Khắc phục lỗi gõ "Hoà" và "Hòa")
+    // 3. Quét Phường / Xã 
     const wards = ['Hải Châu', 'Hòa Cường', 'Thanh Khê', 'An Khê', 'An Hải', 'Sơn Trà', 'Ngũ Hành Sơn', 'Hòa Khánh', 'Hải Vân', 'Liên Chiểu', 'Cẩm Lệ', 'Hòa Xuân', 'Hòa Vang', 'Bà Nà', 'Hòa Tiến', 'Hòa Phước', 'Hòa Bắc', 'Hòa Liên', 'Hòa Ninh'];
     const normalizeVN = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const normalizedText = normalizeVN(text);
@@ -155,9 +152,9 @@ export default function DangTinPage() {
       newFormData.khuVuc = foundWard;
     }
 
-    // 4. Quét Hướng
+    // 4. Quét Hướng (ĐÃ CẬP NHẬT: Cho phép có dấu hai chấm, gạch ngang, khoảng trắng bất kỳ)
     const directions = ['Đông Nam', 'Đông Bắc', 'Tây Nam', 'Tây Bắc', 'Đông', 'Tây', 'Nam', 'Bắc'];
-    const directionMatch = text.match(/hướng\s+(đông nam|đông bắc|tây nam|tây bắc|đông|tây|nam|bắc)/i);
+    const directionMatch = text.match(/hướng\s*[:\-]?\s*(đông nam|đông bắc|tây nam|tây bắc|đông|tây|nam|bắc)/i);
     if (directionMatch) {
       const dir = directions.find(d => d.toLowerCase() === directionMatch[1].toLowerCase());
       if (dir) newFormData.huong = dir;
