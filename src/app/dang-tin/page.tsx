@@ -11,6 +11,7 @@ const INITIAL_FORM_STATE = {
   tieude: '',
   gia: '',
   dienTich: '',
+  soNha: '', // 💡 ĐÃ THÊM TRƯỜNG SỐ NHÀ
   duong: '', 
   khuVuc: '', 
   huong: '',
@@ -108,21 +109,22 @@ export default function DangTinPage() {
     );
   };
 
-  // 🗺️ HÀM TỰ TẠO LINK GOOGLE MAPS (ĐÃ SỬA LỖI & CHUẨN HOÁ)
-  const updateMapLink = (duong: string, phuong: string, currentLink: string) => {
-    // Nếu user đã dán 1 link map thủ công (không chứa chuỗi do app tự tạo), thì giữ nguyên không ghi đè
-    if (currentLink && !currentLink.includes('google.com/maps?q=')) {
+  // 🗺️ HÀM TỰ TẠO LINK GOOGLE MAPS THEO CẤU TRÚC MỚI (Số nhà + Tên đường)
+  const updateMapLink = (soNha: string, duong: string, phuong: string, currentLink: string) => {
+    // Nếu user đã dán 1 link map thủ công, thì giữ nguyên không ghi đè
+    if (currentLink && !currentLink.includes('maps.google.com/maps?q=')) {
       return currentLink;
     }
-    // Nếu có đủ Tên Đường và Phường Xã, tự tổ hợp URL chuẩn của Google Maps
+    // Nếu có Tên Đường và Phường Xã, tự tổ hợp URL
     if (duong && phuong) {
-      const query = `${duong}, ${phuong}, Đà Nẵng`;
-      return `https://www.google.com/maps?q=${encodeURIComponent(query)}`;
+      // Nếu có số nhà thì ghép vào, không có thì thôi
+      const query = soNha ? `${soNha} ${duong}, ${phuong}, Đà Nẵng` : `${duong}, ${phuong}, Đà Nẵng`;
+      return `https://maps.google.com/maps?q=${encodeURIComponent(query)}`;
     }
     return currentLink;
   };
 
-  // 🤖 HÀM TỰ ĐỘNG QUÉT VÀ ĐIỀN DỮ LIỆU
+  // 🤖 HÀM TỰ ĐỘNG QUÉT VÀ BÓC TÁCH DỮ LIỆU THÔNG MINH
   const handleAutoScanDescription = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     let newFormData = { ...formData, moTa: text };
@@ -167,10 +169,26 @@ export default function DangTinPage() {
       newFormData.khuVuc = foundWard;
     }
 
-    // 4. Quét Tên Đường (Bắt nội dung sau chữ "đường" hoặc "mặt tiền", dừng lại khi gặp phường/quận/dấu phẩy/gạch ngang)
-    const streetMatch = text.match(/(?:đường|mặt tiền)\s+([^,\n\-]+?)(?=\s+phường|\s+quận|,|-|\n|$)/i);
+    // 4. Quét Số nhà & Tên Đường
+    // Bắt k, kiệt, mt, mặt tiền, đường (có hoặc không có số đi kèm)
+    const streetMatch = text.match(/(k|kiệt|mt|mặt tiền|đường)\s*(\d+[\d\/a-zA-Z]*)?\s+([^,\n\-]+?)(?=\s+phường|\s+quận|,|-|\n|$)/i);
     if (streetMatch) {
-      newFormData.duong = streetMatch[1].trim();
+      const prefix = streetMatch[1].toLowerCase(); // Lấy từ khoá (k, kiệt, mt...)
+      const num = streetMatch[2]; // Lấy số nhà (54, 54/2...) nếu có
+      const streetName = streetMatch[3].trim(); // Lấy tên đường (ông ích khiêm)
+
+      newFormData.duong = streetName;
+
+      // Xử lý logic gán Số nhà tuỳ theo từ khóa
+      if (prefix === 'k' || prefix === 'kiệt') {
+        newFormData.soNha = num ? `k${num}` : 'k'; // K54 hoặc K
+      } else if (prefix === 'mt' || prefix === 'mặt tiền') {
+        newFormData.soNha = num ? num : ''; // 54 hoặc để trống
+        newFormData.isMatTien = true; // Auto tick ô Mặt tiền
+      } else {
+        // Trường hợp chỉ ghi chữ "đường"
+        newFormData.soNha = num ? num : '';
+      }
     }
 
     // 5. Quét Hướng
@@ -181,22 +199,26 @@ export default function DangTinPage() {
       if (dir) newFormData.huong = dir;
     }
 
-    // 6. Tự động sinh Link Google Maps nếu có đủ Phường + Đường
-    newFormData.linkMap = updateMapLink(newFormData.duong, newFormData.khuVuc, newFormData.linkMap);
+    // 6. Tự động sinh Link Google Maps từ Số Nhà + Đường + Phường
+    newFormData.linkMap = updateMapLink(newFormData.soNha, newFormData.duong, newFormData.khuVuc, newFormData.linkMap);
 
     setFormData(newFormData);
   };
 
-  // Cập nhật Link Map ngay lập tức khi người dùng tự gõ Tên đường
-  const handleDuongChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const duong = e.target.value;
-    setFormData(prev => ({ ...prev, duong, linkMap: updateMapLink(duong, prev.khuVuc, prev.linkMap) }));
+  // Cập nhật Link Map ngay khi gõ từng ô riêng lẻ
+  const handleSoNhaChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const soNha = e.target.value;
+    setFormData(prev => ({ ...prev, soNha, linkMap: updateMapLink(soNha, prev.duong, prev.khuVuc, prev.linkMap) }));
   };
 
-  // Cập nhật Link Map ngay lập tức khi người dùng tự chọn Phường
+  const handleDuongChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const duong = e.target.value;
+    setFormData(prev => ({ ...prev, duong, linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap) }));
+  };
+
   const handleKhuVucChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const khuVuc = e.target.value;
-    setFormData(prev => ({ ...prev, khuVuc, linkMap: updateMapLink(prev.duong, khuVuc, prev.linkMap) }));
+    setFormData(prev => ({ ...prev, khuVuc, linkMap: updateMapLink(prev.soNha, prev.duong, khuVuc, prev.linkMap) }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -256,7 +278,7 @@ export default function DangTinPage() {
           {/* Ô MÔ TẢ ĐƯA LÊN TRÊN ĐỂ DÁN VÀO QUÉT TRƯỚC */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1 text-amber-600">Mô tả chi tiết (Dán vào đây để tự động quét thông tin)</label>
-            <textarea required rows={5} value={formData.moTa} onChange={handleAutoScanDescription} placeholder="Dán thông tin mô tả chi tiết tại đây. Hệ thống sẽ tự động tìm Giá, Diện tích, Đường, Vị trí..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line shadow-inner" />
+            <textarea required rows={5} value={formData.moTa} onChange={handleAutoScanDescription} placeholder="Dán thông tin mô tả chi tiết tại đây. Hệ thống sẽ tự động tìm Giá, Diện tích, Số Nhà, Tên Đường, Vị trí..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line shadow-inner" />
           </div>
 
           <div>
@@ -304,13 +326,6 @@ export default function DangTinPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tên Đường</label>
-              <input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Hoàng Diệu" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Hướng bất động sản</label>
               <select value={formData.huong} onChange={(e) => setFormData({ ...formData, huong: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="">-- Để trống hoặc Chọn --</option>
@@ -318,10 +333,21 @@ export default function DangTinPage() {
                 <option value="Đông Nam">Đông Nam</option><option value="Đông Bắc">Đông Bắc</option><option value="Tây Nam">Tây Nam</option><option value="Tây Bắc">Tây Bắc</option>
               </select>
             </div>
-            {/* Cột này để trống hoặc bạn có thể chèn nội dung khác nếu muốn cho cân đối */}
           </div>
 
-          {/* ĐƯỜNG DẪN GOOGLE MAPS (SẼ ĐƯỢC TỰ ĐỘNG ĐIỀN) */}
+          {/* DÒNG MỚI: SỐ NHÀ VÀ TÊN ĐƯỜNG NẰM CẠNH NHAU */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Số Nhà</label>
+              <input type="text" value={formData.soNha} onChange={handleSoNhaChange} placeholder="Ví dụ: K54/2 hoặc 54" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tên Đường</label>
+              <input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+            </div>
+          </div>
+
+          {/* ĐƯỜNG DẪN GOOGLE MAPS */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Đường dẫn Google Maps</label>
             <input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Hệ thống sẽ tự tạo link nếu có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 text-blue-600" />
