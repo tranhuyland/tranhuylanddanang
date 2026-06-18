@@ -11,7 +11,7 @@ const INITIAL_FORM_STATE = {
   tieude: '',
   gia: '',
   dienTich: '',
-  duong: '', // 💡 ĐÃ THÊM TRƯỜNG TÊN ĐƯỜNG
+  duong: '', 
   khuVuc: '', 
   huong: '',
   loaiHinh: 'Nhà phố',
@@ -108,16 +108,16 @@ export default function DangTinPage() {
     );
   };
 
-  // 🗺️ HÀM TỰ TẠO LINK GOOGLE MAPS
+  // 🗺️ HÀM TỰ TẠO LINK GOOGLE MAPS (ĐÃ SỬA LỖI & CHUẨN HOÁ)
   const updateMapLink = (duong: string, phuong: string, currentLink: string) => {
     // Nếu user đã dán 1 link map thủ công (không chứa chuỗi do app tự tạo), thì giữ nguyên không ghi đè
-    if (currentLink && !currentLink.includes('google.com/maps/search/?api=1&query=')) {
+    if (currentLink && !currentLink.includes('google.com/maps?q=')) {
       return currentLink;
     }
-    // Nếu có đủ Tên Đường và Phường Xã, tự tổ hợp URL
+    // Nếu có đủ Tên Đường và Phường Xã, tự tổ hợp URL chuẩn của Google Maps
     if (duong && phuong) {
       const query = `${duong}, ${phuong}, Đà Nẵng`;
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+      return `https://www.google.com/maps?q=${encodeURIComponent(query)}`;
     }
     return currentLink;
   };
