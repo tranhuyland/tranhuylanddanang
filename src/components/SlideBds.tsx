@@ -185,7 +185,8 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
                     <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-5">
                       <Map className="w-8 h-8 text-blue-400" />
                     </div>
-                    <h3 className="text-white text-xl font-bold mb-2">Đã tìm thấy vị trí</h3>
+                    {/* Đã sửa H3 thành H2 cho chuẩn cấu trúc phân cấp thẻ Headings */}
+                    <h2 className="text-white text-xl font-bold mb-2">Đã tìm thấy vị trí</h2>
                     <p className="text-gray-400 text-sm mb-8 leading-relaxed">
                       Do chính sách bảo mật, bản đồ này cần được mở trong một cửa sổ riêng biệt để xem chi tiết.
                     </p>
