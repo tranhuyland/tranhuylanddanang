@@ -51,7 +51,17 @@ export default function AIChatbot() {
           <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`p-2.5 rounded-xl ${m.role === "user" ? "bg-amber-500 text-black font-semibold" : "bg-slate-100"}`}>{m.text}</div>
+                <div 
+  className={`p-2.5 rounded-xl ${m.role === "user" ? "bg-amber-500 text-black font-semibold" : "bg-slate-100"}`}
+  dangerouslySetInnerHTML={{ 
+    __html: m.role === "ai" 
+      ? m.text
+          .replace(/\n/g, '<br/>') // Xuống dòng
+          .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:blue; text-decoration:underline;">$1</a>') // Biến thành link
+      : m.text 
+  }}
+/>
+
               </div>
             ))}
             <div ref={messagesEndRef} />
