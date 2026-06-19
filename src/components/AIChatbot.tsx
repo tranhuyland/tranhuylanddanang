@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown"; 
 
-// 🛠️ DANH SÁCH THẺ BẤM NHANH (GỢI Ý)
+// 🛠️ DANH SÁCH THẺ BẤM NHANH
 const QUICK_REPLIES = [
   "🏠 Nhà Hải Châu", 
   "💰 Dưới 3 Tỷ", 
@@ -11,15 +11,13 @@ const QUICK_REPLIES = [
   "🔑 Nhà cho thuê"
 ];
 
-// 🛠️ BỘ LỌC THÔNG MINH: Chuyển đổi HTML & Tự động tô đỏ Giá tiền
+// 🛠️ BỘ LỌC THÔNG MINH
 const formatAIResponse = (text: string) => {
   if (!text) return "";
   let formatted = text.replace(/<br\s*\/?>/gi, '\n\n'); 
   formatted = formatted.replace(/<a\s+href=['"]([^'"]+)['"][^>]*>(.*?)<\/a>/gi, '[$2]($1)'); 
-  
   formatted = formatted.replace(/(\d+(?:[.,]\d+)?\s*(?:tỷ|ty|triệu|trieu|tr\/tháng))/gi, '**$1**');
   formatted = formatted.replace(/\*\*\*\*/g, '**'); 
-  
   return formatted;
 };
 
@@ -68,12 +66,13 @@ export default function AIChatbot() {
         </button>
       )}
 
-      {/* 🟢 KHUNG CHAT - TÁCH RỜI HOÀN TOÀN ĐỂ CHỐNG LỖI BÀN PHÍM */}
+      {/* 🟢 KHUNG CHAT ĐƯỢC THIẾT KẾ LẠI ĐỂ CHỐNG LỖI BÀN PHÍM IPHONE */}
       {isOpen && (
-        <div className="fixed top-0 left-0 z-[10000] w-full h-[100dvh] sm:top-auto sm:left-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] bg-white sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        // Dùng `fixed inset-0` trên mobile: neo chặt 4 góc màn hình, tự động co giãn khớp 100% khi bàn phím trồi lên
+        <div className="fixed inset-0 z-[10000] bg-white flex flex-col sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
           
           {/* Header */}
-          <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0 safe-top">
+          <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center shadow-sm">
                 <Bot className="w-5 h-5" />
@@ -85,8 +84,8 @@ export default function AIChatbot() {
             </button>
           </div>
           
-          {/* Messages Area */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-slate-50 scrollbar-hide">
+          {/* Messages Area (Cuộn tự do) */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-slate-50 scrollbar-hide overscroll-contain">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`p-3.5 max-w-[90%] shadow-sm text-[15px] leading-relaxed break-words [overflow-wrap:anywhere] ${m.role === "user" ? "bg-amber-500 text-slate-950 font-medium rounded-2xl rounded-tr-sm" : "bg-white text-slate-900 border border-slate-200 rounded-2xl rounded-tl-sm"}`}>
@@ -94,10 +93,7 @@ export default function AIChatbot() {
                     <div className="prose prose-sm max-w-none">
                        <ReactMarkdown
                          components={{
-                           // Bẻ gãy các đường link dài để không tràn ngang
-                           a: ({ node, ...props }) => (
-                             <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline break-all" />
-                           ),
+                           a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline break-all" />,
                            p: ({ node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
                            ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-1.5" />,
                            li: ({ node, ...props }) => <li {...props} className="pl-1" />,
@@ -141,15 +137,16 @@ export default function AIChatbot() {
             </div>
           </div>
 
-          {/* Input Area */}
+          {/* Input Area (Khối gõ chữ) */}
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
-            className="px-3 pt-2 bg-white shrink-0 flex gap-2.5 items-center border-t border-slate-100"
-            style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }} // Né vạch đen đáy iPhone
+            // pb-safe chống đè lên thanh ngang vuốt thoát app của iPhone
+            className="p-3 bg-white shrink-0 flex gap-2.5 items-center border-t border-slate-100 pb-[env(safe-area-inset-bottom,12px)]"
           >
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
+              // 🔴 text-[16px] là lệnh BẮT BUỘC để trình duyệt KHÔNG ĐƯỢC TỰ ZOOM màn hình khi bấm gõ phím
               className="flex-1 min-w-0 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[16px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
               placeholder="Nhập câu hỏi..." 
             />
