@@ -26,7 +26,7 @@ const INITIAL_FORM_STATE = {
   anh: '', 
   anhSoDo: '', 
   linkMap: '', 
-  toaDo: '', // 📍 Bổ sung trường Tọa Độ
+  toaDo: '',
   moTa: '', 
   tag: 'all',
   isMatTien: false,
@@ -46,6 +46,10 @@ export default function DangTinPage() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
+
+  // 📡 Trạng thái cho tính năng Dò tìm Tên Đường
+  const [isSearchingLoc, setIsSearchingLoc] = useState(false);
+  const [mapMountKey, setMapMountKey] = useState(Date.now()); // Chìa khóa ép bản đồ lia camera
 
   const uploadImagesToCloudinary = async (
     files: FileList | null,
@@ -199,6 +203,41 @@ export default function DangTinPage() {
     setFormData(prev => ({ ...prev, khuVuc, linkMap: updateMapLink(prev.soNha, prev.duong, khuVuc, prev.linkMap) }));
   };
 
+  // 🔍 HÀM DÒ TÌM TỌA ĐỘ BẰNG OPENSTREETMAP API (Miễn phí)
+  const handleSearchLocation = async () => {
+    if (!formData.duong) {
+      alert("⚠️ Vui lòng nhập Tên Đường trước khi bấm dò tìm!");
+      return;
+    }
+    setIsSearchingLoc(true);
+    try {
+      // Ưu tiên 1: Tìm sát rạt Số nhà + Tên Đường + Phường
+      const query = `${formData.soNha ? formData.soNha + ' ' : ''}${formData.duong}, ${formData.khuVuc ? formData.khuVuc + ', ' : ''}Đà Nẵng`;
+      let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+      let data = await res.json();
+      
+      // Dự phòng 2: Nếu Kiệt/Hẻm khó quá, bỏ số nhà, chỉ tìm Tên Đường + Phường
+      if (!data || data.length === 0) {
+        const fallbackQuery = `${formData.duong}, ${formData.khuVuc ? formData.khuVuc + ', ' : ''}Đà Nẵng`;
+        res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackQuery)}&limit=1`);
+        data = await res.json();
+      }
+
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        setFormData(prev => ({ ...prev, toaDo: `${lat.toFixed(6)}, ${lon.toFixed(6)}` }));
+        setMapMountKey(Date.now()); // Trick đỉnh cao: Ép bản đồ tải lại và lia camera ngay lập tức đến điểm mới
+      } else {
+        alert("❌ Bản đồ vệ tinh không tự dò ra đường này. Nó đã bay về trung tâm Phường, anh/chị vui lòng kéo ghim thủ công nhé!");
+      }
+    } catch (err) {
+      alert("❌ Lỗi kết nối đến máy chủ bản đồ.");
+    } finally {
+      setIsSearchingLoc(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (uploading || uploadingSoDo) {
@@ -231,6 +270,7 @@ export default function DangTinPage() {
       setFormData(INITIAL_FORM_STATE);
       setSelectedImagesPreview([]);
       setSoDoImagesPreview([]);
+      setMapMountKey(Date.now()); // Reset bản đồ về mặc định
     } catch (error) {
       setMessage({ type: 'error', content: '❌ Lỗi kết nối đồng bộ. Vui lòng kiểm tra lại link Web App.' });
     } finally {
@@ -328,20 +368,27 @@ export default function DangTinPage() {
             <input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Hệ thống sẽ tự tạo link nếu có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 text-blue-600" />
           </div>
 
-          {/* 🗺️ KHU VỰC BẢN ĐỒ THẢ GHIM TỌA ĐỘ */}
+          {/* 🗺️ KHU VỰC BẢN ĐỒ THẢ GHIM TỌA ĐỘ CÓ NÚT DÒ TÌM */}
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
             <div className="flex justify-between items-end mb-3">
               <label className="block text-xs font-bold text-slate-700 uppercase ml-1">
-                📍 Định vị Tọa độ Bản đồ <span className="text-orange-500">(Mới)</span>
+                📍 Định vị Tọa độ <span className="text-orange-500">(Kéo thả ghim)</span>
               </label>
-              <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded">
-                Click hoặc Kéo ghim
-              </span>
+              <button 
+                type="button" 
+                onClick={handleSearchLocation} 
+                disabled={isSearchingLoc}
+                className="text-[11px] bg-blue-100 text-blue-700 hover:bg-blue-200 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-sm active:scale-95"
+              >
+                {isSearchingLoc ? '⏳ Đang dò...' : '🔍 Dò tìm Tên Đường'}
+              </button>
             </div>
             
             <div className="h-[250px] w-full rounded-xl overflow-hidden border border-slate-300 shadow-inner mb-3 relative z-0">
               <LocationPickerMap 
+                key={mapMountKey} // Trick ép bản đồ render lại để nhảy đúng mục tiêu
                 toaDo={formData.toaDo} 
+                khuVuc={formData.khuVuc}
                 onLocationSelect={(pos) => setFormData({ ...formData, toaDo: `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}` })} 
               />
             </div>
