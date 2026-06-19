@@ -388,7 +388,6 @@ export default function DangTinPage() {
               <LocationPickerMap 
                 key={mapMountKey} // Trick ép bản đồ render lại để nhảy đúng mục tiêu
                 toaDo={formData.toaDo} 
-                khuVuc={formData.khuVuc}
                 onLocationSelect={(pos) => setFormData({ ...formData, toaDo: `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}` })} 
               />
             </div>
