@@ -3,6 +3,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown"; 
 
+// 🛠️ BỘ LỌC THÔNG MINH: Chuyển đổi HTML của AI thành Markdown chuẩn
+const formatAIResponse = (text: string) => {
+  if (!text) return "";
+  let formatted = text.replace(/<br\s*\/?>/gi, '\n\n'); // Biến thẻ <br/> thành 2 lần Enter (xuống dòng)
+  formatted = formatted.replace(/<a\s+href=['"]([^'"]+)['"][^>]*>(.*?)<\/a>/gi, '[$2]($1)'); // Biến thẻ <a> thành link Markdown
+  return formatted;
+};
+
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
@@ -72,15 +80,14 @@ export default function AIChatbot() {
                            a: ({ node, ...props }) => (
                              <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline" />
                            ),
-                           // Tăng khoảng cách đoạn văn
                            p: ({ node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
-                           // Tăng khoảng cách danh sách và thụt lề rõ ràng
                            ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-1.5" />,
                            li: ({ node, ...props }) => <li {...props} className="pl-1" />,
                            strong: ({ node, ...props }) => <strong {...props} className="font-bold text-black" />
                          }}
                        >
-                         {m.text}
+                         {/* Gọi hàm bùa chú ở đây để lọc nội dung trước khi render */}
+                         {formatAIResponse(m.text)}
                        </ReactMarkdown>
                     </div>
                   ) : (
