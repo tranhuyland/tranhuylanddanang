@@ -7,12 +7,11 @@ export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     
-    // 💡 BƯỚC QUYẾT ĐỊNH: Bỏ qua Vercel, dán trực tiếp mã vào đây!
-    // Anh dán mã AQ... của anh vào giữa 2 dấu ngoặc kép. Tuyệt đối không để dư khoảng trắng nhé!
-    const apiKey = "AQ.Ab8RN6KMjUZOb_6cNtHTVjFnspxlBm50pibepd5Q9CRmy-RxEg"; 
+    // API Key của anh đã được dán vào đây
+    const apiKey = "AQ.Ab8RN6K_lw86orz9bSapagozzM2gxSEcbJPA-YU-8cxzAM0HjQ"; 
 
-    if (!apiKey || apiKey.includes("DÁN_MÃ")) {
-      return NextResponse.json({ reply: "🚨 BÁO LỖI: Anh Huy chưa dán mã API Key vào code rồi ạ!" });
+    if (!apiKey) {
+      return NextResponse.json({ reply: "🚨 BÁO LỖI: Anh Huy chưa dán mã API Key vào code!" });
     }
 
     const allBds = await getBdsData();
@@ -24,18 +23,13 @@ export async function POST(req: Request) {
       link: `/nha-dat/${item.slug}`
     }));
 
-        const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land. Dữ liệu: ${JSON.stringify(simplifiedBds)}. 
+    // 💡 ĐÃ SỬA: Thêm yêu cầu định dạng xuống dòng để AI trả kết quả dễ đọc
+    const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land. Dữ liệu: ${JSON.stringify(simplifiedBds)}. 
     Nhiệm vụ của bạn:
-    1. Trả lời thân thiện, chuyên nghiệp.
-    2. Nếu tìm nhà, hãy gợi ý tối đa 3 căn phù hợp nhất.
-    3. ĐỊNH DẠNG TRẢ LỜI: 
-       - Mỗi căn nhà hiển thị trên 1 dòng riêng biệt.
-       - Dùng dấu gạch đầu dòng (-) cho mỗi căn.
-       - Cung cấp link sản phẩm ở cuối mỗi căn.
-    Ví dụ:
-    - [Tên nhà]: Giá [Giá] [Link]
-    - [Tên nhà]: Giá [Giá] [Link]`;
-
+    1. Trả lời ngắn gọn, thân thiện.
+    2. Nếu khách tìm nhà, hãy gợi ý tối đa 3 căn phù hợp nhất.
+    3. ĐỊNH DẠNG: Mỗi căn nhà trình bày trên 1 dòng riêng biệt bằng dấu gạch đầu dòng (-). 
+    4. Luôn cung cấp link sản phẩm ở cuối mỗi dòng.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
