@@ -30,8 +30,8 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      // 🌟 ĐỊNH VỊ CHÍNH XÁC: Góc phải, cách đáy 80px (bottom-20) 
-      className="fixed right-4 bottom-20 md:right-6 md:bottom-24 p-2 bg-orange-500 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 z-40"
+      // 🌟 NÚT TRỞ LÊN TRÊN ĐÃ ĐƯỢC ĐẨY LÊN CAO (Nằm trên nút AI Chatbot)
+      className="fixed right-4 bottom-[144px] md:right-6 md:bottom-[160px] p-2 bg-orange-500 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 z-40"
       aria-label="Trở lên trên"
     >
       <ArrowUp size={20} />
