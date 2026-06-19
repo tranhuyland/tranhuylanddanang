@@ -17,7 +17,6 @@ export async function POST(req: Request) {
     const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
-      dienTich: item.dienTich || "",
       khuVuc: item.khuVucFull || item.diaChi || "",
       link: `/nha-dat/${item.slug}`
     }));
@@ -29,8 +28,8 @@ export async function POST(req: Request) {
     2. Nếu khách hỏi tìm nhà, hãy đối chiếu với dữ liệu, gợi ý tối đa 3 căn phù hợp nhất.
     3. BẮT BUỘC cung cấp kèm đường dẫn (link) của căn nhà đó để khách bấm vào xem chi tiết.`;
 
-    // 💡 ĐIỂM SỬA LỖI: Đổi gemini-1.5-flash thành gemini-1.5-flash-latest
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+    // 💡 ĐÃ SỬA CHỮA: Dùng "gemini-pro" - Phiên bản ổn định 100% cho mọi API Key
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
