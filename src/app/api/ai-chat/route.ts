@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     
-    // Dán mã gsk_... của anh vào đây
+    // API Key của anh
     const groqKey = "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"; 
 
     const allBds = await getBdsData();
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     Hãy trả lời thân thiện. Mỗi nhà liệt kê trên 1 dòng mới với dấu (-). 
     Định dạng link: [Xem chi tiết](link).`;
 
-    // 💡 GỌI API GROQ (Sử dụng model Llama 3)
+    // Gọi API với model mới nhất
     const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
       method: 'POST',
       headers: { 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         'Authorization': `Bearer ${groqKey}` 
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192", 
+        model: "llama-3.3-70b-versatile", // Model mới nhất và ổn định
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
@@ -43,7 +43,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: `🚨 LỖI GROQ: ${data.error.message}` });
     }
 
-    const reply = data.choices[0].message.content;
+    // Lấy nội dung phản hồi
+    let reply = data.choices[0].message.content;
+    
+    // Ép kiểu xuống dòng cho các dấu gạch đầu dòng để hiển thị rõ ràng hơn
+    reply = reply.replace(/-/g, '\n-');
+
     return NextResponse.json({ reply });
 
   } catch (err: any) {
