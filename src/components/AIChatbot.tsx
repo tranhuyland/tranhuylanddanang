@@ -3,18 +3,32 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown"; 
 
-// 🛠️ BỘ LỌC THÔNG MINH: Chuyển đổi HTML của AI thành Markdown chuẩn
+// 🛠️ DANH SÁCH THẺ BẤM NHANH (GỢI Ý)
+const QUICK_REPLIES = [
+  "🏠 Nhà Hải Châu", 
+  "💰 Dưới 3 Tỷ", 
+  "🏢 Mặt tiền kinh doanh", 
+  "🔑 Nhà cho thuê"
+];
+
+// 🛠️ BỘ LỌC THÔNG MINH: Chuyển đổi HTML & Tự động tô đỏ Giá tiền
 const formatAIResponse = (text: string) => {
   if (!text) return "";
-  let formatted = text.replace(/<br\s*\/?>/gi, '\n\n'); // Biến thẻ <br/> thành 2 lần Enter (xuống dòng)
-  formatted = formatted.replace(/<a\s+href=['"]([^'"]+)['"][^>]*>(.*?)<\/a>/gi, '[$2]($1)'); // Biến thẻ <a> thành link Markdown
+  let formatted = text.replace(/<br\s*\/?>/gi, '\n\n'); 
+  formatted = formatted.replace(/<a\s+href=['"]([^'"]+)['"][^>]*>(.*?)<\/a>/gi, '[$2]($1)'); 
+  
+  // Tự động bọc dấu ** cho các cụm từ chỉ giá (tỷ, triệu, tr/tháng) để in đậm
+  formatted = formatted.replace(/(\d+(?:[.,]\d+)?\s*(?:tỷ|ty|triệu|trieu|tr\/tháng))/gi, '**$1**');
+  // Dọn dẹp nếu AI đã tự in đậm rồi (tránh bị lỗi 4 dấu sao ****)
+  formatted = formatted.replace(/\*\*\*\*/g, '**'); 
+  
   return formatted;
 };
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
-    { role: "ai", text: "Xin chào! Em là trợ lý ảo của **Trần Huy Land**. \n\nAnh/chị đang tìm nhà khu vực nào ạ? \n- Hải Châu \n- Cẩm Lệ \n- Sơn Trà" }
+    { role: "ai", text: "Xin chào! Em là trợ lý ảo của **Trần Huy Land**. \n\nAnh/chị đang tìm nhà khu vực nào ạ? Hoặc bấm chọn các gợi ý bên dưới nhé!" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,16 +59,18 @@ export default function AIChatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-4 sm:right-6 z-[9999]">
+    <div className="fixed bottom-0 sm:bottom-6 right-0 sm:right-6 z-[9999]">
       {!isOpen ? (
-        <button 
-          onClick={() => setIsOpen(true)} 
-          className="w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
-        >
-          <Bot className="w-7 h-7" />
-        </button>
+        <div className="p-4 sm:p-0 flex justify-end">
+          <button 
+            onClick={() => setIsOpen(true)} 
+            className="w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
+          >
+            <Bot className="w-7 h-7" />
+          </button>
+        </div>
       ) : (
-        <div className="bg-white w-[340px] sm:w-[380px] h-[520px] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        <div className="bg-white w-full sm:w-[380px] h-[100dvh] sm:h-[550px] max-h-[100dvh] sm:max-h-[85dvh] sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
           <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
@@ -68,7 +84,7 @@ export default function AIChatbot() {
             </button>
           </div>
           
-          {/* Messages */}
+          {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-slate-50 scrollbar-hide">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -83,10 +99,10 @@ export default function AIChatbot() {
                            p: ({ node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
                            ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-1.5" />,
                            li: ({ node, ...props }) => <li {...props} className="pl-1" />,
-                           strong: ({ node, ...props }) => <strong {...props} className="font-bold text-black" />
+                           // 🔴 TÔ ĐỎ VÀ IN ĐẬM TẤT CẢ CÁC ĐOẠN CHỮ QUAN TRỌNG (ĐẶC BIỆT LÀ GIÁ TIỀN)
+                           strong: ({ node, ...props }) => <strong {...props} className="font-bold text-red-600" />
                          }}
                        >
-                         {/* Gọi hàm bùa chú ở đây để lọc nội dung trước khi render */}
                          {formatAIResponse(m.text)}
                        </ReactMarkdown>
                     </div>
@@ -108,15 +124,32 @@ export default function AIChatbot() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Quick Replies (Thẻ bấm nhanh) */}
+          <div className="bg-white px-3 pt-3 pb-1 border-t border-slate-100 shrink-0">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+              {QUICK_REPLIES.map((reply, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(reply)}
+                  disabled={loading}
+                  className="whitespace-nowrap px-3.5 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-[13px] font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50"
+                >
+                  {reply}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Input Area */}
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
-            className="p-3.5 border-t border-slate-100 bg-white shrink-0 flex gap-2.5 items-center"
+            className="p-3 bg-white shrink-0 flex gap-2.5 items-center pb-safe"
           >
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              className="flex-1 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[15px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
+              // 🟢 text-[16px] là CHÌA KHÓA để iPhone không bị nhảy/Zoom màn hình khi bấm vào ô nhập liệu
+              className="flex-1 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[16px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
               placeholder="Nhập câu hỏi..." 
             />
             <button 
