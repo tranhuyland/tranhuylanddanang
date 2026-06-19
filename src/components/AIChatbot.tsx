@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, Loader2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown from "react-markdown"; 
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,29 +41,30 @@ export default function AIChatbot() {
       {!isOpen ? (
         <button 
           onClick={() => setIsOpen(true)} 
-          className="w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-all active:scale-95"
+          className="w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
           <Bot className="w-7 h-7" />
         </button>
       ) : (
-        <div className="bg-white w-[90vw] max-w-[350px] h-[500px] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        // Khóa cứng chiều rộng và chiều cao tại đây
+        <div className="bg-white w-[320px] h-[500px] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
           <div className="bg-slate-900 p-3 text-white flex items-center justify-between shrink-0">
-            <span className="font-bold text-xs uppercase tracking-wider text-amber-400">Trợ lý Trần Huy Land</span>
+            <span className="font-bold text-xs uppercase text-amber-400">Trợ lý Trần Huy Land</span>
             <button onClick={() => setIsOpen(false)} className="hover:bg-slate-700 p-1 rounded-full">
               <X className="w-4 h-4" />
             </button>
           </div>
           
           {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs bg-slate-50">
+          <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs bg-slate-50 scrollbar-hide">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`p-3 rounded-2xl max-w-[85%] shadow-sm ${m.role === "user" ? "bg-amber-500 text-black font-semibold" : "bg-white text-slate-800 border"}`}>
+                <div className={`p-3 rounded-xl max-w-[90%] shadow-sm ${m.role === "user" ? "bg-amber-500 text-black font-semibold" : "bg-white text-slate-800 border border-slate-200"}`}>
                   {m.role === "ai" ? (
-                    <ReactMarkdown className="prose prose-sm max-w-none prose-p:my-1 prose-a:text-blue-600 prose-strong:text-slate-900">
-                      {m.text}
-                    </ReactMarkdown>
+                    <div className="prose prose-xs max-w-none">
+                       <ReactMarkdown>{m.text}</ReactMarkdown>
+                    </div>
                   ) : (
                     m.text
                   )}
@@ -72,7 +73,7 @@ export default function AIChatbot() {
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white p-3 rounded-2xl border border-slate-200 flex items-center gap-2">
+                <div className="bg-white p-2 rounded-xl border border-slate-200">
                   <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
                 </div>
               </div>
@@ -80,20 +81,21 @@ export default function AIChatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
+          {/* Input Area - Cố định */}
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
-            className="p-3 border-t border-slate-100 bg-white shrink-0 flex gap-2 items-center"
+            className="p-2 border-t border-slate-100 bg-white shrink-0 flex gap-2 items-center"
           >
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              className="flex-1 border border-slate-200 rounded-full px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500" 
+              className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500" 
               placeholder="Gõ yêu cầu..." 
             />
             <button 
               type="submit" 
-              className="bg-slate-900 text-white p-2.5 rounded-full hover:bg-slate-800 transition-colors"
+              disabled={loading}
+              className="bg-slate-900 text-white p-2 rounded-lg hover:bg-slate-800"
             >
               <Send className="w-4 h-4" />
             </button>
