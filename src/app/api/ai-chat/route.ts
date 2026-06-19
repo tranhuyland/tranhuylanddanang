@@ -1,50 +1,45 @@
 import { NextResponse } from 'next/server';
 import { getBdsData } from '@/lib/googleSheets';
 
+// Ép Vercel cho phép chạy tối đa thời gian (tránh bị cắt cầu dao giữa chừng)
 export const maxDuration = 30; 
 
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     
-    // Khóa chuẩn của anh
-    const apiKey = "AQ.Ab8RN6K_lw86orz9bSapagozzM2gxSEcbJPA-YU-8cxzAM0HjQ"; 
+    // Khai báo Key AI
+    const apiKey = process.env.GEMINI_API_KEY; 
+    
+    if (!apiKey) {
+      return NextResponse.json({ reply: "🚨 BÁO LỖI: Hệ thống Vercel chưa nhận được biến môi trường GEMINI_API_KEY. Anh Huy vui lòng kiểm tra lại tab Settings > Environment Variables và bấm Redeploy nhé!" });
+    }
 
     const allBds = await getBdsData();
 
-    const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
+    // CHỈ LẤY 15 CĂN ĐẦU TIÊN để AI đọc siêu nhanh, chống lỗi Timeout 10s của Vercel
+    const simplifiedBds = allBds.slice(0, 15).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
       khuVuc: item.khuVucFull || item.diaChi || "",
       link: `/nha-dat/${item.slug}`
     }));
 
-    const systemPrompt = `Bạn là trợ lý ảo của sàn bất động sản Trần Huy Land tại Đà Nẵng. 
-    Dữ liệu 10 căn mới nhất: ${JSON.stringify(simplifiedBds)}. 
-    Nhiệm vụ của bạn:
-    1. Trả lời khách hàng thật thân thiện, chuyên nghiệp và ngắn gọn.
-    2. Nếu khách hỏi tìm nhà, hãy đối chiếu với dữ liệu, gợi ý tối đa 3 căn phù hợp nhất.
-    3. BẮT BUỘC cung cấp kèm đường dẫn (link) của căn nhà đó để khách bấm vào xem chi tiết.`;
+    const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land. Dữ liệu: ${JSON.stringify(simplifiedBds)}. Hãy trả lời ngắn gọn, thân thiện và luôn kèm link sản phẩm.`;
 
-    // 💡 ĐIỂM QUYẾT ĐỊNH: Đổi tên model thành gemini-2.5-flash chuẩn với tài khoản của anh
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
+    // 💡 ĐÃ SỬA: Cập nhật thành model gemini-2.5-flash siêu thông minh của Google
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
-      cache: 'no-store',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey 
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        contents: [{ 
-          parts: [{ text: `${systemPrompt}\n\nKhách hỏi: ${message}` }] 
-        }] 
+        contents: [{ parts: [{ text: `${systemPrompt}\n\nKhách hỏi: ${message}` }] }] 
       })
     });
 
     const data = await response.json();
 
+    // Nếu Google Gemini từ chối, in thẳng lỗi ra màn hình
     if (data.error) {
-      console.error("Lỗi từ Google Gemini:", data.error);
       return NextResponse.json({ reply: `🚨 LỖI TỪ GOOGLE AI: ${data.error.message}` });
     }
 
@@ -52,7 +47,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ reply });
 
   } catch (err: any) {
-    console.error("Lỗi server Chatbot:", err);
+    // Nếu sập mạng hoặc lỗi Server, in thẳng lỗi ra màn hình
     return NextResponse.json({ reply: `🚨 LỖI HỆ THỐNG MẠNG: ${err.message}` });
   }
 }
