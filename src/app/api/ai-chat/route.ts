@@ -7,12 +7,8 @@ export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     
-    // CHỈ DÁN MÃ SK-... VÀO TRONG DẤU NGOẶC KÉP NÀY THÔI NHÉ
-    const openAiKey = "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"; 
-
-    if (!openAiKey || openAiKey.includes("xxxxx")) {
-        return NextResponse.json({ reply: "🚨 Anh Huy chưa dán đúng mã API Key OpenAI vào code ạ!" });
-    }
+    // Dán mã gsk_... của anh vào đây
+    const groqKey = "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"; 
 
     const allBds = await getBdsData();
     const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
@@ -25,14 +21,15 @@ export async function POST(req: Request) {
     Hãy trả lời thân thiện. Mỗi nhà liệt kê trên 1 dòng mới với dấu (-). 
     Định dạng link: [Xem chi tiết](link).`;
 
-    const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+    // 💡 GỌI API GROQ (Sử dụng model Llama 3)
+    const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAiKey}` 
+        'Authorization': `Bearer ${groqKey}` 
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "llama3-8b-8192", 
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
@@ -43,7 +40,7 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (data.error) {
-      return NextResponse.json({ reply: `🚨 LỖI OPENAI: ${data.error.message}` });
+      return NextResponse.json({ reply: `🚨 LỖI GROQ: ${data.error.message}` });
     }
 
     const reply = data.choices[0].message.content;
