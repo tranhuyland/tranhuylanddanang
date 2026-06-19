@@ -17,17 +17,18 @@ const formatAIResponse = (text: string) => {
   let formatted = text.replace(/<br\s*\/?>/gi, '\n\n'); 
   formatted = formatted.replace(/<a\s+href=['"]([^'"]+)['"][^>]*>(.*?)<\/a>/gi, '[$2]($1)'); 
   
-  // 1. Tô đỏ và in đậm giá tiền
-  formatted = formatted.replace(/(\d+(?:[.,]\d+)?\s*(?:tỷ|ty|triệu|trieu|tr\/tháng))/gi, '**$1**');
-  formatted = formatted.replace(/\*\*\*\*/g, '**'); 
-
-  // 2. Tự động đánh số thứ tự và BÔI ĐEN chữ "Bán nhà", "Bán đất" ở đầu dòng
+  // 1. Tự động đánh số thứ tự và BÔI ĐEN chữ "Bán nhà", "Bán đất" ở đầu dòng
   let counter = 1;
   formatted = formatted.replace(/^[ \t]*(?:[-*]\s*|\d+\.\s*)?(bán nhà|bán đất)/gim, (match, p1) => {
     // Viết hoa chữ cái đầu cho chuẩn form: Bán nhà / Bán đất
     const capitalized = p1.charAt(0).toUpperCase() + p1.slice(1).toLowerCase();
+    // Đổi thành danh sách có số 1. 2. 3.
     return `${counter++}. **${capitalized}**`;
   });
+
+  // 2. Dùng thẻ in nghiêng (_) của Markdown để làm "bùa chú" tô đỏ giá tiền
+  formatted = formatted.replace(/(\d+(?:[.,]\d+)?\s*(?:tỷ|ty|triệu|trieu|tr\/tháng))/gi, '_$1_');
+  formatted = formatted.replace(/\*\*\*\*/g, '**'); 
   
   return formatted;
 };
@@ -40,9 +41,7 @@ export default function AIChatbot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Cảm biến nhận diện trạng thái Bàn phím
   const [isFocused, setIsFocused] = useState(false);
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,9 +106,14 @@ export default function AIChatbot() {
                          components={{
                            a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline break-all" />,
                            p: ({ node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
-                           ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-1.5" />,
+                           ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-2" />,
+                           // Định dạng danh sách số (1. 2. 3.) cho kết quả tìm kiếm
+                           ol: ({ node, ...props }) => <ol {...props} className="pl-[18px] mb-3 list-decimal space-y-3 marker:font-bold marker:text-slate-900" />,
                            li: ({ node, ...props }) => <li {...props} className="pl-1" />,
-                           strong: ({ node, ...props }) => <strong {...props} className="font-bold text-red-600" />
+                           // Bán nhà / Bán đất -> In đậm màu đen
+                           strong: ({ node, ...props }) => <strong {...props} className="font-bold text-slate-900" />,
+                           // Giá tiền -> Ép thành màu đỏ in đậm
+                           em: ({ node, ...props }) => <em {...props} className="font-bold text-red-600 not-italic" />
                          }}
                        >
                          {formatAIResponse(m.text)}
@@ -149,8 +153,12 @@ export default function AIChatbot() {
             </div>
           </div>
 
-          {/* 🟢 KHU VỰC GÕ CHỮ - Đã đổi thành thẻ <div> và TẮT Autocomplete */}
-          <div 
+          {/* 🟢 KHU VỰC GÕ CHỮ - Sử dụng Form để giấu thanh Xong (Done) của iOS */}
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend(input);
+            }}
             style={{ paddingBottom: isFocused ? '0.75rem' : 'calc(0.75rem + env(safe-area-inset-bottom))' }}
             className="px-3 pt-2 bg-white shrink-0 flex gap-2.5 items-center border-t border-slate-100 transition-all duration-200"
           >
@@ -159,30 +167,22 @@ export default function AIChatbot() {
               onChange={(e) => setInput(e.target.value)} 
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSend(input);
-                }
-              }}
-              // ⛔ Tắt hoàn toàn gợi ý Địa chỉ, Mật khẩu, Thẻ tín dụng
+              // ⛔ Bùa chú loại bỏ thanh Toolbar iOS và gợi ý
+              enterKeyHint="send"
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
-              name="ai_chat_query"
-              id="ai_chat_query"
-              data-form-type="other"
               className="flex-1 min-w-0 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[16px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
               placeholder="Nhập câu hỏi..." 
             />
             <button 
-              onClick={() => handleSend(input)} 
+              type="submit"
               disabled={loading || !input.trim()}
               className="bg-slate-900 text-amber-400 p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shrink-0"
             >
               <Send className="w-5 h-5" />
             </button>
-          </div>
+          </form>
 
         </div>
       )}
