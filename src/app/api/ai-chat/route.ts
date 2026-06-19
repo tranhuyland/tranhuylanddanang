@@ -24,7 +24,18 @@ export async function POST(req: Request) {
       link: `/nha-dat/${item.slug}`
     }));
 
-    const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land. Dữ liệu: ${JSON.stringify(simplifiedBds)}. Hãy trả lời ngắn gọn, thân thiện và luôn kèm link sản phẩm.`;
+        const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land. Dữ liệu: ${JSON.stringify(simplifiedBds)}. 
+    Nhiệm vụ của bạn:
+    1. Trả lời thân thiện, chuyên nghiệp.
+    2. Nếu tìm nhà, hãy gợi ý tối đa 3 căn phù hợp nhất.
+    3. ĐỊNH DẠNG TRẢ LỜI: 
+       - Mỗi căn nhà hiển thị trên 1 dòng riêng biệt.
+       - Dùng dấu gạch đầu dòng (-) cho mỗi căn.
+       - Cung cấp link sản phẩm ở cuối mỗi căn.
+    Ví dụ:
+    - [Tên nhà]: Giá [Giá] [Link]
+    - [Tên nhà]: Giá [Giá] [Link]`;
+
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
