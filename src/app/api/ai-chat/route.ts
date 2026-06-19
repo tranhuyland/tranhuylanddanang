@@ -12,39 +12,36 @@ export async function POST(req: Request) {
     const simplifiedBds = allBds.slice(0, 15).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
-      link: `/nha-dat/${item.slug}`
+      link: `https://tranhuyland.vn/nha-dat/${item.slug}`
     }));
 
-    // Cập nhật systemPrompt đã tối ưu để hiển thị Link bấm được
-    const systemPrompt = `Bạn là trợ lý AI chuyên nghiệp của Trần Huy Land. 
-    Dữ liệu sản phẩm: ${JSON.stringify(simplifiedBds)}. 
-    
-    YÊU CẦU ĐỊNH DẠNG:
-    - Trả lời thân thiện.
-    - Mỗi bất động sản trình bày trên 1 dòng mới với dấu (-).
-    - Cấu trúc mỗi dòng: "- [Tên nhà] - Giá: [Giá]. Link: [Xem chi tiết](https://tranhuyland.vn[link])"`;
+    // 💡 SỬA SYSTEM PROMPT: Dùng ký tự xuống dòng rõ ràng hơn
+    const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land.
+    Dữ liệu: ${JSON.stringify(simplifiedBds)}.
+    Nhiệm vụ: Trả lời thân thiện.
+    YÊU CẦU BẮT BUỘC:
+    1. Mỗi bất động sản PHẢI bắt đầu bằng ký tự xuống dòng kép để tách biệt.
+    2. Định dạng: "- Tên nhà | Giá: [Giá] | Bấm tại đây: [Xem chi tiết]([link])"
+    3. Không được viết dính liền các căn nhà với nhau.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey 
-      },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({ 
         contents: [{ parts: [{ text: `${systemPrompt}\n\nKhách hỏi: ${message}` }] }] 
       })
     });
 
     const data = await response.json();
+    let reply = data.candidates[0].content.parts[0].text;
 
-    if (data.error) {
-      return NextResponse.json({ reply: `🚨 LỖI: ${data.error.message}` });
-    }
+    // 💡 GIẢI PHÁP MẠNH: Nếu giao diện vẫn chưa xuống dòng, 
+    // ta dùng lệnh thay thế thủ công dấu gạch ngang bằng ký tự xuống dòng xuống phía trước
+    reply = reply.replace(/-/g, '\n\n-'); 
 
-    const reply = data.candidates[0].content.parts[0].text;
     return NextResponse.json({ reply });
 
   } catch (err: any) {
-    return NextResponse.json({ reply: `🚨 LỖI HỆ THỐNG: ${err.message}` });
+    return NextResponse.json({ reply: `🚨 LỖI: ${err.message}` });
   }
 }
