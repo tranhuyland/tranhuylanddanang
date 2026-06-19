@@ -5,10 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
-  Heart, ImageIcon, BedDouble, Bath, Clock, Share2
+  Heart, ImageIcon, BedDouble, Bath, Clock, Share2,
+  Map as MapIcon, List // Bổ sung icon cho công tắc
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
+import MapView from "./MapView"; // Tích hợp Component Bản đồ
 
 // ==========================================
 // 1. CẤU HÌNH & KIỂU DỮ LIỆU
@@ -34,7 +36,6 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 TỐI ƯU HIỂN THỊ THỜI GIAN
 const parseDateInfo = (dateStr: string) => {
   if (!dateStr) return { fullDate: "Hôm nay", time: "", relative: "hôm nay" };
 
@@ -69,7 +70,6 @@ const parseDateInfo = (dateStr: string) => {
   }
 };
 
-// 🔥 BỘ LỌC ĐỘC QUYỀN: TÁCH BẠCH ĐẤT VÀ NHÀ
 const parsePropertyTags = (item: any) => {
   const rawTitleTag = `${item.tieude || ""} ${item.tag || ""} ${item.loaiHinh || item.phân_loại || ""}`.toLowerCase();
   
@@ -82,12 +82,8 @@ const parsePropertyTags = (item: any) => {
   let isChoThue = fullText.includes(" cho thue ");
   let isCanHo = fullText.includes(" can ho ") || fullText.includes(" chung cu ") || fullText.includes(" apartment ");
   
-  // NÂNG CẤP: Chặn thêm các từ khóa "cách MT", "gần MT"
   const isMatTienFake = fullText.includes(" cach mat tien ") || fullText.includes(" sau lung ") || fullText.includes(" gan mat tien ") || fullText.includes(" cach mt ") || fullText.includes(" gan mt ");
-  
   const hasDat = rawTitleTag.includes("đất") || fullText.includes(" dat ") || fullText.includes(" lo dat ") || fullText.includes(" ban dat ");
-
-  // NÂNG CẤP: Nhận diện cả "mat tien" và "mt"
   const isMatTienReal = (fullText.includes(" mat tien ") || fullText.includes(" mt ")) && !isMatTienFake;
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false;
@@ -164,7 +160,6 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// 🔥 GIẢI MÃ GIÁ TIỀN THÔNG MINH CHO BỘ LỌC (Fix lỗi "3,350 tỷ" bị hiểu thành 3350)
 const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
   if (soGiaRaw && !isNaN(Number(soGiaRaw))) {
     const so = Number(soGiaRaw);
@@ -173,9 +168,8 @@ const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
   if (!giaRaw || typeof giaRaw !== 'string') return 0;
   
   let giaStr = giaRaw.toLowerCase().replace(/x/g, '0');
-  giaStr = giaStr.replace(/,/g, '.'); // Chuyển dấu phẩy thành chấm (3,350 -> 3.350)
+  giaStr = giaStr.replace(/,/g, '.'); 
   
-  // Bắt "3.350 tỷ" hoặc "3 tỷ 350"
   const tyMatch = giaStr.match(/([\d.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
   if (tyMatch) {
     let ty = parseFloat(tyMatch[1]);
@@ -190,53 +184,37 @@ const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
     return ty;
   }
   
-  // Bắt "800 triệu"
   const trieuMatch = giaStr.match(/([\d.]+)\s*(?:triệu|trieu)/);
-  if (trieuMatch) {
-    return parseFloat(trieuMatch[1]) / 1000;
-  }
+  if (trieuMatch) return parseFloat(trieuMatch[1]) / 1000;
   
-  // Bắt số thô
   const numMatch = giaStr.match(/([\d.]+)/);
   if (numMatch) {
      const num = parseFloat(numMatch[1]);
-     return num >= 100 ? num / 1000 : num; // Ví dụ nhập "3350" thì web hiểu là 3.35 tỷ
+     return num >= 100 ? num / 1000 : num; 
   }
   return 0;
 };
 
-// 🔥 HÀM BÓC TÁCH PHÒNG NGỦ VÀ WC ĐÃ ĐƯỢC FIX TRIỆT ĐỂ BẰNG NEGATIVE LOOKAHEAD
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
   const allStringValues = Object.values(item).filter(val => typeof val === 'string').join(" ");
-  
   const textWithoutHtml = allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' '); 
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
   if (!pn) {
-    // Regex 1: Số nằm trước chữ (VD: 3 pn, 3 phòng ngủ). Dùng (?![a-z]) để CHẮC CHẮN chặn chữ "nguyen" ngay sau đó.
     const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
-    // Regex 2: Chữ nằm trước số (VD: pn: 3, phòng ngủ 3)
     const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
-    
-    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) {
-      pn = parseInt(matchPhong1[1]).toString();
-    } else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) {
-      pn = parseInt(matchPhong2[1]).toString();
-    }
+    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) pn = parseInt(matchPhong1[1]).toString();
+    else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) pn = parseInt(matchPhong2[1]).toString();
   }
 
   if (!wc) {
     const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
     const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
-    
-    if (matchWC1 && parseInt(matchWC1[1]) > 0) {
-      wc = parseInt(matchWC1[1]).toString();
-    } else if (matchWC2 && parseInt(matchWC2[1]) > 0) {
-      wc = parseInt(matchWC2[1]).toString();
-    }
+    if (matchWC1 && parseInt(matchWC1[1]) > 0) wc = parseInt(matchWC1[1]).toString();
+    else if (matchWC2 && parseInt(matchWC2[1]) > 0) wc = parseInt(matchWC2[1]).toString();
   }
 
   return { pn, wc };
@@ -258,6 +236,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
+  // 🧭 CÔNG TẮC GIAO DIỆN: 'list' (Danh sách) hoặc 'map' (Bản đồ)
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   const itemsPerPage = 10;
   const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
@@ -379,11 +360,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       result = result.filter(i => parsePropertyTags(i).primaryTab === activeLoaiHinh);
     }
     
-    // 🔥 BỘ LỌC GIÁ TIỀN ĐÃ FIX LỖI THÔNG MINH
     if (filters.khoangGia !== "all") {
       result = result.filter(i => {
         const giaTy = extractPriceInBillion(i.gia, i.soGia);
-        // giaTy > 0 để lọc bỏ những căn "Thỏa thuận" khỏi mục "Dưới 3 tỷ"
         if (filters.khoangGia === "duoi3") return giaTy > 0 && giaTy < 3.0;
         if (filters.khoangGia === "3to5") return giaTy >= 3.0 && giaTy <= 5.0;
         return giaTy > 5.0;
@@ -514,52 +493,91 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       </section>
 
       <main id="listing-section" className="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 scroll-mt-28 min-h-[80vh]">
-        {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => {
-               const bdsId = item.id?.toString() || item.slug;
-               return (
-                 <BdsCard 
-                   key={bdsId} 
-                   item={item} 
-                   rank={(currentPage - 1) * itemsPerPage + index + 1} 
-                   isFavorite={favoriteIds.includes(bdsId)}
-                   onToggleFavorite={(e: React.MouseEvent) => toggleFavorite(bdsId, e)}
-                 />
-               );
-            })}
+        
+        {/* 🗺️ THANH ĐIỀU HƯỚNG KẾT QUẢ VÀ CÔNG TẮC GIAO DIỆN */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <h2 className="text-lg md:text-xl font-bold text-slate-800">
+            Tìm thấy <span className="text-orange-500">{filteredItems.length}</span> bất động sản phù hợp
+          </h2>
+          
+          <div className="bg-white p-1 rounded-xl border border-slate-200 inline-flex shadow-sm">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                viewMode === "list" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <List className="w-4 h-4" /> Danh sách
+            </button>
+            <button
+              onClick={() => setViewMode("map")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                viewMode === "map" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <MapIcon className="w-4 h-4" /> Bản đồ
+            </button>
           </div>
+        </div>
+
+        {/* KHU VỰC HIỂN THỊ CHÍNH (Được điều khiển bởi Công tắc) */}
+        {filteredItems.length > 0 ? (
+          viewMode === "list" ? (
+            <>
+              {/* CHẾ ĐỘ DANH SÁCH (LIST VIEW) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-300">
+                {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => {
+                   const bdsId = item.id?.toString() || item.slug;
+                   return (
+                     <BdsCard 
+                       key={bdsId} 
+                       item={item} 
+                       rank={(currentPage - 1) * itemsPerPage + index + 1} 
+                       isFavorite={favoriteIds.includes(bdsId)}
+                       onToggleFavorite={(e: React.MouseEvent) => toggleFavorite(bdsId, e)}
+                     />
+                   );
+                })}
+              </div>
+              
+              {/* PHÂN TRANG */}
+              {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
+                <div className="flex justify-center flex-wrap gap-2 mt-16">
+                  {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => { 
+                        setCurrentPage(idx + 1); 
+                        setTimeout(() => {
+                          const section = document.getElementById("listing-section");
+                          if (section) {
+                            const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
+                            window.scrollTo({ top: topPosition, behavior: 'smooth' });
+                          }
+                        }, 10);
+                      }}
+                      className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                        currentPage === idx + 1 ? "bg-orange-500 text-white shadow-md" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300"
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            /* CHẾ ĐỘ BẢN ĐỒ (MAP VIEW) */
+            <div className="animate-in fade-in zoom-in-95 duration-500 rounded-[2rem] overflow-hidden border-2 border-slate-200 shadow-xl w-full">
+              <MapView bdsList={filteredItems} />
+            </div>
+          )
         ) : (
           <div className="text-center py-24 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-bold text-lg">
               {showFavorites ? "Anh chưa lưu tin yêu thích nào" : "Không tìm thấy sản phẩm phù hợp"}
             </p>
             <p className="text-sm text-slate-400 mt-2">Hãy thử thay đổi điều kiện tìm kiếm hoặc xem lại từ khóa nhé.</p>
-          </div>
-        )}
-        
-        {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
-          <div className="flex justify-center flex-wrap gap-2 mt-16">
-            {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
-              <button 
-                key={idx} 
-                onClick={() => { 
-                  setCurrentPage(idx + 1); 
-                  setTimeout(() => {
-                    const section = document.getElementById("listing-section");
-                    if (section) {
-                      const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
-                      window.scrollTo({ top: topPosition, behavior: 'smooth' });
-                    }
-                  }, 10);
-                }}
-                className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                  currentPage === idx + 1 ? "bg-orange-500 text-white shadow-md" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300"
-                }`}
-              >
-                {idx + 1}
-              </button>
-            ))}
           </div>
         )}
       </main>
@@ -581,7 +599,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
-  // 🔥 Hàm Xử lý chức năng Chia sẻ mượt mà
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
