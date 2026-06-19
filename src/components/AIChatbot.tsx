@@ -73,7 +73,8 @@ export default function AIChatbot() {
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)} 
-          className="fixed bottom-6 right-4 sm:right-6 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
+          // 🌟 NÚT AI CHATBOT NẰM Ở GÓC PHẢI, TRÊN NÚT SCROLL TO TOP
+          className="fixed right-4 bottom-[140px] md:right-6 md:bottom-[160px] z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
           <Bot className="w-7 h-7" />
         </button>
