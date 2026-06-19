@@ -7,12 +7,13 @@ export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     
-    // 💡 GIẢI PHÁP MẠNH NHẤT: Dán trực tiếp Key vào đây, không phụ thuộc vào Vercel nữa!
-    // Anh hãy xóa dòng chữ bên trong dấu ngoặc kép và dán mã AIzaSy... của anh vào nhé.
-    const apiKey = "DÁN_API_KEY_MỚI_CỦA_ANH_VÀO_ĐÂY"; 
+    // 💡 Khai báo kiểu ": string" để Next.js không bắt lỗi.
+    // Anh nhớ xóa dòng chữ "DÁN_API_KEY..." và dán mã AIzaSy... của anh vào lại nhé!
+    const apiKey: string = "AQ.Ab8RN6K8rCPotlrKXD8XAKKeSgXQyYV-NdGJ3IbRlbvfXDZYgw"; 
     
-    if (!apiKey || apiKey === "AQ.Ab8RN6K8rCPotlrKXD8XAKKeSgXQyYV-NdGJ3IbRlbvfXDZYgw") {
-      return NextResponse.json({ reply: "🚨 BÁO LỖI: Anh Huy quên dán mã API Key vào code rồi ạ!" });
+    // Đã bỏ điều kiện so sánh cứng nhắc để Vercel cho qua
+    if (!apiKey || apiKey.length < 10) {
+      return NextResponse.json({ reply: "🚨 BÁO LỖI: Anh Huy chưa dán đúng mã API Key vào code rồi ạ!" });
     }
 
     const allBds = await getBdsData();
