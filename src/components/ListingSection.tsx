@@ -411,7 +411,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     `}
                   >
                     <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">{tab.label}</span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-500" : "text-slate-400"}`}>({currentCount})</span>
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-500" : "text-slate-500"}`}>({currentCount})</span>
                     {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
                 );
@@ -426,7 +426,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold flex items-center gap-1.5">
                   <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
                 </span>
-                <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-400'}`}>
+                <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-500'}`}>
                   ({isClient ? favoriteIds.length : 0})
                 </span>
                 {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
@@ -474,7 +474,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               />
 
               <div className="hidden md:flex items-center justify-between border-t border-slate-100 pt-6 mt-6">
-                <div className="text-xs text-slate-400 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
+                <div className="text-xs text-slate-500 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
                 <div className="flex items-center gap-3">
                   {activeFiltersCount > 0 && (
                     <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50">
@@ -657,9 +657,10 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
 
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
-          <h3 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
+          {/* Đã sửa H3 thành H2 cho liền mạch thứ tự tiêu đề */}
+          <h2 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
             {item.tieude}
-          </h3>
+          </h2>
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item.gia || "Thỏa thuận"}</span>
             {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
@@ -681,6 +682,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
+            {/* Tăng độ đậm màu từ slate-400 lên slate-600 để pass bài test tương phản */}
             <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
               {dateInfo.relative}
             </span>
