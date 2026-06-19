@@ -1,8 +1,7 @@
-// src/components/ScrollToTop.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowUp } from 'lucide-react'; // Hoặc thư viện icon anh đang dùng
+import { ArrowUp } from 'lucide-react'; 
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
@@ -31,11 +30,10 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      // Đã thay đổi p-3 thành p-2 để nút nhỏ hơn
-      className="fixed right-4 bottom-24 p-2 bg-orange-500 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 z-50"
+      // 🌟 ĐỊNH VỊ CHÍNH XÁC: Góc phải, cách đáy 80px (bottom-20) 
+      className="fixed right-4 bottom-20 md:right-6 md:bottom-24 p-2 bg-orange-500 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 z-40"
       aria-label="Trở lên trên"
     >
-      {/* Đã thay đổi size={24} thành size={20} */}
       <ArrowUp size={20} />
     </button>
   );
