@@ -1,22 +1,23 @@
-import type { Metadata, Viewport } from "next"; // 🚀 Import thêm Viewport để tối ưu tải trang trên Mobile
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop"; 
+import AIChatbot from "@/components/AIChatbot"; // 🤖 Import Chatbot
 
 // 🌟 Khởi tạo Font chữ siêu tốc độ
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["vietnamese"],
   weight: ["400", "500", "600", "700", "800"],
-  display: "swap", // 🚀 BÙA CHÚ 1: Hiện chữ ngay lập tức, khắc phục lỗi "Yêu cầu chặn hiển thị"
+  display: "swap",
   variable: "--font-plus-jakarta",
-  preload: true, // 🚀 Ưu tiên tải font này trước tiên
+  preload: true,
 });
 
-// 🚀 BÙA CHÚ 2: Khai báo Viewport chuẩn để không bị cảnh báo "Tối ưu hóa DOM"
+// 🚀 BÙA CHÚ 2: Khai báo Viewport chuẩn
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1, // Ngăn chặn zoom ngoài ý muốn
+  maximumScale: 1,
   themeColor: "#ffffff",
 };
 
@@ -32,9 +33,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={plusJakartaSans.variable}>
-      {/* 💡 Bổ sung suppressHydrationWarning để tránh lỗi chớp nháy giao diện khi kết hợp các tiện ích */}
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         {children}
+        <AIChatbot /> {/* 🤖 Nhúng Chatbot vào đây để xuất hiện toàn trang */}
         <ScrollToTop />
       </body>
     </html>
