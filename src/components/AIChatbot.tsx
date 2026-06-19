@@ -57,19 +57,21 @@ export default function AIChatbot() {
   };
 
   return (
-    // 🟢 SỬA LỖI TRÀN KHUNG: Dùng inset-0 để mở Full màn hình chuẩn trên Mobile, tự động né thanh địa chỉ
-    <div className={`fixed z-[9999] transition-all duration-300 ${!isOpen ? "bottom-6 right-4 sm:right-6" : "inset-0 sm:inset-auto sm:bottom-6 sm:right-6"}`}>
-      
-      {!isOpen ? (
+    <>
+      {/* Nút bấm tròn mở Chatbot */}
+      {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)} 
-          className="w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
+          className="fixed bottom-6 right-4 sm:right-6 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
           <Bot className="w-7 h-7" />
         </button>
-      ) : (
-        // Khung Chatbot chính
-        <div className="bg-white w-full h-full sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+      )}
+
+      {/* 🟢 KHUNG CHAT - TÁCH RỜI HOÀN TOÀN ĐỂ CHỐNG LỖI BÀN PHÍM */}
+      {isOpen && (
+        <div className="fixed top-0 left-0 z-[10000] w-full h-[100dvh] sm:top-auto sm:left-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] bg-white sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+          
           {/* Header */}
           <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0 safe-top">
             <div className="flex items-center gap-2.5">
@@ -87,12 +89,12 @@ export default function AIChatbot() {
           <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-slate-50 scrollbar-hide">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                {/* 🟢 SỬA LỖI TRÀN NGANG: Thêm break-words và overflow-wrap-anywhere để bẻ gãy các đường link quá dài */}
                 <div className={`p-3.5 max-w-[90%] shadow-sm text-[15px] leading-relaxed break-words [overflow-wrap:anywhere] ${m.role === "user" ? "bg-amber-500 text-slate-950 font-medium rounded-2xl rounded-tr-sm" : "bg-white text-slate-900 border border-slate-200 rounded-2xl rounded-tl-sm"}`}>
                   {m.role === "ai" ? (
                     <div className="prose prose-sm max-w-none">
                        <ReactMarkdown
                          components={{
+                           // Bẻ gãy các đường link dài để không tràn ngang
                            a: ({ node, ...props }) => (
                              <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline break-all" />
                            ),
@@ -131,7 +133,7 @@ export default function AIChatbot() {
                   key={i}
                   onClick={() => handleSend(reply)}
                   disabled={loading}
-                  className="whitespace-nowrap px-3.5 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-[13px] font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50"
+                  className="whitespace-nowrap px-3.5 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-[13px] font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50 shrink-0"
                 >
                   {reply}
                 </button>
@@ -142,24 +144,26 @@ export default function AIChatbot() {
           {/* Input Area */}
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
-            className="p-3 bg-white shrink-0 flex gap-2.5 items-center pb-safe"
+            className="px-3 pt-2 bg-white shrink-0 flex gap-2.5 items-center border-t border-slate-100"
+            style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }} // Né vạch đen đáy iPhone
           >
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              className="flex-1 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[16px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
+              className="flex-1 min-w-0 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[16px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
               placeholder="Nhập câu hỏi..." 
             />
             <button 
               type="submit" 
               disabled={loading || !input.trim()}
-              className="bg-slate-900 text-amber-400 p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+              className="bg-slate-900 text-amber-400 p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shrink-0"
             >
               <Send className="w-5 h-5" />
             </button>
           </form>
+
         </div>
       )}
-    </div>
+    </>
   );
 }
