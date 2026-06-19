@@ -28,6 +28,10 @@ export default function AIChatbot() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // 🟢 MỚI: Bộ cảm biến theo dõi trạng thái Bàn phím (Đóng / Mở)
+  const [isFocused, setIsFocused] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,13 +70,11 @@ export default function AIChatbot() {
         </button>
       )}
 
-      {/* 🟢 KHUNG CHAT ĐƯỢC THIẾT KẾ LẠI ĐỂ CHỐNG LỖI BÀN PHÍM IPHONE */}
       {isOpen && (
-        // Dùng `fixed inset-0` trên mobile: neo chặt 4 góc màn hình, tự động co giãn khớp 100% khi bàn phím trồi lên
         <div className="fixed inset-0 z-[10000] bg-white flex flex-col sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
           
           {/* Header */}
-          <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0">
+          <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0 safe-top">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center shadow-sm">
                 <Bot className="w-5 h-5" />
@@ -84,7 +86,7 @@ export default function AIChatbot() {
             </button>
           </div>
           
-          {/* Messages Area (Cuộn tự do) */}
+          {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-slate-50 scrollbar-hide overscroll-contain">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -121,7 +123,7 @@ export default function AIChatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Replies (Thẻ bấm nhanh) */}
+          {/* Quick Replies */}
           <div className="bg-white px-3 pt-3 pb-1 border-t border-slate-100 shrink-0">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
               {QUICK_REPLIES.map((reply, i) => (
@@ -137,16 +139,19 @@ export default function AIChatbot() {
             </div>
           </div>
 
-          {/* Input Area (Khối gõ chữ) */}
+          {/* 🟢 KHU VỰC GÕ CHỮ - ĐÃ XỬ LÝ LỖI KHOẢNG TRỐNG BÀN PHÍM */}
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
-            // pb-safe chống đè lên thanh ngang vuốt thoát app của iPhone
-            className="p-3 bg-white shrink-0 flex gap-2.5 items-center border-t border-slate-100 pb-[env(safe-area-inset-bottom,12px)]"
+            // Nếu isFocused = true (bàn phím mở) -> Xóa đệm Safe Area. Nếu đóng -> Trả lại đệm.
+            style={{ paddingBottom: isFocused ? '0.75rem' : 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+            className="px-3 pt-2 bg-white shrink-0 flex gap-2.5 items-center border-t border-slate-100 transition-all duration-200"
           >
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              // 🔴 text-[16px] là lệnh BẮT BUỘC để trình duyệt KHÔNG ĐƯỢC TỰ ZOOM màn hình khi bấm gõ phím
+              // Cảm biến nhận diện trạng thái bàn phím
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               className="flex-1 min-w-0 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[16px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
               placeholder="Nhập câu hỏi..." 
             />
