@@ -27,7 +27,7 @@ export default function RelatedProducts({ currentItem, allItems }: RelatedProduc
            <h2 className="text-xl font-extrabold text-slate-800">
              Cùng khu vực {currentItem.khuVuc}
            </h2>
-           <p className="text-sm text-slate-400 mt-1">Các bất động sản có thể bạn quan tâm</p>
+           <p className="text-sm text-slate-500 mt-1">Các bất động sản có thể bạn quan tâm</p>
         </div>
         <Link href="/" className="text-orange-600 text-sm font-bold flex items-center gap-1 hover:text-orange-700 transition-colors bg-orange-50 px-3 py-1.5 rounded-full">
           Xem thêm <ChevronRight size={14} />
@@ -63,7 +63,7 @@ export default function RelatedProducts({ currentItem, allItems }: RelatedProduc
               
               {/* Thông tin Chi tiết gọn gàng */}
               <div className="p-3">
-                <div className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center justify-between group-hover:text-orange-500 transition-colors">
+                <div className="text-slate-500 text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center justify-between group-hover:text-orange-500 transition-colors">
                   <span className="flex items-center gap-1 truncate">
                     <MapPin size={12} className="text-orange-500 shrink-0" />
                     <span className="truncate">{item.khuVuc || "Đà Nẵng"}</span>
@@ -71,9 +71,10 @@ export default function RelatedProducts({ currentItem, allItems }: RelatedProduc
                   {item.dienTich && <span className="shrink-0 text-slate-500">{item.dienTich}</span>}
                 </div>
                 
-                <h3 className="text-slate-800 font-bold text-[13px] line-clamp-2 group-hover:text-orange-600 transition-colors leading-snug h-[2.8em]">
+                {/* Đã chuyển thành thẻ H2 chuẩn theo SEO phân cấp thứ tự */}
+                <h2 className="text-slate-800 font-bold text-[13px] line-clamp-2 group-hover:text-orange-600 transition-colors leading-snug h-[2.8em]">
                   {item.tieude}
-                </h3>
+                </h2>
               </div>
             </Link>
           );
