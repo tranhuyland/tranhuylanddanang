@@ -14,6 +14,7 @@ export async function POST(req: Request) {
 
     const allBds = await getBdsData();
 
+    // Dữ liệu đã được làm siêu nhẹ (chỉ 10 căn) nên sẽ không bao giờ làm Google bị ngộp nữa
     const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
@@ -28,8 +29,8 @@ export async function POST(req: Request) {
     2. Nếu khách hỏi tìm nhà, hãy đối chiếu với dữ liệu, gợi ý tối đa 3 căn phù hợp nhất.
     3. BẮT BUỘC cung cấp kèm đường dẫn (link) của căn nhà đó để khách bấm vào xem chi tiết.`;
 
-    // 💡 ĐÃ SỬA CHỮA: Dùng "gemini-pro" - Phiên bản ổn định 100% cho mọi API Key
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    // 💡 SỬ DỤNG MODEL CHUẨN MỚI NHẤT: gemini-1.5-flash
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
