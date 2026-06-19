@@ -23,8 +23,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-slate-950 text-slate-400 text-xs mt-auto border-t border-slate-900">
-      {/* Nâng cấp grid thành 4 cột trên máy tính, 2 cột trên ipad */}
-      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         
         {/* CỘT 1: THƯƠNG HIỆU */}
         <div>
@@ -39,32 +38,35 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* CỘT 2: KHU VỰC TRỌNG ĐIỂM */}
-        <div>
-          <h4 className="text-white font-bold text-sm uppercase mb-5">ĐỊA BÀN KHẢO SÁT</h4>
-          <ul className="space-y-3 text-sm">
-            {topLocations.map((loc) => (
-              <li key={loc.slug}>
-                <Link href={`/vi-tri/${loc.slug}`} className="flex items-center gap-2 hover:text-orange-500 hover:translate-x-1 transition-all duration-300">
-                  <ChevronRight className="w-4 h-4 text-orange-500" /> Nhà đất {loc.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* CỘT 2 & 3: KHU VỰC VÀ PHÂN KHÚC (GỘP CHUNG VÀO 1 LƯỚI ĐỂ NẰM NGANG TRÊN MOBILE) */}
+        <div className="grid grid-cols-2 gap-4 lg:col-span-2">
+          {/* Cột con: ĐỊA BÀN KHẢO SÁT */}
+          <div>
+            <h4 className="text-white font-bold text-sm uppercase mb-5">ĐỊA BÀN KHẢO SÁT</h4>
+            <ul className="space-y-3 text-sm">
+              {topLocations.map((loc) => (
+                <li key={loc.slug}>
+                  <Link href={`/vi-tri/${loc.slug}`} className="flex items-center gap-1.5 hover:text-orange-500 hover:translate-x-1 transition-all duration-300">
+                    <ChevronRight className="w-4 h-4 text-orange-500 shrink-0" /> <span className="truncate">Nhà đất {loc.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        {/* CỘT 3: LOẠI HÌNH (MỚI) */}
-        <div>
-          <h4 className="text-white font-bold text-sm uppercase mb-5">PHÂN KHÚC SẢN PHẨM</h4>
-          <ul className="space-y-3 text-sm">
-            {topTypes.map((type) => (
-              <li key={type.slug}>
-                <Link href={`/loai-hinh/${type.slug}`} className="flex items-center gap-2 hover:text-orange-500 hover:translate-x-1 transition-all duration-300">
-                  <ChevronRight className="w-4 h-4 text-orange-500" /> {type.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {/* Cột con: PHÂN KHÚC SẢN PHẨM */}
+          <div>
+            <h4 className="text-white font-bold text-sm uppercase mb-5">PHÂN KHÚC</h4>
+            <ul className="space-y-3 text-sm">
+              {topTypes.map((type) => (
+                <li key={type.slug}>
+                  <Link href={`/loai-hinh/${type.slug}`} className="flex items-center gap-1.5 hover:text-orange-500 hover:translate-x-1 transition-all duration-300">
+                    <ChevronRight className="w-4 h-4 text-orange-500 shrink-0" /> <span className="truncate">{type.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* CỘT 4: THÔNG TIN VĂN PHÒNG */}
