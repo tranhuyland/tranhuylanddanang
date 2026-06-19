@@ -413,7 +413,7 @@ export default function DangTinPage() {
               </button>
             </div>
             
-            <div className="h-[250px] w-full rounded-xl overflow-hidden border border-slate-300 shadow-inner mb-3 relative z-0">
+            <div className="h-[400px] w-full rounded-2xl overflow-hidden border border-slate-300 shadow-inner mb-3 relative z-0">
               <LocationPickerMap 
                 key={mapMountKey} // Trick ép bản đồ render lại để nhảy đúng mục tiêu
                 toaDo={formData.toaDo} 
