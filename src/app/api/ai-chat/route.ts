@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { message } = await req.json();
     
     // API Key của anh đã được dán vào đây
-    const apiKey = "AQ.Ab8RN6K_lw86orz9bSapagozzM2gxSEcbJPA-YU-8cxzAM0HjQ"; 
+    const apiKey = "AQ.Ab8RN6KMjUZOb_6cNtHTVjFnspxlBm50pibepd5Q9CRmy-RxEg"; 
 
     if (!apiKey) {
       return NextResponse.json({ reply: "🚨 BÁO LỖI: Anh Huy chưa dán mã API Key vào code!" });
