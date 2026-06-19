@@ -6,15 +6,17 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
-    const apiKey = process.env.GEMINI_API_KEY; 
     
-    if (!apiKey) {
-      return NextResponse.json({ reply: "🚨 BÁO LỖI: Vercel chưa nhận được GEMINI_API_KEY. Vui lòng cấu hình lại." });
+    // 💡 GIẢI PHÁP MẠNH NHẤT: Dán trực tiếp Key vào đây, không phụ thuộc vào Vercel nữa!
+    // Anh hãy xóa dòng chữ bên trong dấu ngoặc kép và dán mã AIzaSy... của anh vào nhé.
+    const apiKey = "DÁN_API_KEY_MỚI_CỦA_ANH_VÀO_ĐÂY"; 
+    
+    if (!apiKey || apiKey === "AQ.Ab8RN6K8rCPotlrKXD8XAKKeSgXQyYV-NdGJ3IbRlbvfXDZYgw") {
+      return NextResponse.json({ reply: "🚨 BÁO LỖI: Anh Huy quên dán mã API Key vào code rồi ạ!" });
     }
 
     const allBds = await getBdsData();
 
-    // Dữ liệu đã được làm siêu nhẹ (chỉ 10 căn) nên sẽ không bao giờ làm Google bị ngộp nữa
     const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
@@ -29,7 +31,6 @@ export async function POST(req: Request) {
     2. Nếu khách hỏi tìm nhà, hãy đối chiếu với dữ liệu, gợi ý tối đa 3 căn phù hợp nhất.
     3. BẮT BUỘC cung cấp kèm đường dẫn (link) của căn nhà đó để khách bấm vào xem chi tiết.`;
 
-    // 💡 SỬ DỤNG MODEL CHUẨN MỚI NHẤT: gemini-1.5-flash
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
