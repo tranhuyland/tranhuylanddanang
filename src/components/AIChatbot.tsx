@@ -12,7 +12,6 @@ export default function AIChatbot() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Tự động cuộn xuống dưới cùng
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [messages, isOpen, loading]);
 
@@ -47,35 +46,37 @@ export default function AIChatbot() {
           <Bot className="w-7 h-7" />
         </button>
       ) : (
-        <div className="bg-white w-[320px] sm:w-[350px] h-[500px] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        <div className="bg-white w-[340px] sm:w-[380px] h-[520px] rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
-          <div className="bg-slate-900 p-3 text-white flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center shadow-sm">
+          <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center shadow-sm">
                 <Bot className="w-5 h-5" />
               </div>
               <span className="font-bold text-sm text-amber-400 uppercase tracking-wider">Trợ lý Trần Huy Land</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="hover:bg-slate-700 p-1.5 rounded-full transition-colors">
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
           
           {/* Messages */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 text-sm bg-slate-50 scrollbar-hide">
+          <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-slate-50 scrollbar-hide">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`p-3 max-w-[85%] shadow-sm ${m.role === "user" ? "bg-amber-500 text-black font-semibold rounded-2xl rounded-tr-sm" : "bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-sm"}`}>
+                <div className={`p-3.5 max-w-[88%] shadow-sm text-[15px] leading-relaxed ${m.role === "user" ? "bg-amber-500 text-slate-950 font-medium rounded-2xl rounded-tr-sm" : "bg-white text-slate-900 border border-slate-200 rounded-2xl rounded-tl-sm"}`}>
                   {m.role === "ai" ? (
                     <div className="prose prose-sm max-w-none">
                        <ReactMarkdown
                          components={{
-                           // Cấu hình để thẻ link mở ra tab Zalo mới mượt mà
                            a: ({ node, ...props }) => (
                              <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline" />
                            ),
-                           p: ({ node, ...props }) => <p {...props} className="mb-1 last:mb-0" />,
-                           ul: ({ node, ...props }) => <ul {...props} className="pl-4 mb-1 list-disc" />,
+                           // Tăng khoảng cách đoạn văn
+                           p: ({ node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
+                           // Tăng khoảng cách danh sách và thụt lề rõ ràng
+                           ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-1.5" />,
+                           li: ({ node, ...props }) => <li {...props} className="pl-1" />,
                            strong: ({ node, ...props }) => <strong {...props} className="font-bold text-black" />
                          }}
                        >
@@ -89,12 +90,11 @@ export default function AIChatbot() {
               </div>
             ))}
             
-            {/* Hiệu ứng loading thân thiện */}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white p-3 rounded-2xl rounded-tl-sm border border-slate-200 flex items-center gap-2 shadow-sm">
+                <div className="bg-white p-3.5 rounded-2xl rounded-tl-sm border border-slate-200 flex items-center gap-2.5 shadow-sm">
                   <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-                  <span className="text-xs text-slate-500 font-medium tracking-wide">Đang suy nghĩ...</span>
+                  <span className="text-[14px] text-slate-600 font-medium tracking-wide">Đang suy nghĩ...</span>
                 </div>
               </div>
             )}
@@ -104,20 +104,20 @@ export default function AIChatbot() {
           {/* Input Area */}
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
-            className="p-3 border-t border-slate-100 bg-white shrink-0 flex gap-2 items-center"
+            className="p-3.5 border-t border-slate-100 bg-white shrink-0 flex gap-2.5 items-center"
           >
             <input 
               value={input} 
               onChange={(e) => setInput(e.target.value)} 
-              className="flex-1 border border-slate-200 bg-slate-50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
-              placeholder="Nhập câu hỏi của anh/chị..." 
+              className="flex-1 border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 text-[15px] focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all" 
+              placeholder="Nhập câu hỏi..." 
             />
             <button 
               type="submit" 
               disabled={loading || !input.trim()}
-              className="bg-slate-900 text-amber-400 p-2.5 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+              className="bg-slate-900 text-amber-400 p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </button>
           </form>
         </div>
