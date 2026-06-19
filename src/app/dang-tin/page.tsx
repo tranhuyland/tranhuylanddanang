@@ -198,9 +198,38 @@ export default function DangTinPage() {
     setFormData(prev => ({ ...prev, duong, linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap) }));
   };
 
-  const handleKhuVucChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  // 🚀 ĐÃ CẬP NHẬT: Tự động dò bản đồ ngay khi chọn Phường
+  const handleKhuVucChange = async (e: ChangeEvent<HTMLSelectElement>) => {
     const khuVuc = e.target.value;
     setFormData(prev => ({ ...prev, khuVuc, linkMap: updateMapLink(prev.soNha, prev.duong, khuVuc, prev.linkMap) }));
+
+    if (!khuVuc) return;
+
+    setIsSearchingLoc(true);
+    try {
+      // Tìm theo Đường + Phường (nếu đã nhập đường trước đó)
+      const query = formData.duong ? `${formData.duong}, ${khuVuc}, Đà Nẵng` : `${khuVuc}, Đà Nẵng`;
+      let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+      let data = await res.json();
+      
+      // Nếu không tìm ra, lùi lại chỉ tìm theo tên Phường
+      if (!data || data.length === 0) {
+        res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(khuVuc + ', Đà Nẵng')}&limit=1`);
+        data = await res.json();
+      }
+
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        // Cập nhật tọa độ và ép bản đồ nhảy ngay lập tức
+        setFormData(prev => ({ ...prev, toaDo: `${lat.toFixed(6)}, ${lon.toFixed(6)}` }));
+        setMapMountKey(Date.now());
+      }
+    } catch (err) {
+      console.error("Lỗi tự động dò phường:", err);
+    } finally {
+      setIsSearchingLoc(false);
+    }
   };
 
   // 🔍 HÀM DÒ TÌM TỌA ĐỘ BẰNG OPENSTREETMAP API (Miễn phí)
