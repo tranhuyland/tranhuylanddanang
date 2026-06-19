@@ -15,14 +15,10 @@ export async function POST(req: Request) {
       link: `https://tranhuyland.vn/nha-dat/${item.slug}`
     }));
 
-    // 💡 SỬA SYSTEM PROMPT: Dùng ký tự xuống dòng rõ ràng hơn
-    const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land.
-    Dữ liệu: ${JSON.stringify(simplifiedBds)}.
-    Nhiệm vụ: Trả lời thân thiện.
-    YÊU CẦU BẮT BUỘC:
-    1. Mỗi bất động sản PHẢI bắt đầu bằng ký tự xuống dòng kép để tách biệt.
-    2. Định dạng: "- Tên nhà | Giá: [Giá] | Bấm tại đây: [Xem chi tiết]([link])"
-    3. Không được viết dính liền các căn nhà với nhau.`;
+    const systemPrompt = `Bạn là trợ lý AI của Trần Huy Land. 
+    Dữ liệu: ${JSON.stringify(simplifiedBds)}. 
+    Nhiệm vụ: Trả lời thân thiện. 
+    YÊU CẦU: Mỗi nhà trên 1 dòng mới với dấu (-), link dạng: [Xem chi tiết](link).`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent`, {
       method: 'POST',
@@ -33,15 +29,24 @@ export async function POST(req: Request) {
     });
 
     const data = await response.json();
-    let reply = data.candidates[0].content.parts[0].text;
 
-    // 💡 GIẢI PHÁP MẠNH: Nếu giao diện vẫn chưa xuống dòng, 
-    // ta dùng lệnh thay thế thủ công dấu gạch ngang bằng ký tự xuống dòng xuống phía trước
-    reply = reply.replace(/-/g, '\n\n-'); 
+    // 💡 SỬA LỖI: Kiểm tra kỹ trước khi truy cập 'candidates'
+    if (data.error) {
+      return NextResponse.json({ reply: `🚨 LỖI GOOGLE: ${data.error.message}` });
+    }
 
-    return NextResponse.json({ reply });
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      return NextResponse.json({ reply: "🚨 LỖI: AI không trả về phản hồi hợp lệ. Có thể tài khoản đang bị giới hạn hoặc lỗi Project." });
+    }
+
+    const reply = data.candidates[0].content.parts[0].text;
+    
+    // Ép kiểu xuống dòng cho đẹp
+    const formattedReply = reply.replace(/-/g, '\n-');
+
+    return NextResponse.json({ reply: formattedReply });
 
   } catch (err: any) {
-    return NextResponse.json({ reply: `🚨 LỖI: ${err.message}` });
+    return NextResponse.json({ reply: `🚨 LỖI HỆ THỐNG: ${err.message}` });
   }
 }
