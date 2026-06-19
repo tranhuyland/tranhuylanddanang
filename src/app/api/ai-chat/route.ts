@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getBdsData } from '@/lib/googleSheets';
 
+// 💡 Ép Vercel cho phép chạy tối đa thời gian 30s (tránh bị cắt cầu dao 10s mặc định)
+export const maxDuration = 30; 
+
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     const allBds = await getBdsData();
 
     // 💡 GIẢI PHÁP CHỐNG QUÁ TẢI TỐI ĐA: 
-    // 1. Chỉ lấy 50 căn mới nhất (dùng .slice(0, 50)) để API Google không bị ngộp
+    // 1. Chỉ lấy 10 căn mới nhất (dùng .slice(0, 10)) để API Google không bị ngộp
     // 2. Tinh gọn dữ liệu truyền vào
-    const simplifiedBds = allBds.slice(0, 50).map((item: any) => ({
+    const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
       dienTich: item.dienTich || "",
@@ -19,7 +22,7 @@ export async function POST(req: Request) {
 
     // Huấn luyện AI với dữ liệu siêu nhẹ
     const systemPrompt = `Bạn là trợ lý ảo của sàn bất động sản Trần Huy Land tại Đà Nẵng. 
-    Dữ liệu 50 căn mới nhất: ${JSON.stringify(simplifiedBds)}. 
+    Dữ liệu 10 căn mới nhất: ${JSON.stringify(simplifiedBds)}. 
     Nhiệm vụ của bạn:
     1. Trả lời khách hàng thật thân thiện, chuyên nghiệp và ngắn gọn.
     2. Nếu khách hỏi tìm nhà, hãy đối chiếu với dữ liệu, gợi ý tối đa 3 căn phù hợp nhất.
@@ -30,7 +33,7 @@ export async function POST(req: Request) {
     
     if (!apiKey) {
       console.error("LỖI: Chưa có GEMINI_API_KEY");
-      return NextResponse.json({ reply: "Dạ xin lỗi, hệ thống AI đang bảo trì do thiếu mã khóa. Anh/chị liên hệ Zalo số 0905 77 88 52 để em hỗ trợ trực tiếp nhé!" });
+      return NextResponse.json({ reply: "🚨 BÁO LỖI: Hệ thống Vercel chưa nhận được biến môi trường GEMINI_API_KEY. Anh Huy vui lòng kiểm tra lại tab Settings > Environment Variables và bấm Redeploy nhé!" });
     }
 
     // Gọi API của Google Gemini
@@ -48,14 +51,14 @@ export async function POST(req: Request) {
 
     if (data.error) {
       console.error("Lỗi từ Google Gemini:", data.error);
-      return NextResponse.json({ reply: "Dạ xin lỗi, hệ thống AI đang quá tải lượt hỏi. Anh/chị liên hệ Zalo số 0905 77 88 52 nhé!" });
+      return NextResponse.json({ reply: `🚨 LỖI TỪ GOOGLE AI: ${data.error.message}` });
     }
 
     const reply = data.candidates[0].content.parts[0].text;
     return NextResponse.json({ reply });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Lỗi server Chatbot:", err);
-    return NextResponse.json({ reply: "Dạ xin lỗi, đường truyền mạng đang bị gián đoạn. Anh/chị liên hệ Zalo 0905 77 88 52 giúp em nhé!" });
+    return NextResponse.json({ reply: `🚨 LỖI HỆ THỐNG MẠNG: ${err.message}` });
   }
 }
