@@ -14,7 +14,11 @@
     "react-dom": "^19.0.0",
     "lucide-react": "^0.460.0",
     "swiper": "^11.1.4",
-    "react-markdown": "^9.0.0"
+    "react-markdown": "^9.0.0",
+  // ... các thư viện cũ của anh đang có ở đây, anh giữ nguyên, thêm dấu phẩy ở dòng cuối rồi dán 3 dòng này vào:
+  "leaflet": "^1.9.4",
+  "react-leaflet": "^4.2.1",
+  "leaflet-defaulticon-compatibility": "^0.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
