@@ -1,20 +1,18 @@
 'use client';
 import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, MessageSquareText } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
-    { role: "ai", text: "Xin chào! Em là trợ lý ảo của Trần Huy Land. Anh/chị đang tìm nhà khu vực nào ạ?" }
+    { role: "ai", text: "Xin chào! Em là trợ lý ảo của **Trần Huy Land**. \n\nAnh/chị đang tìm nhà khu vực nào ạ? \n- Hải Châu \n- Cẩm Lệ \n- Sơn Trà" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Tự động cuộn xuống dưới cùng khi có tin nhắn mới
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [messages]);
 
   const handleSend = async (text: string) => {
@@ -31,7 +29,7 @@ export default function AIChatbot() {
       const data = await res.json();
       setMessages(prev => [...prev, { role: "ai", text: data.reply }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: "ai", text: "Anh Huy đang bận, anh/chị nhắn Zalo 0905778852 giúp em nhé!" }]);
+      setMessages(prev => [...prev, { role: "ai", text: "Anh Huy đang bận, anh/chị nhắn Zalo [0905778852](https://zalo.me/84905778852) giúp em nhé!" }]);
     } finally { setLoading(false); }
   };
 
@@ -42,7 +40,7 @@ export default function AIChatbot() {
           <MessageSquareText className="w-7 h-7 text-amber-400" />
         </button>
       ) : (
-        <div className="bg-white w-[90vw] sm:w-80 h-[450px] rounded-2xl shadow-2xl border flex flex-col overflow-hidden animate-in slide-in-from-bottom-10">
+        <div className="bg-white w-[90vw] sm:w-80 h-[500px] rounded-2xl shadow-2xl border flex flex-col overflow-hidden animate-in slide-in-from-bottom-10">
           <div className="bg-slate-900 p-4 text-white flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-xs"><Bot className="text-amber-400" /> TRỢ LÝ TRẦN HUY LAND</div>
             <button onClick={() => setIsOpen(false)}><X className="w-4 h-4" /></button>
@@ -51,27 +49,18 @@ export default function AIChatbot() {
           <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs">
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div 
-  className={`p-2.5 rounded-xl ${m.role === "user" ? "bg-amber-500 text-black font-semibold" : "bg-slate-100"}`}
-  dangerouslySetInnerHTML={{ 
-    __html: m.role === "ai" 
-      ? m.text
-          .replace(/\n/g, '<br/>') // Xuống dòng
-          .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:blue; text-decoration:underline;">$1</a>') // Biến thành link
-      : m.text 
-  }}
-/>
-
+                <div className={`p-3 rounded-2xl max-w-[85%] ${m.role === "user" ? "bg-amber-500 text-black font-semibold" : "bg-slate-100 text-slate-800"}`}>
+                  {m.role === "ai" ? (
+                    <ReactMarkdown className="prose prose-sm max-w-none prose-p:my-1 prose-a:text-blue-600 prose-strong:text-amber-700">
+                      {m.text}
+                    </ReactMarkdown>
+                  ) : (
+                    m.text
+                  )}
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
-          </div>
-
-          {/* Gợi ý nhanh */}
-          <div className="flex gap-2 p-2 px-3 overflow-x-auto no-scrollbar">
-            {["Nhà dưới 3 tỷ", "Đất nền", "Hải Châu"].map(tag => (
-              <button key={tag} onClick={() => handleSend(tag)} className="bg-slate-100 text-[10px] px-2 py-1 rounded-full whitespace-nowrap hover:bg-amber-100">{tag}</button>
-            ))}
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); handleSend(input); setInput(""); }} className="p-2 border-t flex gap-1.5">
