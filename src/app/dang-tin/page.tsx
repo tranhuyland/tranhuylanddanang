@@ -1,7 +1,14 @@
 'use client';
 import React, { useState, ChangeEvent, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
 
-// 🚨 CẤU HÌNH THÔNG SỐ: Giữ nguyên thông số hệ thống của anh Huy
+// 🗺️ Tải Bản đồ động để tránh lỗi SSR của Next.js
+const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full flex items-center justify-center bg-slate-100 text-slate-500 rounded-xl animate-pulse">Đang tải bản đồ định vị...</div>
+});
+
+// 🚨 CẤU HÌNH THÔNG SỐ
 const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzrb1ocMD9pZYe8JN14hSxhYG1KOHPb_ruX3hJtpUzKYn270qsKbjisU0Ea40DaGh3vww/exec';
 const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
 const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland';
@@ -11,7 +18,7 @@ const INITIAL_FORM_STATE = {
   tieude: '',
   gia: '',
   dienTich: '',
-  soNha: '', // 💡 TRƯỜNG SỐ NHÀ
+  soNha: '',
   duong: '', 
   khuVuc: '', 
   huong: '',
@@ -19,6 +26,7 @@ const INITIAL_FORM_STATE = {
   anh: '', 
   anhSoDo: '', 
   linkMap: '', 
+  toaDo: '', // 📍 Bổ sung trường Tọa Độ
   moTa: '', 
   tag: 'all',
   isMatTien: false,
@@ -28,12 +36,10 @@ const INITIAL_FORM_STATE = {
 export default function DangTinPage() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-  // Trạng thái tải ảnh thực tế
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedImagesPreview, setSelectedImagesPreview] = useState<string[]>([]);
   
-  // Trạng thái tải ảnh sổ đỏ
   const [uploadingSoDo, setUploadingSoDo] = useState(false);
   const [uploadProgressSoDo, setUploadProgressSoDo] = useState(0);
   const [soDoImagesPreview, setSoDoImagesPreview] = useState<string[]>([]);
@@ -41,7 +47,6 @@ export default function DangTinPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
 
-  // 🛠️ HÀM TỐI ƯU DÙNG CHUNG: Tải loạt ảnh lên Cloudinary & Giải phóng bộ nhớ RAM
   const uploadImagesToCloudinary = async (
     files: FileList | null,
     setUploadStatus: (status: boolean) => void,
@@ -109,9 +114,7 @@ export default function DangTinPage() {
     );
   };
 
-  // 🗺️ HÀM TỰ TẠO LINK GOOGLE MAPS THEO CẤU TRÚC MỚI (Số nhà + Tên đường)
   const updateMapLink = (soNha: string, duong: string, phuong: string, currentLink: string) => {
-    // Bỏ qua nếu người dùng đã nhập tay link và link đó không chứa định dạng sinh tự động
     if (currentLink && !currentLink.includes('maps.google.com/?q=')) {
       return currentLink;
     }
@@ -122,12 +125,10 @@ export default function DangTinPage() {
     return currentLink;
   };
 
-  // 🤖 HÀM TỰ ĐỘNG QUÉT VÀ BÓC TÁCH DỮ LIỆU THÔNG MINH
   const handleAutoScanDescription = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     let newFormData = { ...formData, moTa: text };
 
-    // 1. Quét Giá
     const priceMatch2 = text.match(/(\d+)\s*tỷ\s*(\d+)/i);
     const priceMatch1 = text.match(/(\d+)(?:\s*[.,]\s*([\dxX]+))?\s*(tỷ|triệu)/i); 
     
@@ -137,27 +138,16 @@ export default function DangTinPage() {
       let num1 = priceMatch1[1];
       let num2 = priceMatch1[2];
       let unit = priceMatch1[3].toLowerCase();
-      
-      if (num2) {
-        newFormData.gia = `${num1},${num2.toLowerCase()} ${unit}`;
-      } else {
-        newFormData.gia = `${num1} ${unit}`;
-      }
+      newFormData.gia = num2 ? `${num1},${num2.toLowerCase()} ${unit}` : `${num1} ${unit}`;
     }
 
-    // 2. Quét Diện Tích
     const areaMatch = text.match(/(\d+)(?:\s*[.,]\s*(\d+))?\s*(?:m2|m²)/i);
     if (areaMatch) {
       let num1 = areaMatch[1];
       let num2 = areaMatch[2];
-      if (num2) {
-        newFormData.dienTich = `${num1},${num2} m2`;
-      } else {
-        newFormData.dienTich = `${num1} m2`;
-      }
+      newFormData.dienTich = num2 ? `${num1},${num2} m2` : `${num1} m2`;
     }
 
-    // 3. Quét Phường / Xã 
     const wards = ['Hải Châu', 'Hòa Cường', 'Thanh Khê', 'An Khê', 'An Hải', 'Sơn Trà', 'Ngũ Hành Sơn', 'Hòa Khánh', 'Hải Vân', 'Liên Chiểu', 'Cẩm Lệ', 'Hòa Xuân', 'Hòa Vang', 'Bà Nà', 'Hòa Tiến', 'Hòa Phước', 'Hòa Bắc', 'Hòa Liên', 'Hòa Ninh'];
     const normalizeVN = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const normalizedText = normalizeVN(text);
@@ -167,7 +157,6 @@ export default function DangTinPage() {
       newFormData.khuVuc = foundWard;
     }
 
-    // 4. Quét Số nhà & Tên Đường
     const streetMatch = text.match(/(k|kiệt|mt|mặt tiền|đường)\s*(\d+[\d\/a-zA-Z]*)?\s+([^,\n\-]+?)(?=\s+phường|\s+quận|,|-|\n|$)/i);
     if (streetMatch) {
       const prefix = streetMatch[1].toLowerCase(); 
@@ -175,17 +164,13 @@ export default function DangTinPage() {
       const streetName = streetMatch[3].trim(); 
 
       newFormData.duong = streetName;
-      // Sửa lỗi: Chỉ lấy phần số, không thêm chữ 'k'
       newFormData.soNha = num ? num.trim() : '';
-
       if (prefix === 'mt' || prefix === 'mặt tiền') {
         newFormData.isMatTien = true; 
       }
     }
 
-    // 🔥 5. Quét Hướng (ĐÃ NÂNG CẤP)
     const directions = ['Đông Nam', 'Đông Bắc', 'Tây Nam', 'Tây Bắc', 'Đông', 'Tây', 'Nam', 'Bắc'];
-    // Dọn dẹp sạch sẽ các ký tự gây nhiễu (*, _, ngoặc) trước khi quét
     const cleanTextForDir = text.replace(/[*_()]/g, ' '); 
     const directionMatch = cleanTextForDir.match(/hướng.*?(đông\s*nam|đông\s*bắc|tây\s*nam|tây\s*bắc|đông|tây|nam|bắc)/i);
     
@@ -195,9 +180,7 @@ export default function DangTinPage() {
       if (dir) newFormData.huong = dir;
     }
 
-    // 6. Tự động sinh Link Google Maps từ Số Nhà + Đường + Phường
     newFormData.linkMap = updateMapLink(newFormData.soNha, newFormData.duong, newFormData.khuVuc, newFormData.linkMap);
-
     setFormData(newFormData);
   };
 
@@ -270,7 +253,6 @@ export default function DangTinPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Ô MÔ TẢ ĐƯA LÊN TRÊN ĐỂ DÁN VÀO QUÉT TRƯỚC */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1 text-amber-600">Mô tả chi tiết (Dán vào đây để tự động quét thông tin)</label>
             <textarea required rows={5} value={formData.moTa} onChange={handleAutoScanDescription} placeholder="Dán thông tin mô tả chi tiết tại đây. Hệ thống sẽ tự động tìm Giá, Diện tích, Số Nhà, Tên Đường, Vị trí..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line shadow-inner" />
@@ -344,6 +326,33 @@ export default function DangTinPage() {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Đường dẫn Google Maps</label>
             <input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Hệ thống sẽ tự tạo link nếu có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 text-blue-600" />
+          </div>
+
+          {/* 🗺️ KHU VỰC BẢN ĐỒ THẢ GHIM TỌA ĐỘ */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div className="flex justify-between items-end mb-3">
+              <label className="block text-xs font-bold text-slate-700 uppercase ml-1">
+                📍 Định vị Tọa độ Bản đồ <span className="text-orange-500">(Mới)</span>
+              </label>
+              <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded">
+                Click hoặc Kéo ghim
+              </span>
+            </div>
+            
+            <div className="h-[250px] w-full rounded-xl overflow-hidden border border-slate-300 shadow-inner mb-3 relative z-0">
+              <LocationPickerMap 
+                toaDo={formData.toaDo} 
+                onLocationSelect={(pos) => setFormData({ ...formData, toaDo: `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}` })} 
+              />
+            </div>
+
+            <input 
+              type="text" 
+              value={formData.toaDo} 
+              onChange={(e) => setFormData({ ...formData, toaDo: e.target.value })} 
+              placeholder="16.054400, 108.202200 (Tự động điền khi ghim)" 
+              className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-semibold focus:outline-none focus:border-emerald-500 text-emerald-700 text-center" 
+            />
           </div>
 
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center">
