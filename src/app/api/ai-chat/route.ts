@@ -12,26 +12,20 @@ export async function POST(req: Request) {
     const simplifiedBds = allBds.slice(0, 10).map((item: any) => ({
       tieuDe: item.tieude || item.title || "",
       gia: item.gia || item.soGia || "Liên hệ",
-      // Đảm bảo link là đường dẫn đầy đủ
       link: `https://tranhuyland.vn/nha-dat/${item.slug}`
     }));
 
-    // 💡 SỬA SYSTEM PROMPT ĐỂ ÉP AI DÙNG MARKDOWN CHUẨN
-    const systemPrompt = `Bạn là trợ lý Trần Huy Land. 
-    Dữ liệu sản phẩm: ${JSON.stringify(simplifiedBds)}. 
-    
-    YÊU CẦU ĐỊNH DẠNG (Bắt buộc):
-    - Trả lời thân thiện.
-    - Mỗi căn nhà phải nằm trên một dòng riêng biệt, bắt đầu bằng dấu gạch đầu dòng (-).
-    - Cấu trúc: "- [Tên nhà] - Giá: [Giá]. Link: [Xem chi tiết]([link])"
-    - Tuyệt đối không để link dính liền vào văn bản, phải có khoảng cách và xuống dòng rõ ràng giữa các căn nhà.`;
+    // 💡 ÉP AI TRẢ VỀ HTML ĐỂ CÓ THỂ BẤM ĐƯỢC LINK
+    const systemPrompt = `Bạn là trợ lý Trần Huy Land. Dữ liệu: ${JSON.stringify(simplifiedBds)}.
+    YÊU CẦU:
+    1. Trả lời thân thiện.
+    2. Mỗi căn nhà trình bày trên 1 dòng.
+    3. Định dạng bắt buộc: "Tên nhà - Giá: [Giá]. <a href='[link]' target='_blank'>Xem chi tiết</a>"
+    4. Không dùng Markdown, chỉ dùng HTML cơ bản.`;
 
     const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqKey}` 
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         messages: [
@@ -42,16 +36,14 @@ export async function POST(req: Request) {
     });
 
     const data = await response.json();
+    let reply = data.choices[0].message.content;
 
-    if (data.error) {
-      return NextResponse.json({ reply: `🚨 LỖI: ${data.error.message}` });
-    }
-
-    const reply = data.choices[0].message.content;
+    // Thay thế các dòng thành thẻ <br/> để xuống dòng thật
+    reply = reply.replace(/\n/g, '<br/>');
 
     return NextResponse.json({ reply });
 
   } catch (err: any) {
-    return NextResponse.json({ reply: `🚨 LỖI HỆ THỐNG: ${err.message}` });
+    return NextResponse.json({ reply: `🚨 LỖI: ${err.message}` });
   }
 }
