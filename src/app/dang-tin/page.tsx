@@ -13,7 +13,7 @@ const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzrb1ocMD9pZY
 const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
 const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland';
 
-// 🔒 MẬT KHẨU TRUY CẬP TRANG ĐĂNG TIN (Anh có thể đổi số 123 thành mk anh muốn)
+// 🔒 MẬT KHẨU TRUY CẬP TRANG ĐĂNG TIN
 const ADMIN_PASSWORD = '123';
 
 const INITIAL_FORM_STATE = {
@@ -81,7 +81,7 @@ export default function DangTinPage() {
     }
   };
 
-  // HÀM XỬ LÝ ĐĂNG XUẤT (Khóa lại trang)
+  // HÀM XỬ LÝ ĐĂNG XUẤT
   const handleLogout = () => {
     if (window.confirm("Bạn có chắc chắn muốn khóa trang đăng tin?")) {
       localStorage.removeItem('thl_admin_auth');
@@ -385,7 +385,6 @@ export default function DangTinPage() {
     }
   };
 
-  // Màn hình chờ kiểm tra thông tin đăng nhập
   if (isCheckingAuth) {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400 font-bold">Đang kiểm tra quyền truy cập...</div>;
   }
@@ -407,11 +406,12 @@ export default function DangTinPage() {
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               placeholder="Nhập mật khẩu..." 
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center text-sm font-bold focus:outline-none focus:border-amber-500 text-slate-700"
+              // Đã đổi text-sm thành text-[16px] để chống zoom trên iPhone
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center text-[16px] font-bold focus:outline-none focus:border-amber-500 text-slate-700"
             />
             {authError && <p className="text-rose-500 text-xs font-bold">{authError}</p>}
             
-            <button type="submit" className="w-full bg-amber-500 text-slate-900 font-bold text-sm uppercase py-4 rounded-xl shadow-md hover:bg-amber-400 transition-colors">
+            <button type="submit" className="w-full bg-amber-500 text-slate-900 font-bold text-[16px] uppercase py-4 rounded-xl shadow-md hover:bg-amber-400 transition-colors">
               Mở khóa hệ thống
             </button>
           </form>
@@ -426,7 +426,6 @@ export default function DangTinPage() {
       <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-xl p-6 sm:p-8">
         
         <div className="text-center mb-8 relative">
-          {/* Nút đăng xuất góc phải */}
           <button 
             onClick={handleLogout}
             className="absolute right-0 top-0 text-[10px] font-bold bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors uppercase border border-rose-100"
@@ -447,29 +446,29 @@ export default function DangTinPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1 text-amber-600">Mô tả chi tiết (Dán vào đây để tự động quét thông tin)</label>
-            <textarea required rows={5} value={formData.moTa} onChange={handleAutoScanDescription} placeholder="Dán thông tin mô tả chi tiết tại đây. Hệ thống sẽ tự động tìm Giá, Diện tích, Số Nhà, Tên Đường, Vị trí..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line shadow-inner" />
+            <textarea required rows={5} value={formData.moTa} onChange={handleAutoScanDescription} placeholder="Dán thông tin mô tả chi tiết tại đây. Hệ thống sẽ tự động tìm Giá, Diện tích, Số Nhà, Tên Đường, Vị trí..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line shadow-inner" />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tiêu đề tin đăng</label>
-            <input required type="text" value={formData.tieude} onChange={(e) => setFormData({ ...formData, tieude: e.target.value })} placeholder="Ví dụ: Bán nhà mặt tiền Nguyễn Sinh Sắc..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+            <input required type="text" value={formData.tieude} onChange={(e) => setFormData({ ...formData, tieude: e.target.value })} placeholder="Ví dụ: Bán nhà mặt tiền Nguyễn Sinh Sắc..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Giá bán hiển thị</label>
-              <input required type="text" value={formData.gia} onChange={(e) => setFormData({ ...formData, gia: e.target.value })} placeholder="Ví dụ: 4,35 tỷ" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+              <input required type="text" value={formData.gia} onChange={(e) => setFormData({ ...formData, gia: e.target.value })} placeholder="Ví dụ: 4,35 tỷ" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Diện tích</label>
-              <input required type="text" value={formData.dienTich} onChange={(e) => setFormData({ ...formData, dienTich: e.target.value })} placeholder="Ví dụ: 100 m2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+              <input required type="text" value={formData.dienTich} onChange={(e) => setFormData({ ...formData, dienTich: e.target.value })} placeholder="Ví dụ: 100 m2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Phường / Xã vị trí</label>
-              <select required value={formData.khuVuc} onChange={handleKhuVucChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select required value={formData.khuVuc} onChange={handleKhuVucChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="">-- Chọn Vị Trí --</option>
                 <option disabled className="font-bold text-slate-400 bg-slate-100">-- Danh sách Phường --</option>
                 <option value="Hải Châu">Hải Châu</option>
@@ -496,7 +495,7 @@ export default function DangTinPage() {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Hướng bất động sản</label>
-              <select value={formData.huong} onChange={(e) => setFormData({ ...formData, huong: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
+              <select value={formData.huong} onChange={(e) => setFormData({ ...formData, huong: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="">-- Để trống hoặc Chọn --</option>
                 <option value="Đông">Đông</option><option value="Tây">Tây</option><option value="Nam">Nam</option><option value="Bắc">Bắc</option>
                 <option value="Đông Nam">Đông Nam</option><option value="Đông Bắc">Đông Bắc</option><option value="Tây Nam">Tây Nam</option><option value="Tây Bắc">Tây Bắc</option>
@@ -507,20 +506,19 @@ export default function DangTinPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Số Nhà</label>
-              <input type="text" value={formData.soNha} onChange={handleSoNhaChange} placeholder="Ví dụ: K54/2 hoặc 54" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+              <input type="text" value={formData.soNha} onChange={handleSoNhaChange} placeholder="Ví dụ: K54/2 hoặc 54" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tên Đường</label>
-              <input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+              <input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Đường dẫn Google Maps</label>
-            <input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Hệ thống sẽ tự tạo link nếu có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-amber-500 text-slate-700 text-blue-600" />
+            <input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Hệ thống sẽ tự tạo link nếu có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700 text-blue-600" />
           </div>
 
-          {/* 🗺️ KHU VỰC BẢN ĐỒ THẢ GHIM TỌA ĐỘ CÓ NÚT DÒ TÌM */}
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
             <div className="flex justify-between items-end mb-3">
               <label className="block text-xs font-bold text-slate-700 uppercase ml-1">
@@ -549,7 +547,7 @@ export default function DangTinPage() {
               value={formData.toaDo} 
               onChange={(e) => setFormData({ ...formData, toaDo: e.target.value })} 
               placeholder="16.054400, 108.202200 (Tự động điền khi ghim)" 
-              className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-semibold focus:outline-none focus:border-emerald-500 text-emerald-700 text-center" 
+              className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-[16px] font-semibold focus:outline-none focus:border-emerald-500 text-emerald-700 text-center" 
             />
           </div>
 
@@ -600,7 +598,7 @@ export default function DangTinPage() {
             <label htmlFor="isMatTien" className="text-xs font-bold text-slate-600 uppercase tracking-wide cursor-pointer select-none">Bất động sản này là mặt tiền kinh doanh</label>
           </div>
 
-          <button type="submit" disabled={loading || uploading || uploadingSoDo} className="w-full bg-slate-900 text-white font-bold text-sm uppercase py-4 rounded-xl shadow-md hover:bg-slate-800 transition-colors disabled:bg-slate-400 mt-4">
+          <button type="submit" disabled={loading || uploading || uploadingSoDo} className="w-full bg-slate-900 text-white font-bold text-[16px] uppercase py-4 rounded-xl shadow-md hover:bg-slate-800 transition-colors disabled:bg-slate-400 mt-4">
             {loading ? 'Đang gửi dữ liệu đồng bộ...' : (uploading || uploadingSoDo) ? '⏳ Đang tải ảnh lên Cloudinary...' : '🚀 Xác Nhận Đăng Tin Lên Hệ Thống'}
           </button>
         </form>
