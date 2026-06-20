@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import ScrollToTop from "@/components/ScrollToTop"; 
-import AIChatbot from "@/components/AIChatbot";
+import dynamic from "next/dynamic"; // 🔥 B1: Import thư viện tải động của Next.js
+
+// 🚀 B1: Lazy Load các component nổi (Chỉ tải khi trình duyệt đã render xong giao diện chính)
+// Điều này giúp tiết kiệm tài nguyên Server và tăng điểm tốc độ Google cực mạnh
+const AIChatbot = dynamic(() => import("@/components/AIChatbot"), { ssr: false });
+const ScrollToTop = dynamic(() => import("@/components/ScrollToTop"), { ssr: false });
 
 // 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap
 const plusJakartaSans = Plus_Jakarta_Sans({
