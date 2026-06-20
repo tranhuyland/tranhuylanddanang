@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic"; // 🚀 BÙA CHÚ 1: Import công cụ tải lười của Next.js
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
   Heart, ImageIcon, BedDouble, Bath, Clock, Share2,
@@ -10,7 +11,17 @@ import {
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
-import MapView from "./MapView"; // Tích hợp Component Bản đồ
+
+// 🚀 BÙA CHÚ 2: Ép bản đồ cực nặng chỉ được tải KHI VÀ CHỈ KHI người dùng bấm vào tab Bản Đồ
+const MapView = dynamic(() => import('./MapView'), { 
+  ssr: false,
+  loading: () => (
+    <div className="h-[60vh] w-full flex flex-col items-center justify-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-3"></div>
+      <span className="text-slate-500 font-medium text-sm">Đang tải bản đồ...</span>
+    </div>
+  )
+});
 
 // ==========================================
 // 1. CẤU HÌNH & KIỂU DỮ LIỆU
@@ -403,7 +414,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 return (
                   <button 
                     key={tab.id} 
-                    aria-label={`Lọc theo ${tab.label}`}
+                    aria-label={`Lọc theo ${tab.label}`} 
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); setShowFavorites(false); 
                       setFilters(initialFilters); setTempFilters(initialFilters); setCurrentPage(1); 
@@ -414,14 +425,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     `}
                   >
                     <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">{tab.label}</span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span>
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span> 
                     {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
                 );
               })}
 
               <button 
-                aria-label="Xem danh sách tin đã lưu"
+                aria-label="Xem danh sách tin đã lưu" 
                 onClick={handleToggleShowFavorites}
                 className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
                   ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}
@@ -544,7 +555,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                        rank={(currentPage - 1) * itemsPerPage + index + 1} 
                        isFavorite={favoriteIds.includes(bdsId)}
                        onToggleFavorite={(e: React.MouseEvent) => toggleFavorite(bdsId, e)}
-                       priority={index < 2} // 🚀 BÙA CHÚ 1: Ép tải tốc độ cao cho 2 sản phẩm đầu tiên
+                       priority={index === 0} // 🚀 BÙA CHÚ 3: Ép tải ưu tiên cho SẢN PHẨM SỐ 1
                      />
                    );
                 })}
@@ -598,7 +609,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 // ==========================================
 // 4. SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
 // ==========================================
-// 🚀 BÙA CHÚ 2: Khai báo thêm thuộc tính priority cho thẻ sản phẩm
+// 🚀 BÙA CHÚ 4: Khai báo để hàm BdsCard nhận được lệnh priority truyền từ trên xuống
 function BdsCard({ item, rank, isFavorite, onToggleFavorite, priority = false }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, priority?: boolean }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
@@ -649,7 +660,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite, priority = false }:
           fill 
           className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
           sizes="(max-width: 1280px) 100vw" 
-          priority={priority} // 🚀 BÙA CHÚ 3: Nạp tín hiệu ưu tiên tải vào ảnh gốc 
+          priority={priority} // 🚀 BÙA CHÚ 5: Gắn lệnh vào thẻ Image
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
