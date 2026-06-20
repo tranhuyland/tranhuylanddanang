@@ -1,108 +1,227 @@
 'use client';
 
-import React, { useMemo } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { MapPin, Heart, ImageIcon, BedDouble, Bath, Clock, Share2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Zoom, Keyboard } from 'swiper/modules';
 import { layUrlAnhChuan } from "@/lib/utils";
-import { parseDateInfo, parsePropertyTags, countImages, calculateGiaM2, extractRooms } from "@/lib/bdsHelpers";
+import { PlayCircle, Image as ImageIcon, Map, X, ZoomIn, ZoomOut, ExternalLink } from "lucide-react";
 
-interface BdsCardProps {
-  item: any;
-  rank?: number;
-  isFavorite: boolean;
-  onToggleFavorite: (e: React.MouseEvent) => void;
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/zoom';
+
+interface PropertyGalleryProps {
+  images: string[];
+  alt: string;
+  videoUrl?: string; 
+  linkMap?: string;  
 }
 
-export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: BdsCardProps) {
-  const thumbnail = layUrlAnhChuan(item.anh);
-  const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
-  const soLuongAnh = useMemo(() => countImages(item), [item]);
-  const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
-  const { pn, wc } = useMemo(() => extractRooms(item), [item]);
-  const tags = useMemo(() => parsePropertyTags(item), [item]);
-  const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
+export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGalleryProps) {
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
 
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    const url = `${window.location.origin}/nha-dat/${item.slug}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: item.tieude, text: 'Xem bất động sản này trên website:', url }); } catch (error) {}
-    } else {
-      navigator.clipboard.writeText(url).then(() => { alert("Đã sao chép đường dẫn chia sẻ!"); });
+  useEffect(() => {
+    const handlePopState = () => setIsLightboxOpen(false);
+    if (isLightboxOpen) {
+      window.history.pushState({ lightbox: true }, '');
+      window.addEventListener('popstate', handlePopState);
+    }
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isLightboxOpen]);
+
+  const closeLightbox = () => {
+    if (isLightboxOpen) {
+      setIsLightboxOpen(false);
+      setTimeout(() => setActiveTab('images'), 300);
+      if (window.history.state?.lightbox) window.history.back();
     }
   };
 
+  const getYoutubeEmbedUrl = (url?: string) => {
+    if (!url) return '';
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
+  };
+
+  // Logic bóc tách link bản đồ thông minh (Tránh lỗi màn hình trắng)
+  const getMapIframeSrc = (mapStr?: string) => {
+    if (!mapStr) return '';
+    if (mapStr.includes('<iframe')) {
+      const match = mapStr.match(/src=["'](.*?)["']/);
+      return match ? match[1] : '';
+    }
+    return mapStr;
+  };
+
+  const mapSrc = getMapIframeSrc(linkMap);
+  const isEmbedMap = mapSrc.includes('/embed') || (linkMap && linkMap.includes('<iframe'));
+
+  if (!images || images.length === 0) return null;
+
   return (
-    <Link href={`/nha-dat/${item.slug}`} aria-label={`Xem chi tiết: ${item.tieude}`}
-      onClick={() => { document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important'); setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300); }}
-      className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
-    >
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
-          {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
-          {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
-          {tags.isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
-          {tags.isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
-          {tags.isNhaMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Nhà Mặt Tiền</span>}
-          {tags.isNhaKiet && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Nhà Kiệt</span>}
-          {tags.isDatNen && <span className="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Nền</span>}
-          {tags.isDatMatTien && <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Mặt Tiền</span>}
-          {tags.isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
-          {tags.isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
-        </div>
-        <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
-          <ImageIcon size={12} aria-hidden="true" /><span className="text-white">{soLuongAnh}</span>
-        </div>
+    <>
+      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group z-0">
+        <Swiper
+          modules={[Navigation, Pagination, Keyboard]}
+          spaceBetween={0}
+          slidesPerView={1}
+          initialSlide={activeIndex}
+          onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+          keyboard={{ enabled: true }}
+          navigation={{ nextEl: '.nm-next', prevEl: '.nm-prev' }}
+          pagination={{ type: 'fraction', el: '.nm-fraction' }}
+          className="w-full h-full"
+        >
+          {images.map((img, idx) => (
+            <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
+              <div 
+                className="w-full h-full relative cursor-zoom-in" 
+                onClick={() => {
+                  setActiveIndex(idx);
+                  setActiveTab('images');
+                  setIsLightboxOpen(true);
+                }}
+              >
+                <Image src={layUrlAnhChuan(img)} alt={`${alt} - Hình ${idx + 1}`} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority={idx === 0} />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+        <button className="nm-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button className="nm-next absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <div className="nm-fraction absolute bottom-3 right-3 z-10 flex items-center justify-center pointer-events-none"></div>
       </div>
 
-      <div className="p-4 flex flex-col flex-grow justify-between">
-        <div>
-          <h2 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
-            {item.tieude}
-          </h2>
-          <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
-            <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item.gia || "Thỏa thuận"}</span>
-            {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
-            {giaM2 && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span></>}
-            {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
-            {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
-          </div>
-          <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-800 mb-4">
-            <MapPin size={16} className="text-green-800 shrink-0" aria-hidden="true" />
-            <span className="truncate">{displayLocation}</span>
-          </div>
-        </div>
-
-        <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
-          <div className="flex flex-col justify-center min-w-0 pr-2">
-            <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
-              <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" aria-hidden="true" />
-              <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
-            </div>
-            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
-              {dateInfo.relative}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* 🌟 ĐÃ FIX TRIỆT ĐỂ LỖI #418: Chuyển hoàn toàn button lồng nhau thành div có role="button" */}
-            <div role="button" tabIndex={0} aria-label="Chia sẻ tin này" className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 cursor-pointer" onClick={handleShare} title="Chia sẻ tin">
-              <Share2 size={15} aria-hidden="true" />
-              <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">Chia sẻ</span>
+      {isLightboxOpen && (
+        <div className="fixed inset-0 bg-black z-[99999] flex flex-col animate-fade-in">
+          <div className="relative w-full h-16 sm:h-20 flex items-center justify-between px-4 z-50 bg-black">
+            <div className="w-16 sm:w-24 text-white text-sm sm:text-base font-medium">
+              {activeTab === 'images' ? `${activeIndex + 1} / ${images.length}` : ''}
             </div>
 
-            <div role="button" tabIndex={0} aria-label={isFavorite ? "Bỏ lưu tin này" : "Lưu tin này"} className={`px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-300 hover:bg-red-50'}`}
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(e); }}
-            >
-              <Heart size={15} fill={isFavorite ? "currentColor" : "none"} aria-hidden="true" className={isFavorite ? "scale-110 transition-transform" : "transition-transform"} />
-              <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">{isFavorite ? 'Đã lưu' : 'Lưu tin'}</span>
+            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar">
+              {videoUrl && (
+                <button onClick={() => setActiveTab('video')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'video' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
+                  <PlayCircle className="w-4 h-4" /> Video
+                </button>
+              )}
+              <button onClick={() => setActiveTab('images')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'images' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
+                <ImageIcon className="w-4 h-4" /> Hình ảnh
+              </button>
+              {linkMap && (
+                <button onClick={() => setActiveTab('map')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'map' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
+                  <Map className="w-4 h-4" /> Bản đồ
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end w-16 sm:w-24 gap-1 sm:gap-2">
+              {activeTab === 'images' && (
+                <>
+                  <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-out"><ZoomOut className="w-5 h-5" /></button>
+                  <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-in"><ZoomIn className="w-5 h-5" /></button>
+                </>
+              )}
+              <button onClick={closeLightbox} className="text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer">
+                <X className="w-6 h-6" />
+              </button>
             </div>
           </div>
+
+          <div className="flex-1 w-full relative bg-black flex items-center justify-center overflow-hidden">
+            {activeTab === 'images' && (
+              <Swiper
+                modules={[Navigation, Zoom, Keyboard]}
+                spaceBetween={20}
+                slidesPerView={1}
+                initialSlide={activeIndex}
+                onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+                zoom={true}
+                keyboard={{ enabled: true }}
+                navigation={{ nextEl: '.lb-next', prevEl: '.lb-prev' }}
+                className="w-full h-full lb-main-swiper"
+              >
+                {images.map((img, idx) => (
+                  <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
+                    <div className="swiper-zoom-container h-full w-full flex items-center justify-center">
+                      <Image src={layUrlAnhChuan(img)} alt={`${alt} - Full ${idx + 1}`} width={1600} height={1200} className="object-contain max-h-[85vh] max-w-full" priority />
+                    </div>
+                  </SwiperSlide>
+                ))}
+                
+                <button className="lb-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button className="lb-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition active:scale-95 disabled:opacity-0 cursor-pointer">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </Swiper>
+            )}
+
+            {activeTab === 'video' && videoUrl && (
+              <div className="w-full h-[30vh] sm:h-[80vh] max-w-5xl mx-auto px-4">
+                <iframe src={getYoutubeEmbedUrl(videoUrl)} className="w-full h-full rounded-lg" allowFullScreen></iframe>
+              </div>
+            )}
+
+            {/* BẢN ĐỒ ĐƯỢC TỐI ƯU HÓA CHỐNG LỖI MÀN HÌNH TRẮNG */}
+            {activeTab === 'map' && linkMap && (
+              <div className="w-full h-[50vh] sm:h-[80vh] max-w-5xl mx-auto px-4 flex items-center justify-center">
+                {isEmbedMap ? (
+                  <iframe src={mapSrc} className="w-full h-full border-0 rounded-lg bg-white shadow-xl" allowFullScreen loading="lazy"></iframe>
+                ) : (
+                  <div className="w-full max-w-md bg-gray-900 rounded-2xl flex flex-col items-center justify-center text-center p-8 border border-gray-800 shadow-2xl">
+                    <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-5">
+                      <Map className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-white text-xl font-bold mb-2">Đã tìm thấy vị trí</h3>
+                    <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                      Do chính sách bảo mật, bản đồ này cần được mở trong một cửa sổ riêng biệt để xem chi tiết.
+                    </p>
+                    <a 
+                      href={linkMap} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
+                    >
+                      Mở ứng dụng Bản đồ <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="w-full h-16 flex items-center justify-center bg-black px-4">
+             <p className="text-white/80 text-sm sm:text-base font-medium truncate max-w-2xl text-center">{alt}</p>
+          </div>
         </div>
-      </div>
-    </Link>
+      )}
+
+      <style jsx global>{`
+        .nm-fraction.swiper-pagination-fraction {
+          width: auto !important;
+          left: auto !important;
+          background-color: rgba(0, 0, 0, 0.75) !important;
+          color: #ffffff !important;
+          padding: 4px 12px !important;
+          border-radius: 6px !important;
+          font-size: 13px !important;
+          letter-spacing: 2px !important;
+        }
+        .lb-main-swiper .swiper-pagination { display: none !important; }
+      `}</style>
+    </>
   );
 }
