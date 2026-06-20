@@ -1,20 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import dynamic from "next/dynamic"; // 🔥 B1: Import thư viện tải động của Next.js
 
-// 🚀 B1: Lazy Load các component nổi (Chỉ tải khi trình duyệt đã render xong giao diện chính)
-// Điều này giúp tiết kiệm tài nguyên Server và tăng điểm tốc độ Google cực mạnh
-const AIChatbot = dynamic(() => import("@/components/AIChatbot"), { ssr: false });
-const ScrollToTop = dynamic(() => import("@/components/ScrollToTop"), { ssr: false });
+// 🚀 Đưa về Import tiêu chuẩn. Next.js sẽ tự động xử lý Client Boundary
+// vì bên trong 2 file này đã có sẵn 'use client'
+import AIChatbot from "@/components/AIChatbot";
+import ScrollToTop from "@/components/ScrollToTop";
 
-// 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap
+// 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap (Đã bỏ mảng weight để load file Variable Font siêu nhẹ)
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
   variable: "--font-plus-jakarta",
-  preload: true,
 });
 
 export const viewport: Viewport = {
@@ -36,10 +33,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
-      {/* 🚀 XÓA THẺ <head> THỦ CÔNG: Next.js tự động xử lý <link rel="preload"> tốt hơn anh tự viết. 
-         Việc ép preload thủ công đôi khi gây lỗi "Render-blocking" nếu đường dẫn tĩnh thay đổi sau mỗi lần build.
-      */}
-      
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         {children}
         <AIChatbot /> 
