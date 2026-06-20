@@ -3,10 +3,10 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import dynamic from "next/dynamic";
 import "./globals.css";
 
-// 🚀 BÙA CHÚ TỐI ƯU: Tải chậm (Lazy-load / Dynamic Import) các tính năng phụ
-// Tắt ssr (Server-Side Rendering) cho Chatbot và Nút cuộn để giải phóng luồng chính tuyệt đối
-const AIChatbot = dynamic(() => import("@/components/AIChatbot"), { ssr: false });
-const ScrollToTop = dynamic(() => import("@/components/ScrollToTop"), { ssr: false });
+// 🚀 BÙA CHÚ TỐI ƯU (ĐÃ SỬA LỖI): Tải chậm (Lazy-load / Code-splitting)
+// Bỏ { ssr: false } để tuân thủ chuẩn Server Component của Next.js 15
+const AIChatbot = dynamic(() => import("@/components/AIChatbot"));
+const ScrollToTop = dynamic(() => import("@/components/ScrollToTop"));
 
 // 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap để không chặn hiển thị
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -35,10 +35,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
-        {/* 1. Ưu tiên tải toàn bộ nội dung chính (Trang chủ, Nhà đất, Hình ảnh) trước */}
+        {/* Ưu tiên tải toàn bộ nội dung chính (Trang chủ, Nhà đất, Hình ảnh) trước */}
         {children}
         
-        {/* 2. Chatbot và Nút cuộn sẽ được lẳng lặng nạp vào sau khi web đã mượt mà */}
+        {/* Chatbot và Nút cuộn được tách luồng tải riêng */}
         <AIChatbot /> 
         <ScrollToTop />
       </body>
