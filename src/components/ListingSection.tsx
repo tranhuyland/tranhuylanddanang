@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from "react";
-import { SlidersHorizontal, Check, RotateCcw, X, Heart, MapIcon, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  SlidersHorizontal, Check, RotateCcw, X, Heart, MapIcon, List, 
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal 
+} from "lucide-react";
 import FilterWidget from "./FilterWidget"; 
 import MapView from "./MapView";
 import BdsCard from "./BdsCard";
@@ -19,6 +22,20 @@ const TAB_OPTIONS = [
   { id: "Căn hộ", label: "🏢 Căn hộ" },
   { id: "Cho thuê", label: "🔑 Cho thuê" }
 ];
+
+// Thuật toán sinh mảng phân trang thông minh (Có dấu 3 chấm)
+const generatePagination = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, '...', totalPages];
+  }
+  if (currentPage >= totalPages - 2) {
+    return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+};
 
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
   const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
@@ -163,6 +180,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginationArray = generatePagination(currentPage, totalPages);
 
   return (
     <>
@@ -271,19 +289,54 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                    );
                 })}
               </div>
+              
+              {/* 🌟 PHÂN TRANG SIÊU TỐI ƯU VÀ CHUYÊN NGHIỆP */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center flex-wrap gap-2 mt-12 sm:mt-16">
-                  <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} aria-label="Trang trước" className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold transition-all ${currentPage === 1 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}>
-                    <ChevronLeft size={18} />
+                <div className="flex flex-wrap justify-center items-center gap-1.5 sm:gap-2 mt-12 sm:mt-16">
+                  
+                  {/* Nút Trang Đầu */}
+                  <button onClick={() => handlePageChange(1)} disabled={currentPage === 1} aria-label="Trang đầu" 
+                    className={`hidden sm:flex items-center justify-center px-3 h-10 rounded-xl font-bold transition-all ${currentPage === 1 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}
+                  >
+                    <ChevronsLeft size={18} />
                   </button>
-                  {Array.from({ length: totalPages }, (_, idx) => (
-                    <button key={idx} aria-label={`Trang ${idx + 1}`} onClick={() => handlePageChange(idx + 1)} className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === idx + 1 ? "bg-orange-500 text-white shadow-md shadow-orange-500/30" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 active:scale-95"}`}>
-                      {idx + 1}
-                    </button>
+
+                  {/* Nút Trước */}
+                  <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} aria-label="Trang trước" 
+                    className={`flex items-center justify-center gap-1 px-3 sm:px-4 h-10 rounded-xl font-bold transition-all ${currentPage === 1 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}
+                  >
+                    <ChevronLeft size={16} strokeWidth={2.5} /> <span className="text-[13px] hidden min-[390px]:inline">Trước</span>
+                  </button>
+
+                  {/* Các số trang (Có rút gọn ...) */}
+                  {paginationArray.map((page, idx) => (
+                    page === '...' ? (
+                      <div key={`dots-${idx}`} className="w-8 h-10 flex items-center justify-center text-slate-400">
+                        <MoreHorizontal size={18} />
+                      </div>
+                    ) : (
+                      <button key={idx} aria-label={`Trang ${page}`} onClick={() => handlePageChange(page as number)} 
+                        className={`min-w-[40px] px-1 h-10 rounded-xl font-bold text-sm transition-all ${currentPage === page ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-md shadow-orange-500/30" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 active:scale-95"}`}
+                      >
+                        {page}
+                      </button>
+                    )
                   ))}
-                  <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Trang sau" className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold transition-all ${currentPage === totalPages ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}>
-                    <ChevronRight size={18} />
+
+                  {/* Nút Sau */}
+                  <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Trang sau" 
+                    className={`flex items-center justify-center gap-1 px-3 sm:px-4 h-10 rounded-xl font-bold transition-all ${currentPage === totalPages ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}
+                  >
+                     <span className="text-[13px] hidden min-[390px]:inline">Sau</span> <ChevronRight size={16} strokeWidth={2.5} />
                   </button>
+
+                  {/* Nút Trang Cuối */}
+                  <button onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} aria-label="Trang cuối" 
+                    className={`hidden sm:flex items-center justify-center px-3 h-10 rounded-xl font-bold transition-all ${currentPage === totalPages ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}
+                  >
+                    <ChevronsRight size={18} />
+                  </button>
+
                 </div>
               )}
             </>
