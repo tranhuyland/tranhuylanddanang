@@ -6,7 +6,7 @@ import Link from "next/link";
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
   Heart, ImageIcon, BedDouble, Bath, Clock, Share2,
-  Map as MapIcon, List // Bổ sung icon cho công tắc
+  Map as MapIcon, List 
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -195,26 +195,30 @@ const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
   return 0;
 };
 
+const removeHtmlAndAccents = (item: any) => {
+  const allStringValues = Object.values(item).filter(val => typeof val === 'string').join(" ");
+  const textWithoutHtml = allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' '); 
+  return removeAccents(textWithoutHtml).toLowerCase();
+};
+
 const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  const allStringValues = Object.values(item).filter(val => typeof val === 'string').join(" ");
-  const textWithoutHtml = allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' '); 
-  const fullText = removeAccents(textWithoutHtml).toLowerCase();
-
-  if (!pn) {
-    const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
-    const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
-    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) pn = parseInt(matchPhong1[1]).toString();
-    else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) pn = parseInt(matchPhong2[1]).toString();
-  }
-
-  if (!wc) {
-    const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
-    const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
-    if (matchWC1 && parseInt(matchWC1[1]) > 0) wc = parseInt(matchWC1[1]).toString();
-    else if (matchWC2 && parseInt(matchWC2[1]) > 0) wc = parseInt(matchWC2[1]).toString();
+  if (!pn || !wc) {
+    const fullText = removeHtmlAndAccents(item);
+    if (!pn) {
+      const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
+      const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
+      if (matchPhong1 && parseInt(matchPhong1[1]) > 0) pn = parseInt(matchPhong1[1]).toString();
+      else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) pn = parseInt(matchPhong2[1]).toString();
+    }
+    if (!wc) {
+      const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
+      const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+      if (matchWC1 && parseInt(matchWC1[1]) > 0) wc = parseInt(matchWC1[1]).toString();
+      else if (matchWC2 && parseInt(matchWC2[1]) > 0) wc = parseInt(matchWC2[1]).toString();
+    }
   }
 
   return { pn, wc };
@@ -236,11 +240,10 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  
-  // 🧭 CÔNG TẮC GIAO DIỆN: 'list' (Danh sách) hoặc 'map' (Bản đồ)
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
-  const itemsPerPage = 10;
+  // 🌟 ĐÃ TỐI ƯU: Đưa số sản phẩm hiển thị về mốc vàng 6 bài/trang để giảm số lượng thẻ HTML, diệt tận gốc lỗi quá tải kích thước DOM.
+  const itemsPerPage = 6;
   const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
 
   useEffect(() => {
@@ -280,8 +283,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     window.addEventListener('openFilterDrawer', handleOpenDrawer);
     window.addEventListener('searchBds', handleSearch);
     return () => {
-      window.removeEventListener('openFilterDrawer', handleOpenDrawer);
-      window.removeEventListener('searchBds', handleSearch);
+      window.addEventListener('openFilterDrawer', handleOpenDrawer);
+      window.addEventListener('searchBds', handleSearch);
     };
   }, [filters, initialFilters]);
 
@@ -567,7 +570,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               )}
             </>
           ) : (
-            /* CHẾ ĐỘ BẢN ĐỒ (MAP VIEW) */
+            /* 🌟 ĐÃ TỐI ƯU: Chỉ dựng DOM Bản đồ khi viewMode thực sự bằng 'map' để tiết kiệm RAM tối đa cho di động */
             <div className="animate-in fade-in zoom-in-95 duration-500 rounded-[2rem] overflow-hidden border-2 border-slate-200 shadow-xl w-full">
               <MapView bdsList={filteredItems} />
             </div>
@@ -657,7 +660,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
 
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
-          {/* Đã sửa H3 thành H2 cho liền mạch thứ tự tiêu đề */}
           <h2 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
             {item.tieude}
           </h2>
@@ -682,7 +684,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            {/* Tăng độ đậm màu từ slate-400 lên slate-600 để pass bài test tương phản */}
             <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
               {dateInfo.relative}
             </span>
