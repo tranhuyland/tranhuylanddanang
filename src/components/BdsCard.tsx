@@ -7,43 +7,40 @@ import { MapPin, Heart, ImageIcon, BedDouble, Bath, Clock, Share2 } from "lucide
 import { layUrlAnhChuan } from "@/lib/utils";
 import { parseDateInfo, parsePropertyTags, countImages, calculateGiaM2, extractRooms } from "@/lib/bdsHelpers";
 
-export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void }) {
+interface BdsCardProps {
+  item: any;
+  rank?: number;
+  isFavorite: boolean;
+  onToggleFavorite: (e: React.MouseEvent) => void;
+}
+
+export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: BdsCardProps) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
-  
-  const soLuongAnhChinhXac = useMemo(() => countImages(item), [item]);
+  const soLuongAnh = useMemo(() => countImages(item), [item]);
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
   const tags = useMemo(() => parsePropertyTags(item), [item]);
-  
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
   const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     const url = `${window.location.origin}/nha-dat/${item.slug}`;
-    
     if (navigator.share) {
-      try { await navigator.share({ title: item.tieude, text: 'Xem bất động sản này trên website:', url: url }); } catch (error) {}
+      try { await navigator.share({ title: item.tieude, text: 'Xem bất động sản này trên website:', url }); } catch (error) {}
     } else {
       navigator.clipboard.writeText(url).then(() => { alert("Đã sao chép đường dẫn chia sẻ!"); });
     }
   };
 
   return (
-    <Link 
-      href={`/nha-dat/${item.slug}`} 
-      aria-label={`Xem chi tiết: ${item.tieude}`}
-      onClick={() => {
-        document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
-        setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300);
-      }}
+    <Link href={`/nha-dat/${item.slug}`} aria-label={`Xem chi tiết: ${item.tieude}`}
+      onClick={() => { document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important'); setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300); }}
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
@@ -56,9 +53,8 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { 
           {tags.isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
           {tags.isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
         </div>
-
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
-          <ImageIcon size={12} aria-hidden="true" /><span>{soLuongAnhChinhXac}</span>
+          <ImageIcon size={12} aria-hidden="true" /><span className="text-white">{soLuongAnh}</span>
         </div>
       </div>
 
@@ -74,7 +70,6 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { 
             {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
             {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
           </div>
-          
           <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-800 mb-4">
             <MapPin size={16} className="text-green-800 shrink-0" aria-hidden="true" />
             <span className="truncate">{displayLocation}</span>
@@ -93,6 +88,7 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { 
           </div>
           
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* 🌟 ĐÃ FIX TRIỆT ĐỂ LỖI #418: Chuyển hoàn toàn button lồng nhau thành div có role="button" */}
             <div role="button" tabIndex={0} aria-label="Chia sẻ tin này" className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 cursor-pointer" onClick={handleShare} title="Chia sẻ tin">
               <Share2 size={15} aria-hidden="true" />
               <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">Chia sẻ</span>
