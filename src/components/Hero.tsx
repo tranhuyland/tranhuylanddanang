@@ -15,13 +15,16 @@ export default function Hero() {
       {/* Hero Background */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1781152987/jhgz7jpx9tqdzuuki6ps.jpg"
-          alt="Toàn cảnh Đà Nẵng - Kho nhà đất chính chủ Trần Huy Land"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center opacity-40"
-        />
+  src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1781152987/jhgz7jpx9tqdzuuki6ps.jpg"
+  alt="Toàn cảnh Đà Nẵng - Kho nhà đất chính chủ Trần Huy Land"
+  fill
+  priority
+  fetchPriority="high"
+  loading="eager"
+  sizes="100vw"
+  quality={85}
+  className="object-cover object-center opacity-40"
+/>
 
         <div className="absolute inset-0 bg-slate-900/20" />
       </div>
