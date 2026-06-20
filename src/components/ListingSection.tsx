@@ -403,7 +403,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 return (
                   <button 
                     key={tab.id} 
-                    aria-label={`Lọc theo ${tab.label}`} // 🌟 Sửa lỗi Accessibility Hình 1
+                    aria-label={`Lọc theo ${tab.label}`}
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); setShowFavorites(false); 
                       setFilters(initialFilters); setTempFilters(initialFilters); setCurrentPage(1); 
@@ -414,14 +414,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     `}
                   >
                     <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">{tab.label}</span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span> {/* 🌟 Sửa lỗi độ tương phản Hình 3 */}
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span>
                     {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
                 );
               })}
 
               <button 
-                aria-label="Xem danh sách tin đã lưu" // 🌟 Sửa lỗi Accessibility Hình 1
+                aria-label="Xem danh sách tin đã lưu"
                 onClick={handleToggleShowFavorites}
                 className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
                   ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}
@@ -504,12 +504,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         {/* 🗺️ THANH ĐIỀU HƯỚNG KẾT QUẢ VÀ CÔNG TẮC GIAO DIỆN */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-lg md:text-xl font-bold text-slate-800">
-            Tìm thấy <span className="text-orange-600">{filteredItems.length}</span> bất động sản phù hợp {/* 🌟 Sửa lỗi độ tương phản Hình 3 */}
+            Tìm thấy <span className="text-orange-600">{filteredItems.length}</span> bất động sản phù hợp
           </h2>
           
           <div className="bg-white p-1 rounded-xl border border-slate-200 inline-flex shadow-sm">
             <button
-              aria-label="Xem dạng danh sách" // 🌟 Sửa lỗi Accessibility Hình 1
+              aria-label="Xem dạng danh sách"
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "list" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
@@ -518,7 +518,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <List className="w-4 h-4" aria-hidden="true" /> Danh sách
             </button>
             <button
-              aria-label="Xem dạng bản đồ" // 🌟 Sửa lỗi Accessibility Hình 1
+              aria-label="Xem dạng bản đồ"
               onClick={() => setViewMode("map")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "map" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
@@ -544,6 +544,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                        rank={(currentPage - 1) * itemsPerPage + index + 1} 
                        isFavorite={favoriteIds.includes(bdsId)}
                        onToggleFavorite={(e: React.MouseEvent) => toggleFavorite(bdsId, e)}
+                       priority={index < 2} // 🚀 BÙA CHÚ 1: Ép tải tốc độ cao cho 2 sản phẩm đầu tiên
                      />
                    );
                 })}
@@ -597,7 +598,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 // ==========================================
 // 4. SUB-COMPONENT: THẺ SẢN PHẨM BĐS 
 // ==========================================
-function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void }) {
+// 🚀 BÙA CHÚ 2: Khai báo thêm thuộc tính priority cho thẻ sản phẩm
+function BdsCard({ item, rank, isFavorite, onToggleFavorite, priority = false }: { item: any, rank?: number, isFavorite: boolean, onToggleFavorite: (e: React.MouseEvent) => void, priority?: boolean }) {
   const thumbnail = layUrlAnhChuan(item.anh);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   
@@ -641,7 +643,14 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
       className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] block"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
+        <Image 
+          src={thumbnail} 
+          alt={item.tieude || "Trần Huy Land"} 
+          fill 
+          className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+          sizes="(max-width: 1280px) 100vw" 
+          priority={priority} // 🚀 BÙA CHÚ 3: Nạp tín hiệu ưu tiên tải vào ảnh gốc 
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
@@ -698,7 +707,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           
           <div className="flex items-center gap-1.5 shrink-0">
             
-            {/* 🌟 SỬA LỖI HÌNH 2: Nâng kích thước padding (py-2.5 thay vì py-1.5) và đặt min-h-[44px] để nút bấm đủ rộng, khắc phục cảnh báo Google */}
             <button 
               aria-label="Chia sẻ tin này"
               className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
@@ -711,7 +719,6 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               </span>
             </button>
 
-            {/* 🌟 SỬA LỖI HÌNH 2: Nâng kích thước padding (py-2.5 thay vì py-1.5) và đặt min-h-[44px] để nút bấm đủ rộng, khắc phục cảnh báo Google */}
             <button 
               aria-label={isFavorite ? "Bỏ lưu tin này" : "Lưu tin này"}
               className={`px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 ${
