@@ -242,7 +242,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   const [isClient, setIsClient] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
-  // 🌟 ĐÃ TỐI ƯU: Đưa số sản phẩm hiển thị về mốc vàng 6 bài/trang để giảm số lượng thẻ HTML, diệt tận gốc lỗi quá tải kích thước DOM.
   const itemsPerPage = 6;
   const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
 
@@ -404,6 +403,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 return (
                   <button 
                     key={tab.id} 
+                    aria-label={`Lọc theo ${tab.label}`} // 🌟 Sửa lỗi Accessibility Hình 1
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); setShowFavorites(false); 
                       setFilters(initialFilters); setTempFilters(initialFilters); setCurrentPage(1); 
@@ -414,22 +414,23 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     `}
                   >
                     <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">{tab.label}</span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-500" : "text-slate-500"}`}>({currentCount})</span>
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span> {/* 🌟 Sửa lỗi độ tương phản Hình 3 */}
                     {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
                 );
               })}
 
               <button 
+                aria-label="Xem danh sách tin đã lưu" // 🌟 Sửa lỗi Accessibility Hình 1
                 onClick={handleToggleShowFavorites}
                 className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
                   ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}
                 `}
               >
                 <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold flex items-center gap-1.5">
-                  <Heart size={16} fill={showFavorites ? "currentColor" : "none"} /> Đã lưu
+                  <Heart size={16} fill={showFavorites ? "currentColor" : "none"} aria-hidden="true" /> Đã lưu
                 </span>
-                <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-400' : 'text-slate-500'}`}>
+                <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-500' : 'text-slate-500'}`}>
                   ({isClient ? favoriteIds.length : 0})
                 </span>
                 {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
@@ -439,30 +440,33 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
             <div className="px-4 sm:px-8">
               <div className="md:hidden flex gap-2 mb-2">
                 <button 
+                  aria-label="Mở bộ lọc nâng cao"
                   onClick={() => { setTempFilters(filters); setIsDrawerOpen(true); }}
                   className="flex-1 flex items-center justify-center gap-2 bg-orange-50/50 text-orange-600 px-4 py-3 rounded-2xl text-sm font-bold border border-orange-100 transition-all active:scale-95"
                 >
-                  <SlidersHorizontal size={18} /> Bộ lọc chi tiết 
+                  <SlidersHorizontal size={18} aria-hidden="true" /> Bộ lọc chi tiết 
                   {activeFiltersCount > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow-md">{activeFiltersCount}</span>}
                 </button>
                 
                 <button 
+                  aria-label="Xem tin đã lưu"
                   onClick={handleToggleShowFavorites}
                   className={`flex flex-col items-center justify-center px-4 py-2 rounded-2xl text-sm font-bold border transition-all active:scale-95 
                     ${showFavorites ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 text-red-500 border-red-100'}
                   `}
                 >
-                  <Heart size={20} fill={showFavorites ? "currentColor" : "none"} className={showFavorites ? "text-white" : "text-red-500"} />
+                  <Heart size={20} fill={showFavorites ? "currentColor" : "none"} className={showFavorites ? "text-white" : "text-red-500"} aria-hidden="true" />
                   <span className="text-[11px] mt-0.5 whitespace-nowrap">Đã lưu ({isClient ? favoriteIds.length : 0})</span>
                 </button>
               </div>
 
               {activeFiltersCount > 0 && !showFavorites && (
                 <button 
+                  aria-label="Hủy toàn bộ bộ lọc"
                   onClick={handleResetFilters}
                   className="md:hidden w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-2xl text-sm font-bold border border-red-100 transition-all active:scale-95 mb-2"
                 >
-                  <X size={18} /> Hủy bỏ bộ lọc đang áp dụng
+                  <X size={18} aria-hidden="true" /> Hủy bỏ bộ lọc đang áp dụng
                 </button>
               )}
 
@@ -480,12 +484,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 <div className="text-xs text-slate-500 font-medium italic">* Vui lòng chọn các tiêu chí trên và nhấn Tìm kiếm.</div>
                 <div className="flex items-center gap-3">
                   {activeFiltersCount > 0 && (
-                    <button onClick={handleResetFilters} className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50">
-                      <RotateCcw size={16} className="inline mr-2" />Xóa lọc
+                    <button onClick={handleResetFilters} aria-label="Xóa bộ lọc" className="text-sm font-bold text-slate-500 hover:text-red-500 px-5 py-3 rounded-xl hover:bg-red-50">
+                      <RotateCcw size={16} className="inline mr-2" aria-hidden="true" />Xóa lọc
                     </button>
                   )}
-                  <button onClick={handleApplyFilters} className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all">
-                    <Check size={16} className="inline mr-2" />Tìm kiếm ngay
+                  <button onClick={handleApplyFilters} aria-label="Tìm kiếm ngay" className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-xl shadow-lg hover:scale-[1.02] transition-all">
+                    <Check size={16} className="inline mr-2" aria-hidden="true" />Tìm kiếm ngay
                   </button>
                 </div>
               </div>
@@ -500,25 +504,27 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         {/* 🗺️ THANH ĐIỀU HƯỚNG KẾT QUẢ VÀ CÔNG TẮC GIAO DIỆN */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-lg md:text-xl font-bold text-slate-800">
-            Tìm thấy <span className="text-orange-500">{filteredItems.length}</span> bất động sản phù hợp
+            Tìm thấy <span className="text-orange-600">{filteredItems.length}</span> bất động sản phù hợp {/* 🌟 Sửa lỗi độ tương phản Hình 3 */}
           </h2>
           
           <div className="bg-white p-1 rounded-xl border border-slate-200 inline-flex shadow-sm">
             <button
+              aria-label="Xem dạng danh sách" // 🌟 Sửa lỗi Accessibility Hình 1
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "list" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <List className="w-4 h-4" /> Danh sách
+              <List className="w-4 h-4" aria-hidden="true" /> Danh sách
             </button>
             <button
+              aria-label="Xem dạng bản đồ" // 🌟 Sửa lỗi Accessibility Hình 1
               onClick={() => setViewMode("map")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "map" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              <MapIcon className="w-4 h-4" /> Bản đồ
+              <MapIcon className="w-4 h-4" aria-hidden="true" /> Bản đồ
             </button>
           </div>
         </div>
@@ -549,6 +555,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                   {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
                     <button 
                       key={idx} 
+                      aria-label={`Trang ${idx + 1}`}
                       onClick={() => { 
                         setCurrentPage(idx + 1); 
                         setTimeout(() => {
@@ -570,7 +577,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               )}
             </>
           ) : (
-            /* 🌟 ĐÃ TỐI ƯU: Chỉ dựng DOM Bản đồ khi viewMode thực sự bằng 'map' để tiết kiệm RAM tối đa cho di động */
             <div className="animate-in fade-in zoom-in-95 duration-500 rounded-[2rem] overflow-hidden border-2 border-slate-200 shadow-xl w-full">
               <MapView bdsList={filteredItems} />
             </div>
@@ -627,6 +633,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
   return (
     <Link 
       href={`/nha-dat/${item.slug}`} 
+      aria-label={`Xem chi tiết: ${item.tieude}`}
       onClick={() => {
         document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
         setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300);
@@ -654,7 +661,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         </div>
 
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
-          <ImageIcon size={12} /><span>{soLuongAnhChinhXac}</span>
+          <ImageIcon size={12} aria-hidden="true" /><span>{soLuongAnhChinhXac}</span>
         </div>
       </div>
 
@@ -673,7 +680,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           </div>
           
           <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-800 mb-4">
-            <MapPin size={16} className="text-green-800 shrink-0" />
+            <MapPin size={16} className="text-green-800 shrink-0" aria-hidden="true" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
@@ -681,7 +688,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex flex-col justify-center min-w-0 pr-2">
             <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
-              <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" />
+              <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" aria-hidden="true" />
               <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
             <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
@@ -691,19 +698,23 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           
           <div className="flex items-center gap-1.5 shrink-0">
             
+            {/* 🌟 SỬA LỖI HÌNH 2: Nâng kích thước padding (py-2.5 thay vì py-1.5) và đặt min-h-[44px] để nút bấm đủ rộng, khắc phục cảnh báo Google */}
             <button 
-              className="px-2 py-1.5 sm:px-3 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1 sm:gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+              aria-label="Chia sẻ tin này"
+              className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
               onClick={handleShare}
               title="Chia sẻ tin"
             >
-              <Share2 size={14} className="sm:w-[15px] sm:h-[15px]" />
-              <span className="text-[11px] sm:text-[13px] font-bold whitespace-nowrap">
+              <Share2 size={15} aria-hidden="true" />
+              <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">
                 Chia sẻ
               </span>
             </button>
 
+            {/* 🌟 SỬA LỖI HÌNH 2: Nâng kích thước padding (py-2.5 thay vì py-1.5) và đặt min-h-[44px] để nút bấm đủ rộng, khắc phục cảnh báo Google */}
             <button 
-              className={`px-2 py-1.5 sm:px-3 border rounded-lg active:scale-95 transition-all shadow-sm flex items-center gap-1 sm:gap-1.5 ${
+              aria-label={isFavorite ? "Bỏ lưu tin này" : "Lưu tin này"}
+              className={`px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 ${
                 isFavorite 
                   ? 'border-red-200 text-red-500 bg-red-50' 
                   : 'border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-300 hover:bg-red-50'
@@ -714,8 +725,8 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
                 onToggleFavorite(e);
               }}
             >
-              <Heart size={14} fill={isFavorite ? "currentColor" : "none"} className={`sm:w-[15px] sm:h-[15px] ${isFavorite ? "scale-110 transition-transform" : "transition-transform"}`} />
-              <span className="text-[11px] sm:text-[13px] font-bold whitespace-nowrap">
+              <Heart size={15} fill={isFavorite ? "currentColor" : "none"} aria-hidden="true" className={isFavorite ? "scale-110 transition-transform" : "transition-transform"} />
+              <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">
                 {isFavorite ? 'Đã lưu' : 'Lưu tin'}
               </span>
             </button>
