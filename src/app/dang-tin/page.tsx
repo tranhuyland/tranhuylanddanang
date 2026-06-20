@@ -2,6 +2,60 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 
+
+// 🚨 CẤU HÌNH MẬT KHẨU CỦA ANH
+const ADMIN_PASSWORD = "Huy"; // Anh đổi mật khẩu của anh ở đây
+
+export default function DangTinPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+
+  // Kiểm tra mật khẩu đã lưu trong trình duyệt chưa
+  useEffect(() => {
+    const savedAuth = localStorage.getItem("is_admin_authed");
+    if (savedAuth === "true") setIsAuthenticated(true);
+  }, []);
+
+  const handleLogin = (e: FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      localStorage.setItem("is_admin_authed", "true");
+    } else {
+      alert("Sai mật khẩu rồi anh Huy ơi!");
+    }
+  };
+
+  // NẾU CHƯA ĐĂNG NHẬP THÌ HIỆN FORM MẬT KHẨU
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
+          <h2 className="text-xl font-bold mb-4 text-center">Trang Đăng Tin Admin</h2>
+          <input 
+            type="password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Nhập mật khẩu..."
+            className="w-full border rounded-xl px-4 py-3 mb-4 outline-none focus:border-orange-500"
+          />
+          <button type="submit" className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">
+            Đăng nhập
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // NẾU ĐÃ ĐĂNG NHẬP THÌ HIỆN GIAO DIỆN ĐĂNG TIN CŨ
+  return (
+    <>
+      {/*... Toàn bộ code đăng tin cũ của anh ở dưới đây ...*/}
+    </>
+  );
+}
+
+
 // 🗺️ Tải Bản đồ động để tránh lỗi SSR của Next.js
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
   ssr: false,
