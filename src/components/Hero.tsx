@@ -1,7 +1,6 @@
 'use client';
-
 import React from 'react';
-import Image from 'next/image';
+import Image from 'next/image'; // 🚀 Khai báo thư viện tối ưu ảnh của Next.js
 import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
 export default function Hero() {
@@ -10,29 +9,26 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden bg-slate-950">
-      
-      {/* Hero Background - TỐI ƯU LCP */}
+    <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
+        {/* 🔥 Đã chèn 3 bùa chú mạnh nhất để trị dứt điểm lỗi LCP của Google */}
         <Image
-          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1781152987/jhgz7jpx9tqdzuuki6ps.jpg"
-          alt="Toàn cảnh Đà Nẵng - Kho nhà đất chính chủ Trần Huy Land"
+          src="/hero-bg.jpg"
+          alt="Toàn cảnh Đà Nẵng"
           fill
-          priority={true}          // 🚀 Ép tải ngay lập tức
-          fetchPriority="high"      // 🚀 Ép độ ưu tiên tải cao nhất
-          loading="eager"          // 🚀 Cấm chế độ tải lười (lazy)
-          sizes="100vw"
-          quality={60}
-          className="object-cover object-center opacity-40"
+          priority={true} // Bùa chú 1: Next.js ưu tiên tải
+          fetchPriority="high" // 🚀 Bùa chú 2: Ép Google nhận diện đây là ảnh Khẩn Cấp (High Priority)
+          loading="eager" // 🚀 Bùa chú 3: Cấm tuyệt đối trình duyệt dùng chế độ lười tải (lazy)
+          sizes="100vw"   
+          className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-slate-900/20" />
+        <div className="absolute inset-0 bg-slate-900/20"></div>
       </div>
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/75 p-6 md:p-8 rounded-[2rem] shadow-2xl border border-white/50">
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-sm border border-white">
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/30 backdrop-blur-lg p-6 md:p-8 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-sm border border-white">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
@@ -41,68 +37,48 @@ export default function Hero() {
           </div>
 
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
-            Nhà Thật • Giá Thật
-            <br />
+            Nhà Thật • Giá Thật <br />
+            {/* 🔥 Đổi sang màu xám đen đồng bộ, bỏ hiệu ứng bóng đổ để chữ nét và sắc sảo nhất */}
             <span className="text-slate-900">
               Giao Dịch Minh Bạch
             </span>
           </h1>
 
           <p className="text-slate-900 font-medium text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
-            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng.
-            Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
+            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng. Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
-            <a
-              href="tel:0905778852"
+            <a 
+              href="tel:0905778852" 
               className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-orange-500/30 text-sm hover:shadow-orange-500/50 active:scale-95 transition-all"
             >
-              <Phone className="w-4 h-4" />
-              Chi tiết liên hệ
+              <Phone className="w-4 h-4" /> Liên Hệ Tư Vấn
             </a>
-
-            <button
+            
+            <button 
               onClick={handleOpenKyGui}
-              type="button"
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white text-slate-800 border border-white hover:bg-slate-50 font-bold py-3 px-6 rounded-2xl text-sm shadow-md active:scale-95 transition-all"
+              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white/95 text-slate-800 border border-white hover:bg-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md active:scale-95 transition-all"
             >
-              <FileText className="w-4 h-4 text-blue-600" />
-              Ký Gởi Nhà Đất
+              <FileText className="w-4 h-4 text-blue-600" /> Ký Gởi Nhà Đất
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-900/10">
-            <div className="flex flex-col">
-              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <Building2 className="w-4 h-4 text-orange-600" />
-                500+
-              </span>
-              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
-                Sản Phẩm
-              </span>
-            </div>
-
-            <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
-              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <MapPin className="w-4 h-4 text-orange-600" />
-                100%
-              </span>
-              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
-                Chính Chủ
-              </span>
-            </div>
-
-            <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
-              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <TrendingUp className="w-4 h-4 text-orange-600" />
-                Siêu
-              </span>
-              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
-                Đầu Tư
-              </span>
-            </div>
+             <div className="flex flex-col">
+                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><Building2 className="w-4 h-4 text-orange-600"/> 500+</span>
+                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Sản Phẩm</span>
+             </div>
+             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
+                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><MapPin className="w-4 h-4 text-orange-600"/> 100%</span>
+                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Chính Chủ</span>
+             </div>
+             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
+                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><TrendingUp className="w-4 h-4 text-orange-600"/> Siêu</span>
+                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Đầu Tư</span>
+             </div>
           </div>
+
         </div>
       </div>
     </section>
