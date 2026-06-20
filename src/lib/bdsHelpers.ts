@@ -19,8 +19,7 @@ export const parseDateInfo = (dateStr: string) => {
     let relative = "hôm nay";
     if (diffDays === 1) relative = "hôm qua";
     else if (diffDays > 1) relative = `${diffDays} ngày trước`;
-    const shortTime = timePart ? timePart.split(":").slice(0, 2).join(":") : "";
-    return { fullDate: formattedDate, time: shortTime, relative };
+    return { fullDate: formattedDate, time: timePart ? timePart.split(":").slice(0, 2).join(":") : "", relative };
   } catch(e) {
     return { fullDate: dateStr, time: "", relative: "" };
   }
@@ -39,7 +38,6 @@ export const parsePropertyTags = (item: any) => {
   const isMatTienReal = (fullText.includes(" mat tien ") || fullText.includes(" mt ")) && !isMatTienFake;
 
   let isDatMatTien = false, isDatKiet = false, isDatNen = false, isNhaMatTien = false, isNhaKiet = false;
-
   if (hasDat) {
     isCanHo = false; isChoThue = false; isNhaMatTien = false; isNhaKiet = false;
     const hasNenStrict = rawTitleTag.includes("nền") || fullText.includes(" dat nen ") || fullText.includes(" lo nen ");
@@ -50,7 +48,6 @@ export const parsePropertyTags = (item: any) => {
     if (isMatTienReal) isNhaMatTien = true;
     else isNhaKiet = true;
   }
-
   let primaryTab = "Nhà phố"; 
   if (hasDat) primaryTab = "Đất";
   else if (isCanHo) primaryTab = "Căn hộ";
@@ -72,8 +69,7 @@ export const calculateGiaM2 = (item: any) => {
   try {
     let giaTriTrieu = 0;
     if (item.soGia && !isNaN(Number(item.soGia))) {
-      const so = Number(item.soGia);
-      giaTriTrieu = so < 1000 ? so * 1000 : so;
+      giaTriTrieu = Number(item.soGia) < 1000 ? Number(item.soGia) * 1000 : Number(item.soGia);
     } else {
       const giaStr = (item.gia || "").toLowerCase().replace(/x/g, '0');
       const tyMatch = giaStr.match(/([\d,.]+)\s*(?:tỷ|ty)\s*([\d]+)?/);
@@ -114,17 +110,13 @@ export const extractPriceInBillion = (giaRaw: any, soGiaRaw: any) => {
   const trieuMatch = giaStr.match(/([\d.]+)\s*(?:triệu|trieu)/);
   if (trieuMatch) return parseFloat(trieuMatch[1]) / 1000;
   const numMatch = giaStr.match(/([\d.]+)/);
-  if (numMatch) {
-     const num = parseFloat(numMatch[1]);
-     return num >= 100 ? num / 1000 : num; 
-  }
+  if (numMatch) return parseFloat(numMatch[1]) >= 100 ? parseFloat(numMatch[1]) / 1000 : parseFloat(numMatch[1]);
   return 0;
 };
 
 export const removeHtmlAndAccents = (item: any) => {
   const allStringValues = Object.values(item).filter(val => typeof val === 'string').join(" ");
-  const textWithoutHtml = allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' '); 
-  return removeAccents(textWithoutHtml).toLowerCase();
+  return removeAccents(allStringValues.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' ')).toLowerCase();
 };
 
 export const extractRooms = (item: any) => {
@@ -133,17 +125,22 @@ export const extractRooms = (item: any) => {
   if (!pn || !wc) {
     const fullText = removeHtmlAndAccents(item);
     if (!pn) {
-      const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
-      const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
-      if (matchPhong1 && parseInt(matchPhong1[1]) > 0) pn = parseInt(matchPhong1[1]).toString();
-      else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) pn = parseInt(matchPhong2[1]).toString();
+      const match1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
+      const match2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
+      pn = match1 && parseInt(match1[1]) > 0 ? match1[1] : (match2 && parseInt(match2[1]) > 0 ? match2[1] : null);
     }
     if (!wc) {
-      const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
-      const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
-      if (matchWC1 && parseInt(matchWC1[1]) > 0) wc = parseInt(matchWC1[1]).toString();
-      else if (matchWC2 && parseInt(matchWC2[1]) > 0) wc = parseInt(matchWC2[1]).toString();
+      const match1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
+      const match2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
+      wc = match1 && parseInt(match1[1]) > 0 ? match1[1] : (match2 && parseInt(match2[1]) > 0 ? match2[1] : null);
     }
   }
   return { pn, wc };
+};
+
+export const generatePagination = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  if (currentPage <= 3) return [1, 2, 3, 4, '...', totalPages];
+  if (currentPage >= totalPages - 2) return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
 };
