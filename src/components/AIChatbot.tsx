@@ -74,8 +74,8 @@ export default function AIChatbot() {
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)} 
-          // 🌟 NÚT AI CHATBOT NẰM Ở GÓC PHẢI, TRÊN NÚT SCROLL TO TOP
-          className="fixed right-4 bottom-20 md:right-6 md:bottom-24 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
+          // 🌟 ĐÃ SỬA: Hạ thấp nút xuống sát dải Zalo/Gọi điện dưới đáy di động
+          className="fixed right-4 bottom-[76px] md:right-6 md:bottom-28 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
           <Bot className="w-7 h-7" />
         </button>
@@ -109,12 +109,9 @@ export default function AIChatbot() {
                            a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-bold underline break-all" />,
                            p: ({ node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
                            ul: ({ node, ...props }) => <ul {...props} className="pl-5 mb-3 list-disc space-y-2" />,
-                           // Định dạng danh sách số (1. 2. 3.) cho kết quả tìm kiếm
                            ol: ({ node, ...props }) => <ol {...props} className="pl-[18px] mb-3 list-decimal space-y-3 marker:font-bold marker:text-slate-900" />,
                            li: ({ node, ...props }) => <li {...props} className="pl-1" />,
-                           // Bán nhà / Bán đất -> In đậm màu đen
                            strong: ({ node, ...props }) => <strong {...props} className="font-bold text-slate-900" />,
-                           // Giá tiền -> Ép thành màu đỏ in đậm
                            em: ({ node, ...props }) => <em {...props} className="font-bold text-red-600 not-italic" />
                          }}
                        >
@@ -155,7 +152,7 @@ export default function AIChatbot() {
             </div>
           </div>
 
-          {/* 🟢 KHU VỰC GÕ CHỮ - Sử dụng Form để giấu thanh Xong (Done) của iOS */}
+          {/* 🟢 KHU VỰC GÕ CHỮ */}
           <form 
             onSubmit={(e) => {
               e.preventDefault();
@@ -169,7 +166,6 @@ export default function AIChatbot() {
               onChange={(e) => setInput(e.target.value)} 
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              // ⛔ Bùa chú loại bỏ thanh Toolbar iOS và gợi ý
               enterKeyHint="send"
               autoComplete="off"
               autoCorrect="off"
