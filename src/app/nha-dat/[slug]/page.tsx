@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 import PropertyClient from "./PropertyClient";
 import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils";
-import dynamic from "next/dynamic"; // 🔥 B1: Import thư viện tải động của Next.js
+import nextDynamic from "next/dynamic"; // 💡 Đổi tên thành nextDynamic để không đụng hàng
 
 // 🚀 B1: Lazy Load các component phụ trợ
-// Đưa FloatingWidgets và BackButton sang dạng Client Component hoàn toàn (ssr: false)
+const FloatingWidgets = nextDynamic(() => import("@/components/FloatingWidgets"), { ssr: false });
+const BackButton = nextDynamic(() => import("@/components/BackButton"), { ssr: false });
+
 // Giúp chống lỗi vỡ DOM (Hydration) và không chặn luồng render dữ liệu chính của nhà đất
 const FloatingWidgets = dynamic(() => import("@/components/FloatingWidgets"), { ssr: false });
 const BackButton = dynamic(() => import("@/components/BackButton"), { ssr: false });
