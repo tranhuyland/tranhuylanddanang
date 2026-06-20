@@ -17,7 +17,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5, // 🌟 Đã sửa từ 1 thành 5 để người dùng mắt kém có thể Zoom web
   themeColor: "#ffffff",
 };
 
@@ -32,7 +32,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={plusJakartaSans.variable}>
+    // 🌟 Thêm suppressHydrationWarning vào HTML để sửa lỗi lệch Server/Client (Lỗi React #418)
+    <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         {children}
         <AIChatbot /> {/* 🤖 Nhúng Chatbot vào đây để xuất hiện toàn trang */}
