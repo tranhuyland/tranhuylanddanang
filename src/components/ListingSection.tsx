@@ -340,7 +340,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
   };
 
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
+    const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nh phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     safeBdsItems.forEach(i => {
       if (!i) return;
       const primaryTab = parsePropertyTags(i).primaryTab;
