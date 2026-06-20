@@ -1,21 +1,13 @@
 import { getBdsData } from "@/lib/googleSheets";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingWidgets from "@/components/FloatingWidgets";
 import { notFound } from "next/navigation";
+import BackButton from "@/components/BackButton"; // 🌟 Vẫn giữ import để nút nổi hoạt động
 import PropertyClient from "./PropertyClient";
 import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils";
-import nextDynamic from "next/dynamic"; // 💡 Đổi tên thành nextDynamic để không đụng hàng
-
-// 🚀 B1: Lazy Load các component phụ trợ
-const FloatingWidgets = nextDynamic(() => import("@/components/FloatingWidgets"), { ssr: false });
-const BackButton = nextDynamic(() => import("@/components/BackButton"), { ssr: false });
-
-// Giúp chống lỗi vỡ DOM (Hydration) và không chặn luồng render dữ liệu chính của nhà đất
-const FloatingWidgets = dynamic(() => import("@/components/FloatingWidgets"), { ssr: false });
-const BackButton = dynamic(() => import("@/components/BackButton"), { ssr: false });
-// Giữ lại cơ chế tự động nạp cho SEO, nhưng tách riêng luồng tải
-const RelatedProducts = dynamic(() => import("@/components/RelatedProducts")); 
+import RelatedProducts from "@/components/RelatedProducts"; // 🔥 Import component Tin Liên Quan
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
