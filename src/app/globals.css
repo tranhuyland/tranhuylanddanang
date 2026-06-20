@@ -2,19 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
-html { scroll-behavior: smooth; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #0f172a; }
-.glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+/* 🌟 Cấu hình cơ bản */
+html { 
+  scroll-behavior: smooth; 
+  /* Chặn hiện tượng lướt trang "nảy" khó chịu trên di động */
+  overscroll-behavior-y: none; 
+}
+
+body { 
+  font-family: 'Plus Jakarta Sans', sans-serif; 
+  background-color: #F8FAFC; 
+  color: #0f172a; 
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 🌟 Hiệu ứng Glassmorphism chuyên nghiệp */
+.glass { 
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px); 
+  -webkit-backdrop-filter: blur(16px); 
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 🌟 Hero Section tinh chỉnh */
 .hero-bg {
-    background: linear-gradient(rgba(2, 6, 23, 0.76), rgba(2, 6, 23, 0.86)), 
+    background: linear-gradient(rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.7)), 
                 url('https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1800&auto=format&fit=crop');
-    background-size: cover; background-position: center;
+    background-size: cover; 
+    background-position: center;
 }
-.floating { animation: floating 2s ease-in-out infinite; }
+
+/* 🌟 Animation tinh tế */
+.floating { animation: floating 3s ease-in-out infinite; }
 @keyframes floating {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
-    100% { transform: translateY(0px); }
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
 }
+
+/* 🌟 Ẩn thanh cuộn nhưng vẫn cuộn được */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
