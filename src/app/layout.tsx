@@ -2,22 +2,21 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop"; 
-import AIChatbot from "@/components/AIChatbot"; // 🤖 Import Chatbot
+import AIChatbot from "@/components/AIChatbot";
 
 // 🌟 Khởi tạo Font chữ siêu tốc độ
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["vietnamese"],
   weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
+  display: "swap", // Bắt buộc để font không bị chặn hiển thị
   variable: "--font-plus-jakarta",
   preload: true,
 });
 
-// 🚀 BÙA CHÚ 2: Khai báo Viewport chuẩn
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5, // 🌟 Đã sửa từ 1 thành 5 để người dùng mắt kém có thể Zoom web
+  maximumScale: 5, 
   themeColor: "#ffffff",
 };
 
@@ -32,11 +31,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // 🌟 Thêm suppressHydrationWarning vào HTML để sửa lỗi lệch Server/Client (Lỗi React #418)
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
+      {/* 🚀 BỔ SUNG THẺ HEAD: Ép tải trước CSS và cấu trúc cơ bản để chống lỗi Render-blocking */}
+      <head>
+        <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
+      </head>
+      
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         {children}
-        <AIChatbot /> {/* 🤖 Nhúng Chatbot vào đây để xuất hiện toàn trang */}
+        <AIChatbot /> 
         <ScrollToTop />
       </body>
     </html>
