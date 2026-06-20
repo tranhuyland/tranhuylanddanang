@@ -20,9 +20,7 @@ const formatAIResponse = (text: string) => {
   // 1. Tự động đánh số thứ tự và BÔI ĐEN chữ "Bán nhà", "Bán đất" ở đầu dòng
   let counter = 1;
   formatted = formatted.replace(/^[ \t]*(?:[-*]\s*|\d+\.\s*)?(bán nhà|bán đất)/gim, (match, p1) => {
-    // Viết hoa chữ cái đầu cho chuẩn form: Bán nhà / Bán đất
     const capitalized = p1.charAt(0).toUpperCase() + p1.slice(1).toLowerCase();
-    // Đổi thành danh sách có số 1. 2. 3.
     return `${counter++}. **${capitalized}**`;
   });
 
@@ -44,7 +42,6 @@ export default function AIChatbot() {
   const [isFocused, setIsFocused] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // ĐÃ SỬA LỖI BỊ CẮT CỤT TẠI ĐÂY 👇
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [messages, isOpen, loading]);
 
@@ -73,27 +70,27 @@ export default function AIChatbot() {
     <>
       {!isOpen && (
         <button 
+          aria-label="Mở khung chat hỗ trợ" // 🌟 Thêm nhãn cho Google Bot
           onClick={() => setIsOpen(true)} 
-          // 🌟 ĐÃ SỬA: Hạ thấp xuống xí nữa cho sát cách dải Zalo một chút cực kỳ thẩm mỹ
           className="fixed right-4 bottom-[68px] md:right-6 md:bottom-24 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
-          <Bot className="w-7 h-7" />
+          <Bot className="w-7 h-7" aria-hidden="true" />
         </button>
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 z-[10000] bg-white flex flex-col sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
+        <div role="dialog" aria-modal="true" aria-label="Cửa sổ chat tự động" className="fixed inset-0 z-[10000] bg-white flex flex-col sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] sm:max-h-[85vh] sm:rounded-2xl shadow-2xl border-0 sm:border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-5">
           
           {/* Header */}
           <div className="bg-slate-900 p-3.5 text-white flex items-center justify-between shrink-0 safe-top">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center shadow-sm">
-                <Bot className="w-5 h-5" />
+                <Bot className="w-5 h-5" aria-hidden="true" />
               </div>
               <span className="font-bold text-sm text-amber-400 uppercase tracking-wider">Trợ lý Trần Huy Land</span>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-slate-700 p-1.5 rounded-full transition-colors">
-              <X className="w-5 h-5" />
+            <button aria-label="Đóng khung chat" onClick={() => setIsOpen(false)} className="hover:bg-slate-700 p-1.5 rounded-full transition-colors">
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
           
@@ -128,7 +125,7 @@ export default function AIChatbot() {
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-white p-3.5 rounded-2xl rounded-tl-sm border border-slate-200 flex items-center gap-2.5 shadow-sm">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-500" aria-hidden="true" />
                   <span className="text-[14px] text-slate-600 font-medium tracking-wide">Đang suy nghĩ...</span>
                 </div>
               </div>
@@ -142,6 +139,7 @@ export default function AIChatbot() {
               {QUICK_REPLIES.map((reply, i) => (
                 <button
                   key={i}
+                  aria-label={`Hỏi mẫu: ${reply}`} // 🌟 Thêm nhãn
                   onClick={() => handleSend(reply)}
                   disabled={loading}
                   className="whitespace-nowrap px-3.5 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-[13px] font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50 shrink-0"
@@ -175,10 +173,11 @@ export default function AIChatbot() {
             />
             <button 
               type="submit"
+              aria-label="Gửi tin nhắn" // 🌟 Thêm nhãn
               disabled={loading || !input.trim()}
               className="bg-slate-900 text-amber-400 p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shrink-0"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-5 h-5" aria-hidden="true" />
             </button>
           </form>
 
