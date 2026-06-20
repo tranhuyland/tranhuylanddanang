@@ -550,30 +550,40 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               </div>
               
               {/* PHÂN TRANG */}
-              {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
-                <div className="flex justify-center flex-wrap gap-2 mt-16">
-                  {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
-                    <button 
-                      key={idx} 
-                      aria-label={`Trang ${idx + 1}`}
-                      onClick={() => { 
-                        setCurrentPage(idx + 1); 
-                        setTimeout(() => {
-                          const section = document.getElementById("listing-section");
-                          if (section) {
-                            const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
-                            window.scrollTo({ top: topPosition, behavior: 'smooth' });
-                          }
-                        }, 10);
-                      }}
-                      className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                        currentPage === idx + 1 ? "bg-orange-500 text-white shadow-md" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300"
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
-                </div>
+         {/* PHÂN TRANG THÔNG MINH */}
+{totalPages > 1 && (
+  <div className="flex items-center justify-center gap-2 mt-8 pb-4">
+    {/* Nút Previous */}
+    <button
+      disabled={currentPage === 1}
+      onClick={() => {
+        setCurrentPage(prev => Math.max(prev - 1, 1));
+        document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" });
+      }}
+      className={`px-4 py-2 rounded-xl border ${currentPage === 1 ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white text-slate-700 border-slate-200 hover:border-orange-500'}`}
+    >
+      Trước
+    </button>
+
+    {/* Số trang */}
+    <span className="text-sm font-bold text-slate-600">
+      Trang {currentPage} / {totalPages}
+    </span>
+
+    {/* Nút Next */}
+    <button
+      disabled={currentPage === totalPages}
+      onClick={() => {
+        setCurrentPage(prev => Math.min(prev + 1, totalPages));
+        document.getElementById("listing-section")?.scrollIntoView({ behavior: "smooth" });
+      }}
+      className={`px-4 py-2 rounded-xl border ${currentPage === totalPages ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white text-slate-700 border-slate-200 hover:border-orange-500'}`}
+    >
+      Sau
+    </button>
+  </div>
+)}
+
               )}
             </>
           ) : (
