@@ -74,8 +74,8 @@ export default function AIChatbot() {
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)} 
-          // 🌟 ĐÃ SỬA: Hạ thấp nút xuống sát dải Zalo/Gọi điện dưới đáy di động
-          className="fixed right-4 bottom-[76px] md:right-6 md:bottom-28 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
+          // 🌟 ĐÃ SỬA: Hạ thấp xuống xí nữa cho sát cách dải Zalo một chút cực kỳ thẩm mỹ
+          className="fixed right-4 bottom-[68px] md:right-6 md:bottom-24 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
           <Bot className="w-7 h-7" />
         </button>
