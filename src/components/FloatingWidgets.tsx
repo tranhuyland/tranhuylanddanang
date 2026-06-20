@@ -34,22 +34,14 @@ export default function FloatingWidgets() {
           title="Nhắn tin Zalo ngay"
           className="flex flex-col items-center justify-center bg-[#0068ff] text-white hover:bg-[#0056d6] active:bg-[#004bb8] transition-colors duration-150 border-l border-white/10 p-2"
         >
-          <div className="w-5 h-5 mb-0.5 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-xs">
-            {/* 🌟 ĐÃ TỐI ƯU: Nạp icon nhỏ bằng chế độ lazy để tránh cản trở quá trình render khung trang web */}
-            <img 
-              src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1734567890/zalo-icon.png" 
-              alt="Zalo" 
-              className="w-3.5 h-3.5 object-contain"
-              loading="lazy"
-            />
-          </div>
+          <span className="font-black text-base tracking-tighter mb-0.5" aria-hidden="true">Zalo</span>
           <span className="text-[11px] font-medium tracking-wide">Nhắn Zalo ngay</span>
         </a>
 
       </div>
 
       {/* 2. NÚT TRÒN NỔI TIỆN ÍCH (Giữ nguyên vẹn cho Máy tính / PC) */}
-      <div className="hidden md:flex fixed bottom-6 right-6 z-40 flex-col gap-4">
+      <div className="hidden md:flex fixed bottom-6 right-6 z-40 flex-col gap-4"> {/* Tăng gap-3 lên gap-4 để nới lỏng vùng chạm theo chuẩn Google */}
         {/* Nút Zalo PC */}
         <a 
           href={`https://zalo.me/${phoneNumber}`} 
