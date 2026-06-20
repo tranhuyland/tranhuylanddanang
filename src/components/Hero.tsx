@@ -9,18 +9,18 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden">
+    <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden bg-slate-950">
       <div className="absolute inset-0 z-0">
-        {/* 🔥 Đã chèn 3 bùa chú mạnh nhất để trị dứt điểm lỗi LCP của Google */}
+        {/* 🔥 ĐÃ TỐI ƯU: Ép đường dẫn qua Cloudinary với tham số f_auto,q_auto để tự chuyển WebP/AVIF siêu nhẹ */}
         <Image
-          src="/hero-bg.jpg"
-          alt="Toàn cảnh Đà Nẵng"
+          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1781152987/jhgz7jpx9tqdzuuki6ps.jpg"
+          alt="Toàn cảnh Đà Nẵng - Kho nhà đất chính chủ Trần Huy Land"
           fill
-          priority={true} // Bùa chú 1: Next.js ưu tiên tải
+          priority={true} // Bùa chú 1: Next.js ưu tiên tải số 1
           fetchPriority="high" // 🚀 Bùa chú 2: Ép Google nhận diện đây là ảnh Khẩn Cấp (High Priority)
-          loading="eager" // 🚀 Bùa chú 3: Cấm tuyệt đối trình duyệt dùng chế độ lười tải (lazy)
+          loading="eager" // 🚀 Bùa chú 3: Cấm tuyệt đối trình duyệt dùng chế độ lười tải (lazy) để diệt lỗi LCP
           sizes="100vw"   
-          className="object-cover object-center"
+          className="object-cover object-center opacity-40 transition-transform duration-700 hover:scale-105"
         />
         <div className="absolute inset-0 bg-slate-900/20"></div>
       </div>
@@ -38,7 +38,6 @@ export default function Hero() {
 
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật <br />
-            {/* 🔥 Đổi sang màu xám đen đồng bộ, bỏ hiệu ứng bóng đổ để chữ nét và sắc sảo nhất */}
             <span className="text-slate-900">
               Giao Dịch Minh Bạch
             </span>
@@ -53,11 +52,12 @@ export default function Hero() {
               href="tel:0905778852" 
               className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-orange-500/30 text-sm hover:shadow-orange-500/50 active:scale-95 transition-all"
             >
-              <Phone className="w-4 h-4" /> Liên Hệ Tư Vấn
+              <Phone className="w-4 h-4" /> Chi tiết liên hệ
             </a>
             
             <button 
               onClick={handleOpenKyGui}
+              type="button"
               className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white/95 text-slate-800 border border-white hover:bg-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md active:scale-95 transition-all"
             >
               <FileText className="w-4 h-4 text-blue-600" /> Ký Gởi Nhà Đất
