@@ -49,7 +49,7 @@ export default function DangTinPage() {
 
   // 📡 Trạng thái cho tính năng Dò tìm Tên Đường
   const [isSearchingLoc, setIsSearchingLoc] = useState(false);
-  const [mapMountKey, setMapMountKey] = useState(Date.now()); // Chìa khóa ép bản đồ lia camera
+  const [mapMountKey, setMapMountKey] = useState(Date.now());
 
   const uploadImagesToCloudinary = async (
     files: FileList | null,
@@ -124,7 +124,7 @@ export default function DangTinPage() {
     }
     if (duong && phuong) {
       const query = soNha ? `${soNha} ${duong}, ${phuong}, Đà Nẵng` : `${duong}, ${phuong}, Đà Nẵng`;
-      return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
+      return `https://maps.google.com/?q=$${encodeURIComponent(query)}`;
     }
     return currentLink;
   };
@@ -198,7 +198,6 @@ export default function DangTinPage() {
     setFormData(prev => ({ ...prev, duong, linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap) }));
   };
 
-  // 🚀 ĐÃ CẬP NHẬT: Tự động dò bản đồ ngay khi chọn Phường
   const handleKhuVucChange = async (e: ChangeEvent<HTMLSelectElement>) => {
     const khuVuc = e.target.value;
     setFormData(prev => ({ ...prev, khuVuc, linkMap: updateMapLink(prev.soNha, prev.duong, khuVuc, prev.linkMap) }));
@@ -207,12 +206,10 @@ export default function DangTinPage() {
 
     setIsSearchingLoc(true);
     try {
-      // Tìm theo Đường + Phường (nếu đã nhập đường trước đó)
       const query = formData.duong ? `${formData.duong}, ${khuVuc}, Đà Nẵng` : `${khuVuc}, Đà Nẵng`;
       let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
       let data = await res.json();
       
-      // Nếu không tìm ra, lùi lại chỉ tìm theo tên Phường
       if (!data || data.length === 0) {
         res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(khuVuc + ', Đà Nẵng')}&limit=1`);
         data = await res.json();
@@ -221,7 +218,6 @@ export default function DangTinPage() {
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
-        // Cập nhật tọa độ và ép bản đồ nhảy ngay lập tức
         setFormData(prev => ({ ...prev, toaDo: `${lat.toFixed(6)}, ${lon.toFixed(6)}` }));
         setMapMountKey(Date.now());
       }
@@ -232,7 +228,6 @@ export default function DangTinPage() {
     }
   };
 
-  // 🔍 HÀM DÒ TÌM TỌA ĐỘ BẰNG OPENSTREETMAP API (Miễn phí)
   const handleSearchLocation = async () => {
     if (!formData.duong) {
       alert("⚠️ Vui lòng nhập Tên Đường trước khi bấm dò tìm!");
@@ -240,12 +235,10 @@ export default function DangTinPage() {
     }
     setIsSearchingLoc(true);
     try {
-      // Ưu tiên 1: Tìm sát rạt Số nhà + Tên Đường + Phường
       const query = `${formData.soNha ? formData.soNha + ' ' : ''}${formData.duong}, ${formData.khuVuc ? formData.khuVuc + ', ' : ''}Đà Nẵng`;
       let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
       let data = await res.json();
       
-      // Dự phòng 2: Nếu Kiệt/Hẻm khó quá, bỏ số nhà, chỉ tìm Tên Đường + Phường
       if (!data || data.length === 0) {
         const fallbackQuery = `${formData.duong}, ${formData.khuVuc ? formData.khuVuc + ', ' : ''}Đà Nẵng`;
         res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackQuery)}&limit=1`);
@@ -256,7 +249,7 @@ export default function DangTinPage() {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
         setFormData(prev => ({ ...prev, toaDo: `${lat.toFixed(6)}, ${lon.toFixed(6)}` }));
-        setMapMountKey(Date.now()); // Trick đỉnh cao: Ép bản đồ tải lại và lia camera ngay lập tức đến điểm mới
+        setMapMountKey(Date.now()); 
       } else {
         alert("❌ Bản đồ vệ tinh không tự dò ra đường này. Nó đã bay về trung tâm Phường, anh/chị vui lòng kéo ghim thủ công nhé!");
       }
@@ -267,10 +260,54 @@ export default function DangTinPage() {
     }
   };
 
+  // 🔥 ĐÃ NÂNG CẤP: BỘ BẮT LỖI (VALIDATION) VÀ CHỐNG SPAM CHUYÊN SÂU
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Hàm tiện ích: Hiển thị lỗi & Cuộn lên trên cùng mượt mà
+    const showError = (msg: string) => {
+      setMessage({ type: 'error', content: msg });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     if (uploading || uploadingSoDo) {
-      setMessage({ type: 'error', content: '⏳ Vui lòng đợi toàn bộ hình ảnh tải lên hoàn tất trước khi đăng tin!' });
+      showError('⏳ Vui lòng đợi toàn bộ hình ảnh tải lên hoàn tất trước khi đăng tin!');
+      return;
+    }
+
+    // 🚨 1. CHỐNG SPAM: Rate Limit (Khoá 15 giây mới được đăng tiếp)
+    const now = Date.now();
+    const lastSubmit = localStorage.getItem('lastSubmitTimeTranHuyLand');
+    if (lastSubmit && now - parseInt(lastSubmit) < 15000) {
+      showError('🚨 Thao tác quá nhanh! Vui lòng đợi 15 giây trước khi đăng tin tiếp theo.');
+      return;
+    }
+
+    // 🚨 2. CHUẨN HÓA DỮ LIỆU: Cắt bỏ khoảng trắng dư thừa
+    const tieudeClean = formData.tieude.trim();
+    const moTaClean = formData.moTa.trim();
+    const giaClean = formData.gia.trim();
+    const dienTichClean = formData.dienTich.trim();
+    const khuVucClean = formData.khuVuc.trim();
+
+    // 🚨 3. BẮT LỖI ĐỘ DÀI & NỘI DUNG RỖNG
+    if (moTaClean.length < 20) {
+      showError('❌ Mô tả quá ngắn. Vui lòng nhập chi tiết hơn (ít nhất 20 ký tự).');
+      return;
+    }
+    if (tieudeClean.length < 10) {
+      showError('❌ Tiêu đề tin đăng phải có ít nhất 10 ký tự.');
+      return;
+    }
+    if (!giaClean || !dienTichClean || !khuVucClean) {
+      showError('❌ Vui lòng điền đầy đủ các trường bắt buộc (Giá, Diện tích, Phường/Xã).');
+      return;
+    }
+
+    // 🚨 4. CHỐNG NHẬP RÁC: Nhận diện nhập trùng lặp (VD: "aaaaaaa", "1111111")
+    const spamPattern = /([a-zA-Z0-9])\1{6,}/; 
+    if (spamPattern.test(tieudeClean) || spamPattern.test(moTaClean)) {
+      showError('🤖 Hệ thống phát hiện nội dung Spam (nhập trùng ký tự liên tục). Vui lòng nhập tiếng Việt hợp lệ!');
       return;
     }
 
@@ -280,11 +317,16 @@ export default function DangTinPage() {
     const today = new Date();
     const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 
+    // Sử dụng dữ liệu đã được làm sạch
     const payload = {
       ...formData,
+      tieude: tieudeClean, 
+      moTa: moTaClean,
+      gia: giaClean,
+      dienTich: dienTichClean,
       id: Date.now().toString(),
       ngayDang: formattedDate,
-      isMatTien: formData.isMatTien || formData.tieude.toLowerCase().includes('mặt tiền')
+      isMatTien: formData.isMatTien || tieudeClean.toLowerCase().includes('mặt tiền')
     };
 
     try {
@@ -295,13 +337,18 @@ export default function DangTinPage() {
         body: JSON.stringify(payload),
       });
 
+      // Ghi nhận thời gian gửi thành công để kích hoạt rào chắn 15s cho lần kế tiếp
+      localStorage.setItem('lastSubmitTimeTranHuyLand', Date.now().toString());
+
       setMessage({ type: 'success', content: '🎉 Thêm sản phẩm bất động sản đồng bộ lên Google Sheet thành công!' });
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Trượt lên đầu để thấy câu chúc
+      
       setFormData(INITIAL_FORM_STATE);
       setSelectedImagesPreview([]);
       setSoDoImagesPreview([]);
       setMapMountKey(Date.now()); // Reset bản đồ về mặc định
     } catch (error) {
-      setMessage({ type: 'error', content: '❌ Lỗi kết nối đồng bộ. Vui lòng kiểm tra lại link Web App.' });
+      showError('❌ Lỗi kết nối đồng bộ. Vui lòng kiểm tra lại link Web App.');
     } finally {
       setLoading(false);
     }
@@ -415,7 +462,7 @@ export default function DangTinPage() {
             
             <div className="h-[400px] w-full rounded-2xl overflow-hidden border border-slate-300 shadow-inner mb-3 relative z-0">
               <LocationPickerMap 
-                key={mapMountKey} // Trick ép bản đồ render lại để nhảy đúng mục tiêu
+                key={mapMountKey}
                 toaDo={formData.toaDo} 
                 onLocationSelect={(pos) => setFormData({ ...formData, toaDo: `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}` })} 
               />
