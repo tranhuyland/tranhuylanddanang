@@ -6,7 +6,7 @@ import Link from "next/link";
 import { 
   MapPin, SlidersHorizontal, Check, RotateCcw, X, 
   Heart, ImageIcon, BedDouble, Bath, Clock, Share2,
-  Map as MapIcon, List 
+  Map as MapIcon, List, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { layUrlAnhChuan } from "@/lib/utils"; 
 import FilterWidget from "./FilterWidget"; 
@@ -325,6 +325,20 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     setCurrentPage(1);
   };
 
+  const handlePageChange = (newPage: number) => {
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    if (newPage < 1 || newPage > totalPages) return;
+    
+    setCurrentPage(newPage);
+    setTimeout(() => {
+      const section = document.getElementById("listing-section");
+      if (section) {
+        const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: topPosition, behavior: 'smooth' });
+      }
+    }, 10);
+  };
+
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = { all: safeBdsItems.length, "Đất": 0, "Nhà phố": 0, "Căn hộ": 0, "Cho thuê": 0 };
     safeBdsItems.forEach(i => {
@@ -389,6 +403,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return result;
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+
   return (
     <>
       <section className="w-full relative z-10 -mt-6 sm:-mt-10">
@@ -403,7 +419,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 return (
                   <button 
                     key={tab.id} 
-                    aria-label={`Lọc theo ${tab.label}`} // 🌟 Sửa lỗi Accessibility Hình 1
+                    aria-label={`Lọc theo ${tab.label}`}
                     onClick={() => { 
                       setActiveLoaiHinh(tab.id); setShowFavorites(false); 
                       setFilters(initialFilters); setTempFilters(initialFilters); setCurrentPage(1); 
@@ -414,14 +430,14 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                     `}
                   >
                     <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">{tab.label}</span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span> {/* 🌟 Sửa lỗi độ tương phản Hình 3 */}
+                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span>
                     {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
                   </button>
                 );
               })}
 
               <button 
-                aria-label="Xem danh sách tin đã lưu" // 🌟 Sửa lỗi Accessibility Hình 1
+                aria-label="Xem danh sách tin đã lưu"
                 onClick={handleToggleShowFavorites}
                 className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 
                   ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}
@@ -504,12 +520,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         {/* 🗺️ THANH ĐIỀU HƯỚNG KẾT QUẢ VÀ CÔNG TẮC GIAO DIỆN */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-lg md:text-xl font-bold text-slate-800">
-            Tìm thấy <span className="text-orange-600">{filteredItems.length}</span> bất động sản phù hợp {/* 🌟 Sửa lỗi độ tương phản Hình 3 */}
+            Tìm thấy <span className="text-orange-600">{filteredItems.length}</span> bất động sản phù hợp
           </h2>
           
           <div className="bg-white p-1 rounded-xl border border-slate-200 inline-flex shadow-sm">
             <button
-              aria-label="Xem dạng danh sách" // 🌟 Sửa lỗi Accessibility Hình 1
+              aria-label="Xem dạng danh sách"
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "list" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
@@ -518,7 +534,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               <List className="w-4 h-4" aria-hidden="true" /> Danh sách
             </button>
             <button
-              aria-label="Xem dạng bản đồ" // 🌟 Sửa lỗi Accessibility Hình 1
+              aria-label="Xem dạng bản đồ"
               onClick={() => setViewMode("map")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "map" ? "bg-orange-50 text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
@@ -529,11 +545,11 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
           </div>
         </div>
 
-        {/* KHU VỰC HIỂN THỊ CHÍNH (Được điều khiển bởi Công tắc) */}
+        {/* KHU VỰC HIỂN THỊ CHÍNH */}
         {filteredItems.length > 0 ? (
           viewMode === "list" ? (
             <>
-              {/* CHẾ ĐỘ DANH SÁCH (LIST VIEW) */}
+              {/* CHẾ ĐỘ DANH SÁCH */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-300">
                 {filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => {
                    const bdsId = item.id?.toString() || item.slug;
@@ -549,30 +565,52 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
                 })}
               </div>
               
-              {/* PHÂN TRANG */}
-              {Math.ceil(filteredItems.length / itemsPerPage) > 1 && (
-                <div className="flex justify-center flex-wrap gap-2 mt-16">
-                  {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, idx) => (
+              {/* 🌟 PHÂN TRANG ĐƯỢC TỐI ƯU HÓA */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center flex-wrap gap-2 mt-12 sm:mt-16">
+                  {/* Nút Trước */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    aria-label="Trang trước"
+                    className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold transition-all ${
+                      currentPage === 1 
+                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'
+                    }`}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  {/* Các số trang */}
+                  {Array.from({ length: totalPages }, (_, idx) => (
                     <button 
                       key={idx} 
                       aria-label={`Trang ${idx + 1}`}
-                      onClick={() => { 
-                        setCurrentPage(idx + 1); 
-                        setTimeout(() => {
-                          const section = document.getElementById("listing-section");
-                          if (section) {
-                            const topPosition = section.getBoundingClientRect().top + window.scrollY - 100;
-                            window.scrollTo({ top: topPosition, behavior: 'smooth' });
-                          }
-                        }, 10);
-                      }}
+                      onClick={() => handlePageChange(idx + 1)}
                       className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                        currentPage === idx + 1 ? "bg-orange-500 text-white shadow-md" : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300"
+                        currentPage === idx + 1 
+                          ? "bg-orange-500 text-white shadow-md shadow-orange-500/30" 
+                          : "bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 active:scale-95"
                       }`}
                     >
                       {idx + 1}
                     </button>
                   ))}
+
+                  {/* Nút Sau */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    aria-label="Trang sau"
+                    className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold transition-all ${
+                      currentPage === totalPages 
+                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'
+                    }`}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
               )}
             </>
@@ -698,10 +736,12 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
           
           <div className="flex items-center gap-1.5 shrink-0">
             
-            {/* 🌟 SỬA LỖI HÌNH 2: Nâng kích thước padding (py-2.5 thay vì py-1.5) và đặt min-h-[44px] để nút bấm đủ rộng, khắc phục cảnh báo Google */}
-            <button 
+            {/* 🌟 ĐÃ SỬA LỖI #418: Chuyển thẻ button thành thẻ div có role="button" để tránh vi phạm quy tắc lồng thẻ trong HTML */}
+            <div 
+              role="button"
+              tabIndex={0}
               aria-label="Chia sẻ tin này"
-              className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+              className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 cursor-pointer"
               onClick={handleShare}
               title="Chia sẻ tin"
             >
@@ -709,12 +749,14 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">
                 Chia sẻ
               </span>
-            </button>
+            </div>
 
-            {/* 🌟 SỬA LỖI HÌNH 2: Nâng kích thước padding (py-2.5 thay vì py-1.5) và đặt min-h-[44px] để nút bấm đủ rộng, khắc phục cảnh báo Google */}
-            <button 
+            {/* 🌟 ĐÃ SỬA LỖI #418: Chuyển thẻ button thành thẻ div có role="button" */}
+            <div 
+              role="button"
+              tabIndex={0}
               aria-label={isFavorite ? "Bỏ lưu tin này" : "Lưu tin này"}
-              className={`px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 ${
+              className={`px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${
                 isFavorite 
                   ? 'border-red-200 text-red-500 bg-red-50' 
                   : 'border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-300 hover:bg-red-50'
@@ -729,7 +771,7 @@ function BdsCard({ item, rank, isFavorite, onToggleFavorite }: { item: any, rank
               <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">
                 {isFavorite ? 'Đã lưu' : 'Lưu tin'}
               </span>
-            </button>
+            </div>
             
           </div>
         </div>
