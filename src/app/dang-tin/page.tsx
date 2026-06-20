@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, ChangeEvent, FormEvent } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
 // 🗺️ Tải Bản đồ động để tránh lỗi SSR của Next.js
@@ -12,6 +12,9 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
 const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzrb1ocMD9pZYe8JN14hSxhYG1KOHPb_ruX3hJtpUzKYn270qsKbjisU0Ea40DaGh3vww/exec';
 const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
 const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland';
+
+// 🔒 MẬT KHẨU TRUY CẬP TRANG ĐĂNG TIN (Anh có thể đổi số 123 thành mk anh muốn)
+const ADMIN_PASSWORD = '123';
 
 const INITIAL_FORM_STATE = {
   id: '',
@@ -34,6 +37,12 @@ const INITIAL_FORM_STATE = {
 };
 
 export default function DangTinPage() {
+  // 🚨 STATE XÁC THỰC BẢO MẬT
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   const [uploading, setUploading] = useState(false);
@@ -50,6 +59,36 @@ export default function DangTinPage() {
   // 📡 Trạng thái cho tính năng Dò tìm Tên Đường
   const [isSearchingLoc, setIsSearchingLoc] = useState(false);
   const [mapMountKey, setMapMountKey] = useState(Date.now());
+
+  // KIỂM TRA MẬT KHẨU ĐÃ LƯU KHI MỞ TRANG
+  useEffect(() => {
+    const auth = localStorage.getItem('thl_admin_auth');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    }
+    setIsCheckingAuth(false);
+  }, []);
+
+  // HÀM XỬ LÝ ĐĂNG NHẬP
+  const handleLogin = (e: FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      localStorage.setItem('thl_admin_auth', 'true');
+      setIsAuthenticated(true);
+      setAuthError('');
+    } else {
+      setAuthError('Mật khẩu không chính xác!');
+    }
+  };
+
+  // HÀM XỬ LÝ ĐĂNG XUẤT (Khóa lại trang)
+  const handleLogout = () => {
+    if (window.confirm("Bạn có chắc chắn muốn khóa trang đăng tin?")) {
+      localStorage.removeItem('thl_admin_auth');
+      setIsAuthenticated(false);
+      setPasswordInput('');
+    }
+  };
 
   const uploadImagesToCloudinary = async (
     files: FileList | null,
@@ -260,11 +299,9 @@ export default function DangTinPage() {
     }
   };
 
-  // 🔥 ĐÃ NÂNG CẤP: BỘ BẮT LỖI (VALIDATION) VÀ CHỐNG SPAM CHUYÊN SÂU
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Hàm tiện ích: Hiển thị lỗi & Cuộn lên trên cùng mượt mà
     const showError = (msg: string) => {
       setMessage({ type: 'error', content: msg });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -275,7 +312,6 @@ export default function DangTinPage() {
       return;
     }
 
-    // 🚨 1. CHỐNG SPAM: Rate Limit (Khoá 15 giây mới được đăng tiếp)
     const now = Date.now();
     const lastSubmit = localStorage.getItem('lastSubmitTimeTranHuyLand');
     if (lastSubmit && now - parseInt(lastSubmit) < 15000) {
@@ -283,14 +319,12 @@ export default function DangTinPage() {
       return;
     }
 
-    // 🚨 2. CHUẨN HÓA DỮ LIỆU: Cắt bỏ khoảng trắng dư thừa
     const tieudeClean = formData.tieude.trim();
     const moTaClean = formData.moTa.trim();
     const giaClean = formData.gia.trim();
     const dienTichClean = formData.dienTich.trim();
     const khuVucClean = formData.khuVuc.trim();
 
-    // 🚨 3. BẮT LỖI ĐỘ DÀI & NỘI DUNG RỖNG
     if (moTaClean.length < 20) {
       showError('❌ Mô tả quá ngắn. Vui lòng nhập chi tiết hơn (ít nhất 20 ký tự).');
       return;
@@ -304,7 +338,6 @@ export default function DangTinPage() {
       return;
     }
 
-    // 🚨 4. CHỐNG NHẬP RÁC: Nhận diện nhập trùng lặp (VD: "aaaaaaa", "1111111")
     const spamPattern = /([a-zA-Z0-9])\1{6,}/; 
     if (spamPattern.test(tieudeClean) || spamPattern.test(moTaClean)) {
       showError('🤖 Hệ thống phát hiện nội dung Spam (nhập trùng ký tự liên tục). Vui lòng nhập tiếng Việt hợp lệ!');
@@ -317,7 +350,6 @@ export default function DangTinPage() {
     const today = new Date();
     const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 
-    // Sử dụng dữ liệu đã được làm sạch
     const payload = {
       ...formData,
       tieude: tieudeClean, 
@@ -337,16 +369,15 @@ export default function DangTinPage() {
         body: JSON.stringify(payload),
       });
 
-      // Ghi nhận thời gian gửi thành công để kích hoạt rào chắn 15s cho lần kế tiếp
       localStorage.setItem('lastSubmitTimeTranHuyLand', Date.now().toString());
 
       setMessage({ type: 'success', content: '🎉 Thêm sản phẩm bất động sản đồng bộ lên Google Sheet thành công!' });
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // Trượt lên đầu để thấy câu chúc
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
       
       setFormData(INITIAL_FORM_STATE);
       setSelectedImagesPreview([]);
       setSoDoImagesPreview([]);
-      setMapMountKey(Date.now()); // Reset bản đồ về mặc định
+      setMapMountKey(Date.now()); 
     } catch (error) {
       showError('❌ Lỗi kết nối đồng bộ. Vui lòng kiểm tra lại link Web App.');
     } finally {
@@ -354,10 +385,55 @@ export default function DangTinPage() {
     }
   };
 
+  // Màn hình chờ kiểm tra thông tin đăng nhập
+  if (isCheckingAuth) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400 font-bold">Đang kiểm tra quyền truy cập...</div>;
+  }
+
+  // 🔒 GIAO DIỆN KHÓA BẢO VỆ NẾU CHƯA NHẬP MẬT KHẨU
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-slate-100 shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+            🔒
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase">Khu vực bảo mật</h2>
+          <p className="text-sm font-bold text-slate-500 mb-8">Vui lòng nhập mật khẩu để truy cập trang Đăng tin nội bộ.</p>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input 
+              type="password" 
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Nhập mật khẩu..." 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center text-sm font-bold focus:outline-none focus:border-amber-500 text-slate-700"
+            />
+            {authError && <p className="text-rose-500 text-xs font-bold">{authError}</p>}
+            
+            <button type="submit" className="w-full bg-amber-500 text-slate-900 font-bold text-sm uppercase py-4 rounded-xl shadow-md hover:bg-amber-400 transition-colors">
+              Mở khóa hệ thống
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔓 GIAO DIỆN CHÍNH SAU KHI ĐÃ ĐĂNG NHẬP THÀNH CÔNG
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-xl p-6 sm:p-8">
-        <div className="text-center mb-8">
+        
+        <div className="text-center mb-8 relative">
+          {/* Nút đăng xuất góc phải */}
+          <button 
+            onClick={handleLogout}
+            className="absolute right-0 top-0 text-[10px] font-bold bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors uppercase border border-rose-100"
+          >
+            🔒 Đăng xuất
+          </button>
+
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight">Úp Tin Bất Động Sản Hệ Thống</h1>
           <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">Hệ thống tự động hóa Trần Huy Land</p>
         </div>
