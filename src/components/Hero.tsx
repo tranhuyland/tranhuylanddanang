@@ -12,20 +12,19 @@ export default function Hero() {
   return (
     <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden bg-slate-950">
       
-      {/* Hero Background */}
+      {/* Hero Background - TỐI ƯU LCP */}
       <div className="absolute inset-0 z-0">
         <Image
-  src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1781152987/jhgz7jpx9tqdzuuki6ps.jpg"
-  alt="Toàn cảnh Đà Nẵng - Kho nhà đất chính chủ Trần Huy Land"
-  fill
-  priority
-  fetchPriority="high"
-  loading="eager"
-  sizes="100vw"
-  quality={85}
-  className="object-cover object-center opacity-40"
-/>
-
+          src="https://res.cloudinary.com/ds6k0kfbz/image/upload/f_auto,q_auto/v1781152987/jhgz7jpx9tqdzuuki6ps.jpg"
+          alt="Toàn cảnh Đà Nẵng - Kho nhà đất chính chủ Trần Huy Land"
+          fill
+          priority={true}          // 🚀 Ép tải ngay lập tức
+          fetchPriority="high"      // 🚀 Ép độ ưu tiên tải cao nhất
+          loading="eager"          // 🚀 Cấm chế độ tải lười (lazy)
+          sizes="100vw"
+          quality={85}
+          className="object-cover object-center opacity-40"
+        />
         <div className="absolute inset-0 bg-slate-900/20" />
       </div>
 
@@ -33,7 +32,6 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
         <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/75 p-6 md:p-8 rounded-[2rem] shadow-2xl border border-white/50">
 
-          {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-sm border border-white">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
@@ -42,7 +40,6 @@ export default function Hero() {
             Kho Nhà Đất Đà Nẵng
           </div>
 
-          {/* Heading */}
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật
             <br />
@@ -51,13 +48,11 @@ export default function Hero() {
             </span>
           </h1>
 
-          {/* Description */}
           <p className="text-slate-900 font-medium text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
             Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng.
             Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
           </p>
 
-          {/* Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <a
               href="tel:0905778852"
@@ -77,7 +72,6 @@ export default function Hero() {
             </button>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-900/10">
             <div className="flex flex-col">
               <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
@@ -109,7 +103,6 @@ export default function Hero() {
               </span>
             </div>
           </div>
-
         </div>
       </div>
     </section>
