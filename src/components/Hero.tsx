@@ -22,7 +22,7 @@ export default function Hero() {
           fetchPriority="high"      // 🚀 Ép độ ưu tiên tải cao nhất
           loading="eager"          // 🚀 Cấm chế độ tải lười (lazy)
           sizes="100vw"
-          quality={85}
+          quality={60}
           className="object-cover object-center opacity-40"
         />
         <div className="absolute inset-0 bg-slate-900/20" />
