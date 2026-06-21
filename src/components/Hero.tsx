@@ -27,21 +27,17 @@ export default function Hero() {
             w-full
             md:max-w-xl
             lg:max-w-2xl
-            bg-white/75
-            backdrop-blur-sm
+            bg-white/90
             p-6
             md:p-8
             rounded-[2rem]
-            shadow-2xl
+            shadow-lg
             border
             border-white/50
           "
         >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 shadow-sm border border-white">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75 animate-ping"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-            </span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 border border-white">
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
             Kho Nhà Đất Đà Nẵng
           </div>
 
@@ -61,7 +57,7 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <a
               href="tel:0905778852"
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-orange-500/30 text-sm hover:shadow-orange-500/50 active:scale-95 transition-all"
+              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md hover:opacity-95 active:scale-95 transition-all"
             >
               <Phone className="w-4 h-4" />
               Liên Hệ Tư Vấn
