@@ -8,6 +8,8 @@ import PropertyClient from "./PropertyClient";
 import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils";
 import RelatedProducts from "@/components/RelatedProducts"; // 🔥 Import component Tin Liên Quan
+import Link from "next/link"; // 🚀 Thêm thư viện chuyển trang tối ưu của Next.js
+import { Home, ChevronRight } from "lucide-react"; // 🚀 Thêm các icon điều hướng trực quan
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
@@ -118,8 +120,23 @@ export default async function NhaDatDetail({ params }: Props) {
       <Header />
       
       {/* Bao bọc Main chống tràn chiều ngang trên di động */}
-      <main className="max-w-4xl mx-auto px-4 py-8 sm:py-10 flex-1 w-full max-w-full overflow-hidden">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-10 flex-1 w-full max-w-full overflow-hidden">
         
+        {/* 🗺️ THANH ĐIỀU HƯỚNG BREADCRUMB: Giúp khách dễ dàng bấm về thẳng Trang chủ */}
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 mb-5 sm:mb-6 flex-wrap border-b border-slate-100 pb-3">
+          <Link 
+            href="/" 
+            className="flex items-center gap-1 text-slate-700 hover:text-orange-600 transition-colors font-bold"
+          >
+            <Home className="w-3.5 h-3.5 text-slate-600" />
+            Trang chủ
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="text-slate-400 font-medium truncate max-w-[200px] sm:max-w-md">
+            {titleText}
+          </span>
+        </div>
+
         {/* Component xử lý Client (Tab Video, Map, Images) */}
         <PropertyClient item={item} />
 
