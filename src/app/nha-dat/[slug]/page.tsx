@@ -136,12 +136,9 @@ export default async function NhaDatDetail({ params }: Props) {
 
       <Header />
       
-      {/* Bao bọc Main chống tràn chiều ngang trên di động */}
-      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-10 flex-1 w-full max-w-full overflow-hidden">
-        
-        {/* 🗺️ THANH ĐIỀU HƯỚNG BREADCRUMB: Trang chủ > [slug vị trí phường] > Chi tiết sản phẩm */}
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 mb-5 sm:mb-6 flex-wrap border-b border-slate-100 pb-3">
-          {/* Cấp 1: Trang chủ */}
+      {/* 🪟 THANH BREADCRUMB CỐ ĐỊNH (STICKY): Nằm ngoài Main, ghim chặt dưới Header */}
+      <div className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
+        <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 flex-wrap">
           <Link 
             href="/" 
             className="flex items-center gap-1 text-slate-700 hover:text-orange-600 transition-colors font-bold"
@@ -150,7 +147,6 @@ export default async function NhaDatDetail({ params }: Props) {
             Trang chủ
           </Link>
           
-          {/* Cấp 2: Đã khớp chuẩn link dẫn về trang động Phường/Vị trí (/vi-tri/[slug]) */}
           {locationName && (
             <>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -163,14 +159,15 @@ export default async function NhaDatDetail({ params }: Props) {
             </>
           )}
 
-          {/* Cấp 3: Tên sản phẩm hiện tại */}
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-400 font-medium truncate max-w-[180px] sm:max-w-md">
             {titleText}
           </span>
         </div>
+      </div>
 
-        {/* Component xử lý Client (Tab Video, Map, Images) */}
+      {/* Thân Main chính - Thu hẹp pt-6 xuống pt-4 để không bị rỗng chân với thanh Sticky */}
+      <main className="max-w-4xl mx-auto px-4 pt-4 pb-8 sm:pt-6 sm:pb-10 flex-1 w-full max-w-full overflow-hidden">
         <PropertyClient item={item} />
 
         {/* 🔥 GẮN KHU VỰC TIN LIÊN QUAN */}
