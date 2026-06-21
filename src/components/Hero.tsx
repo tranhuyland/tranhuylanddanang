@@ -8,7 +8,7 @@ export default function Hero() {
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/hero-bg.webp"
+          src="/hero-bg.jpg"
           alt="Toàn cảnh Đà Nẵng"
           fill
           priority
