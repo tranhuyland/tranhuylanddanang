@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Phone, Building2, MapPin, TrendingUp } from 'lucide-react';
 import KyGuiButton from './KyGuiButton';
 
-// 💡 1. TÁCH DỮ LIỆU TĨNH (DRY Principle): Giúp JSX phía dưới cực kỳ sạch và dễ mở rộng
+// 💡 1. TÁCH DỮ LIỆU TĨNH (DRY Principle)
 const HERO_STATS = [
   {
     icon: Building2,
@@ -43,9 +43,12 @@ export default function Hero() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 p-6 md:p-8 rounded-[2rem] shadow-lg border border-white/50">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 border border-white">
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+        {/* 🪟 ĐÃ PHỤC HỒI KÍNH: bg-white/70 + backdrop-blur-md + shadow-2xl */}
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/70 backdrop-blur-md p-6 md:p-8 rounded-[2rem] shadow-2xl border border-white/50 transition-all">
+          
+          {/* Nhãn nhỏ trên cùng - Dùng hiệu ứng "kính chồng kính" */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 border border-white/60 shadow-sm">
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500 animate-pulse" />
             Kho Nhà Đất Đà Nẵng
           </div>
 
@@ -72,7 +75,7 @@ export default function Hero() {
             <KyGuiButton />
           </div>
 
-          {/* 💡 2. TÁI CẤU TRÚC GRID: Gọn hơn 60% code cũ, tự động chèn vạch kẻ */}
+          {/* Grid Stats */}
           <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-900/10">
             {HERO_STATS.map((stat, idx) => {
               const IconComponent = stat.icon;
