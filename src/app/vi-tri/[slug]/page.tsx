@@ -5,6 +5,8 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 import ListingSection from "@/components/ListingSection";
 import { Metadata } from "next";
 import React from "react";
+import Link from "next/link"; // 🚀 Thêm Link tối ưu chuyển trang
+import { Home, ChevronRight } from "lucide-react"; // 🚀 Thêm bộ icon điều hướng trực quan
 
 // 🚀 KÍCH HOẠT ISR CACHE: Tự động làm mới dữ liệu mỗi 60 giây y như trang chủ
 export const revalidate = 60;
@@ -63,8 +65,24 @@ export default async function LocationPage({ params }: Props) {
     <main className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
 
-      {/* KHỐI HERO HEADER CHUẨN SEO */}
-      <div className="pt-28 pb-12 bg-slate-900 text-center px-4">
+      {/* KHỐI HERO HEADER CHUẨN SEO + TÍCH HỢP BREADCRUMB VIÊN THUỐC */}
+      <div className="pt-28 pb-12 bg-slate-900 text-center px-4 relative overflow-hidden">
+        
+        {/* 🗺️ BREADCRUMB DẠNG PILL (VIÊN THUỐC) - Thiết kế tinh tế trên nền tối */}
+        <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs sm:text-sm text-slate-300 mb-6 backdrop-blur-md shadow-inner">
+          <Link 
+            href="/" 
+            className="flex items-center gap-1 hover:text-orange-400 transition-colors font-semibold"
+          >
+            <Home className="w-3.5 h-3.5 text-slate-400" />
+            Trang chủ
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+          <span className="text-slate-400 font-medium">Khu vực</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+          <span className="text-orange-400 font-bold">{exactName}</span>
+        </div>
+
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
           Nhà đất <span className="text-orange-500">{exactName}</span>, Đà Nẵng
         </h1>
