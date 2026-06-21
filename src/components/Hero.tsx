@@ -12,6 +12,8 @@ export default function Hero() {
           alt="Toàn cảnh Đà Nẵng"
           fill
           priority
+          fetchPriority="high" // 🚀 Ép trình duyệt quét và tải ảnh này ở mức ưu tiên cao nhất
+          loading="eager" // 🚀 Khóa tuyệt đối mọi cơ chế tải lười (lazy-load)
           sizes="100vw"
           quality={80}
           className="object-cover object-center"
