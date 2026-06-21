@@ -200,14 +200,23 @@ export default function DangTinPage() {
       newFormData.khuVuc = foundWard;
     }
 
-    const streetMatch = text.match(/(k|kiệt|mt|mặt tiền|đường)\s*(\d+[\d\/a-zA-Z]*)?\s+([^,\n\-]+?)(?=\s+phường|\s+quận|,|-|\n|$)/i);
+    // 🔥 ĐÃ CẢI TIẾN: BỘ QUÉT TÊN ĐƯỜNG THÔNG MINH (CHỐNG CHỮ "ĐƯỜNG" & CHẶT ĐUÔI "-")
+    const streetMatch = text.match(/(k|kiệt|mt|mặt tiền|đường)\s*(\d+[\d\/a-zA-Z]*)?\s+([^,\n\-\–\—]+?)(?=\s+phường|\s+quận|,|-|–|—|\n|$)/i);
     if (streetMatch) {
       const prefix = streetMatch[1].toLowerCase(); 
       const num = streetMatch[2]; 
-      const streetName = streetMatch[3].trim(); 
+      const rawStreet = streetMatch[3].trim(); 
 
-      newFormData.duong = streetName;
+      // 1. Tẩy sạch chữ "đường" hoặc "duong" ở đầu nếu bị dính
+      // 2. Cắt đứt đuôi mọi thứ nằm sau các loại dấu gạch ngang (- / – / —)
+      const cleanStreetName = rawStreet
+        .replace(/^(?:đường|duong)\s+/i, '')
+        .split(/[\-\–\—]/)[0]
+        .trim();
+
+      newFormData.duong = cleanStreetName;
       newFormData.soNha = num ? num.trim() : '';
+
       if (prefix === 'mt' || prefix === 'mặt tiền') {
         newFormData.isMatTien = true; 
       }
@@ -406,7 +415,6 @@ export default function DangTinPage() {
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               placeholder="Nhập mật khẩu..." 
-              // Đã đổi text-sm thành text-[16px] để chống zoom trên iPhone
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center text-[16px] font-bold focus:outline-none focus:border-amber-500 text-slate-700"
             />
             {authError && <p className="text-rose-500 text-xs font-bold">{authError}</p>}
