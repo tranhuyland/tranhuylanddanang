@@ -147,7 +147,7 @@ export default async function NhaDatDetail({ params }: Props) {
             className="flex items-center gap-1 text-slate-700 hover:text-orange-600 transition-colors font-bold shrink-0"
           >
             <Home className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-            <span className="hidden sm:inline">Trang chủ</span>
+            Trang chủ
           </Link>
           
           {/* Cấp 2: Tên Phường/Xã cố định không bị bóp (shrink-0) */}
