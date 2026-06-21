@@ -10,7 +10,7 @@ import { layUrlAnhChuan } from "@/lib/utils";
 import RelatedProducts from "@/components/RelatedProducts";
 import Link from "next/link";
 import { Home, ChevronRight } from "lucide-react";
-import { cache } from "react"; // 🌟 1. Bổ sung bộ nhớ đệm luồng RAM của React 19
+import { cache } from "react";
 
 export const revalidate = 60;
 
@@ -31,12 +31,14 @@ function convertToSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// 🌟 2. Bọc React.cache() -> Đảm bảo generateMetadata và Page chỉ quét mảng Sheet 1 lần duy nhất!
+// 🌟 BẢN VÁ LỖI VERCEL: Ép foundItem về kiểu "any" an toàn.
+// Triệt tiêu hoàn toàn sự khắt khe của TypeScript đối với các cột Sheet viết hoa.
 const getPropertyBySlug = cache(async (slug: string) => {
   const data = await getBdsData();
   const safeData = Array.isArray(data) ? data : [];
+  const foundItem = safeData.find((p: any) => p?.slug === slug);
   return {
-    item: safeData.find((p: Record<string, any>) => p?.slug === slug) || null,
+    item: foundItem ? (foundItem as any) : null,
     allItems: safeData,
   };
 });
@@ -101,7 +103,6 @@ export default async function NhaDatDetail({ params }: Props) {
     "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString().split("T")[0],
     "image": imageSeo,
     "priceCurrency": "VND",
-    // 🌟 3. Ép kiểu Number tuyệt đối cho bọ Google Bot
     "price": priceNumber > 0 ? priceNumber : 0, 
     "about": {
       "@type": "Residence",
@@ -168,6 +169,6 @@ export default async function NhaDatDetail({ params }: Props) {
       <BackButton />
       <Footer />
       <FloatingWidgets />
-    </> 
+    </>
   );
 }
