@@ -59,8 +59,16 @@ export default function Header() {
               <button aria-label="Quay lại" onClick={() => router.back()} className="p-2.5 text-slate-600 hover:bg-slate-100 rounded-full active:scale-95 transition-all">
                 <ChevronLeft size={24} aria-hidden="true" />
               </button>
-              <div className="flex-1 text-center font-extrabold text-slate-700 text-[17px] mr-10">
-                Chi tiết sản phẩm
+
+              {/* 🌟 ĐÃ THAY THẾ: Logo bấm về Trang chủ */}
+              <div className="flex-1 flex items-center justify-center mr-6">
+                <Link 
+                  href="/" 
+                  className="relative h-8 w-36 sm:h-9 sm:w-40 block active:scale-95 transition-transform"
+                  aria-label="Về trang chủ Trần Huy Land"
+                >
+                  <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
+                </Link>
               </div>
             </>
           ) : (
