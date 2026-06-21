@@ -3,115 +3,106 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import { notFound } from "next/navigation";
-import BackButton from "@/components/BackButton"; // 🌟 Vẫn giữ import để nút nổi hoạt động
+import BackButton from "@/components/BackButton";
 import PropertyClient from "./PropertyClient";
 import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils";
-import RelatedProducts from "@/components/RelatedProducts"; // 🔥 Import component Tin Liên Quan
-import Link from "next/link"; // 🚀 Thêm thư viện chuyển trang tối ưu của Next.js
-import { Home, ChevronRight } from "lucide-react"; // 🚀 Thêm các icon điều hướng trực quan
+import RelatedProducts from "@/components/RelatedProducts";
+import Link from "next/link";
+import { Home, ChevronRight } from "lucide-react";
+import { cache } from "react"; // 🌟 1. Bổ sung bộ nhớ đệm luồng RAM của React 19
 
-// Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// 🛠️ HÀM HỖ TRỢ CHUYỂN TÊN PHƯỜNG SANG SLUG ĐỒNG BỘ VỚI LOCATION_MAP (Ví dụ: "Hòa Cường" -> "hoa-cuong")
 function convertToSlug(text: string): string {
   if (!text) return "";
-  return text
+  return String(text)
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
-// 🌐 1. TỐI ƯU SEO METADATA ĐỘNG CHUẨN GOOGLE & ZALO/FACEBOOK
+// 🌟 2. Bọc React.cache() -> Đảm bảo generateMetadata và Page chỉ quét mảng Sheet 1 lần duy nhất!
+const getPropertyBySlug = cache(async (slug: string) => {
+  const data = await getBdsData();
+  const safeData = Array.isArray(data) ? data : [];
+  return {
+    item: safeData.find((p: Record<string, any>) => p?.slug === slug) || null,
+    allItems: safeData,
+  };
+});
+
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const data = await getBdsData();
-  
-  // Lớp bảo vệ chống crash khi Google API trả về lỗi
-  const safeData = Array.isArray(data) ? data : [];
-  const item = safeData.find((p) => p.slug === slug) as any;
+  const { item } = await getPropertyBySlug(slug);
 
   if (!item) {
     return { title: "Không tìm thấy sản phẩm - Trần Huy Land" };
   }
 
-  const titleText = item.tieude || item.Tieude || "Chi tiết bất động sản";
-  const priceText = item.gia || item.Gia || "Liên hệ";
-  const areaText = item.dienTich || item.DienTich || "Chưa rõ";
-  const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
+  const titleText = item.tieude || item.Tieude || item.title || "Chi tiết bất động sản";
+  const priceText = item.gia || item.Gia || item.price || "Liên hệ";
+  const areaText = item.dienTich || item.DienTich || item.dientich || "Chưa rõ";
+  const locationText = item.khuVucFull || item.khuvucFull || item.diachi || "Đà Nẵng";
   
-  // 📸 Bóc tách ảnh đầu tiên làm Thumbnail cho Zalo/FB
-  const anhGoc = item.anh || item.Anh || "";
-  const danhSachAnh = anhGoc ? anhGoc.split(",").map((a: string) => a.trim()).filter((a: string) => a !== "" && a.startsWith("http")) : [];
-  // Thay thế link ảnh mặc định nếu sản phẩm không có ảnh
-  const imageSeo = danhSachAnh.length > 0 ? layUrlAnhChuan(danhSachAnh[0]) : "https://tranhuyland.vn/logo.png";
+  const imageSeo = layUrlAnhChuan(item.anh || item.Anh) || "https://tranhuyland.vn/logo.png";
 
   return {
     title: `${titleText} - Giá tốt: ${priceText} | Trần Huy Land`,
     description: `Bán bất động sản chính chủ tại ${locationText}. Diện tích thực tế: ${areaText}, giá bán công khai: ${priceText}. Sổ hồng chính chủ, hỗ trợ tư vấn pháp lý nhanh chóng.`,
     openGraph: {
       title: titleText,
-      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại khu vực ${locationText}.`,
+      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại ${locationText}.`,
       url: `https://tranhuyland.vn/nha-dat/${slug}`,
       siteName: "Trần Huy Land",
-      images: [
-        {
-          url: imageSeo,
-          width: 1200,
-          height: 630,
-          alt: titleText,
-        }
-      ],
+      images: [{ url: imageSeo, width: 1200, height: 630, alt: titleText }],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: titleText,
-      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại khu vực ${locationText}.`,
+      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại ${locationText}.`,
       images: [imageSeo],
     },
   };
 }
 
-// 🏢 2. KHUNG TRANG RENDER THỜI GIAN THỰC TỪ SERVER
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
-  const data = await getBdsData(); 
-  
-  // Lớp bảo vệ chống crash cho trang chi tiết
-  const safeData = Array.isArray(data) ? data : [];
-  const item = safeData.find((p) => p.slug === slug) as any; 
+  const { item, allItems } = await getPropertyBySlug(slug);
 
   if (!item) notFound();
 
-  const titleText = item.tieude || item.Tieude || "";
-  const rawPrice = item.gia || item.Gia || "0";
-  const priceNumber = parseFloat(rawPrice.replace(/[^0-9]/g, "")) || 0; 
-  const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
-  const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
+  const titleText = item.tieude || item.Tieude || item.title || "";
+  
+  const rawPrice = String(item.gia || item.Gia || "0");
+  const cleanPrice = rawPrice.replace(/[^0-9]/g, "");
+  const priceNumber = cleanPrice ? parseFloat(cleanPrice) : 0;
 
-  // 🚀 Lấy tên Phường/Vị trí để tạo cấp điều hướng giữa
+  const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   const locationName = item.khuVuc || item.KhuVuc || "";
   const locationSlug = convertToSlug(locationName);
+  const imageSeo = layUrlAnhChuan(item.anh || item.Anh) || "https://tranhuyland.vn/logo.png";
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     "name": titleText,
     "description": `${titleText} tại khu vực ${locationText}.`,
-    "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString().split('T')[0],
+    "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString().split("T")[0],
     "image": imageSeo,
     "priceCurrency": "VND",
-    "price": priceNumber > 0 ? priceNumber : rawPrice, 
+    // 🌟 3. Ép kiểu Number tuyệt đối cho bọ Google Bot
+    "price": priceNumber > 0 ? priceNumber : 0, 
     "about": {
       "@type": "Residence",
       "name": titleText,
@@ -119,11 +110,11 @@ export default async function NhaDatDetail({ params }: Props) {
       "address": {
         "@type": "PostalAddress",
         "streetAddress": locationText,
-        "addressLocality": "Đà Nẵng", 
+        "addressLocality": "Đà Nẵng",
         "addressRegion": "Đà Nẵng",
-        "addressCountry": "VN"
-      }
-    }
+        "addressCountry": "VN",
+      },
+    },
   };
 
   return (
@@ -135,26 +126,22 @@ export default async function NhaDatDetail({ params }: Props) {
       />
 
       <Header />
-      
-      {/* 🪟 THANH BREADCRUMB CỐ ĐỊNH (STICKY): Đã khóa chết 1 dòng trên mọi thiết bị */}
+
       <div className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
-        {/* Lõi bùa chú: flex-nowrap + overflow-hidden */}
         <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-slate-500 flex-nowrap overflow-hidden">
           
-          {/* Cấp 1: Nút Trang chủ cố định không bị bóp (shrink-0) */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center gap-1 text-slate-700 hover:text-orange-600 transition-colors font-bold shrink-0"
           >
             <Home className="w-3.5 h-3.5 text-slate-600 shrink-0" />
             Trang chủ
           </Link>
-          
-          {/* Cấp 2: Tên Phường/Xã cố định không bị bóp (shrink-0) */}
+
           {locationName && (
             <>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <Link 
+              <Link
                 href={`/vi-tri/${locationSlug}`}
                 className="text-slate-700 hover:text-orange-600 transition-colors font-bold shrink-0 truncate max-w-[120px] sm:max-w-none"
               >
@@ -163,30 +150,24 @@ export default async function NhaDatDetail({ params }: Props) {
             </>
           )}
 
-          {/* Cấp 3: Tên sản phẩm - Co giãn thông minh tự gọt chữ (min-w-0 flex-1 truncate) */}
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-400 font-medium min-w-0 flex-1 truncate">
             {titleText}
           </span>
-
         </div>
       </div>
 
-      {/* Thân Main chính */}
-      <main className="max-w-4xl mx-auto px-4 pt-4 pb-8 sm:pt-6 sm:pb-10 flex-1 w-full max-w-full overflow-hidden">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-10 flex-1 w-full overflow-hidden">
         <PropertyClient item={item} />
 
-        {/* 🔥 GẮN KHU VỰC TIN LIÊN QUAN */}
         <div className="mt-8 sm:mt-12">
-          <RelatedProducts currentItem={item} allItems={safeData} />
+          <RelatedProducts currentItem={item} allItems={allItems} />
         </div>
       </main>
-      
-      {/* 🌟 Đặt BackButton ở đây: Nút nổi "Quay về" chuẩn UX */}
+
       <BackButton />
-      
       <Footer />
       <FloatingWidgets />
-    </>
+    </> 
   );
 }
