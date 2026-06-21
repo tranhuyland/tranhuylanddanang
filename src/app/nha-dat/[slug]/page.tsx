@@ -10,6 +10,7 @@ import { layUrlAnhChuan } from "@/lib/utils";
 import RelatedProducts from "@/components/RelatedProducts"; // 🔥 Import component Tin Liên Quan
 import Link from "next/link"; // 🚀 Thêm thư viện chuyển trang tối ưu của Next.js
 import { Home, ChevronRight } from "lucide-react"; // 🚀 Thêm các icon điều hướng trực quan
+import Image from "next/image"; // 🚀 Nạp logo mượt mà chuẩn Next.js
 
 // Bật cơ chế tải động liên tục để website tự cập nhật nhà đất mới từ Google Sheet ngay lập tức
 export const dynamic = "force-dynamic";
@@ -99,7 +100,7 @@ export default async function NhaDatDetail({ params }: Props) {
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   const imageSeo = layUrlAnhChuan(item.anh || item.Anh);
 
-  // 🚀 Lấy tên Phường/Vị trí để tạo cấp điều hướng giữa
+  // Lấy tên Phường/Vị trí để tạo cấp điều hướng giữa
   const locationName = item.khuVuc || item.KhuVuc || "";
   const locationSlug = convertToSlug(locationName);
 
@@ -136,37 +137,50 @@ export default async function NhaDatDetail({ params }: Props) {
 
       <Header />
       
-      {/* 🪟 THANH BREADCRUMB CỐ ĐỊNH (STICKY): Nằm ngoài Main, ghim chặt dưới Header */}
+      {/* 🪟 THANH BREADCRUMB CỐ ĐỊNH (STICKY) - ĐÃ KHÓA CHẾT 1 DÒNG */}
       <div className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
-        <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 flex-wrap">
+        {/* Đã gỡ bỏ flex-wrap, thay bằng: overflow-hidden */}
+        <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-slate-500 overflow-hidden">
+          
+          {/* Cấp 1: LOGO (Cố định không bao giờ bị bóp) */}
           <Link 
             href="/" 
-            className="flex items-center gap-1 text-slate-700 hover:text-orange-600 transition-colors font-bold"
+            className="hover:opacity-85 transition-opacity shrink-0 flex items-center"
+            aria-label="Quay về trang chủ Trần Huy Land"
           >
-            <Home className="w-3.5 h-3.5 text-slate-600" />
-            Trang chủ
+            <Image 
+              src="/logo.png" 
+              alt="Trần Huy Land Logo" 
+              width={82} // Tinh chỉnh mốc vàng 82px cực đẹp cho lề Mobile
+              height={24} 
+              priority={true} 
+              className="object-contain h-5 sm:h-6 w-auto shrink-0"
+            />
           </Link>
           
+          {/* Cấp 2: VỊ TRÍ PHƯỜNG (Cố định shrink-0 không bị bóp) */}
           {locationName && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
               <Link 
                 href={`/vi-tri/${locationSlug}`}
-                className="text-slate-700 hover:text-orange-600 transition-colors font-bold"
+                className="text-slate-700 hover:text-orange-600 transition-colors font-bold shrink-0 truncate max-w-[110px] sm:max-w-none"
               >
                 {locationName}
               </Link>
             </>
           )}
 
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="text-slate-400 font-medium truncate max-w-[180px] sm:max-w-md">
+          {/* Cấp 3: TÊN SẢN PHẨM (Bùa chú tối thượng: min-w-0 flex-1 truncate) */}
+          <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
+          <span className="text-slate-400 font-medium min-w-0 flex-1 truncate">
             {titleText}
           </span>
+
         </div>
       </div>
 
-      {/* Thân Main chính - Thu hẹp pt-6 xuống pt-4 để không bị rỗng chân với thanh Sticky */}
+      {/* Thân Main chính */}
       <main className="max-w-4xl mx-auto px-4 pt-4 pb-8 sm:pt-6 sm:pb-10 flex-1 w-full max-w-full overflow-hidden">
         <PropertyClient item={item} />
 
