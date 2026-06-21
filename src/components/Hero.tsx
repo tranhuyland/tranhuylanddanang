@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
+import { Phone, Building2, MapPin, TrendingUp } from 'lucide-react';
 import KyGuiButton from './KyGuiButton';
 
 export default function Hero() {
@@ -101,55 +101,6 @@ export default function Hero() {
               </span>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}          </div>
-
-          <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
-            Nhà Thật • Giá Thật <br />
-            {/* 🔥 Đổi sang màu xám đen đồng bộ, bỏ hiệu ứng bóng đổ để chữ nét và sắc sảo nhất */}
-            <span className="text-slate-900">
-              Giao Dịch Minh Bạch
-            </span>
-          </h1>
-
-          <p className="text-slate-900 font-medium text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
-            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng. Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <a 
-              href="tel:0905778852" 
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-orange-500/30 text-sm hover:shadow-orange-500/50 active:scale-95 transition-all"
-            >
-              <Phone className="w-4 h-4" /> Liên Hệ Tư Vấn
-            </a>
-            
-            <button 
-              onClick={handleOpenKyGui}
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white/95 text-slate-800 border border-white hover:bg-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md active:scale-95 transition-all"
-            >
-              <FileText className="w-4 h-4 text-blue-600" /> Ký Gởi Nhà Đất
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-900/10">
-             <div className="flex flex-col">
-                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><Building2 className="w-4 h-4 text-orange-600"/> 500+</span>
-                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Sản Phẩm</span>
-             </div>
-             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
-                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><MapPin className="w-4 h-4 text-orange-600"/> 100%</span>
-                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Chính Chủ</span>
-             </div>
-             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
-                <span className="flex items-center gap-1 text-slate-900 font-black text-lg"><TrendingUp className="w-4 h-4 text-orange-600"/> Siêu</span>
-                <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">Đầu Tư</span>
-             </div>
-          </div>
-
         </div>
       </div>
     </section>
