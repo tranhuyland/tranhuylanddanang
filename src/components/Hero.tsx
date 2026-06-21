@@ -2,6 +2,25 @@ import Image from 'next/image';
 import { Phone, Building2, MapPin, TrendingUp } from 'lucide-react';
 import KyGuiButton from './KyGuiButton';
 
+// 💡 1. TÁCH DỮ LIỆU TĨNH (DRY Principle): Giúp JSX phía dưới cực kỳ sạch và dễ mở rộng
+const HERO_STATS = [
+  {
+    icon: Building2,
+    value: '500+',
+    label: 'Sản Phẩm',
+  },
+  {
+    icon: MapPin,
+    value: '100%',
+    label: 'Chính Chủ',
+  },
+  {
+    icon: TrendingUp,
+    value: 'Siêu',
+    label: 'Đầu Tư',
+  },
+] as const;
+
 export default function Hero() {
   return (
     <section className="relative w-full pt-12 pb-24 md:pt-20 md:pb-32 flex items-center justify-center overflow-hidden">
@@ -12,8 +31,8 @@ export default function Hero() {
           alt="Toàn cảnh Đà Nẵng"
           fill
           priority
-          fetchPriority="high" // 🚀 Ép trình duyệt quét và tải ảnh này ở mức ưu tiên cao nhất
-          loading="eager" // 🚀 Khóa tuyệt đối mọi cơ chế tải lười (lazy-load)
+          fetchPriority="high"
+          loading="eager"
           sizes="100vw"
           quality={80}
           className="object-cover object-center"
@@ -24,41 +43,26 @@ export default function Hero() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        <div
-          className="
-            w-full
-            md:max-w-xl
-            lg:max-w-2xl
-            bg-white/90
-            p-6
-            md:p-8
-            rounded-[2rem]
-            shadow-lg
-            border
-            border-white/50
-          "
-        >
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/90 p-6 md:p-8 rounded-[2rem] shadow-lg border border-white/50">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-4 border border-white">
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
             Kho Nhà Đất Đà Nẵng
           </div>
 
           <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] tracking-tight mb-3">
             Nhà Thật • Giá Thật
             <br />
-            <span className="text-slate-900">
-              Giao Dịch Minh Bạch
-            </span>
+            <span className="text-slate-900">Giao Dịch Minh Bạch</span>
           </h1>
 
           <p className="text-slate-900 font-medium text-sm sm:text-base mb-6 max-w-lg leading-relaxed">
-            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng.
-            Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
+            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng. Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <a
               href="tel:0905778852"
+              aria-label="Gọi điện thoại liên hệ tư vấn"
               className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md hover:opacity-95 active:scale-95 transition-all"
             >
               <Phone className="w-4 h-4" />
@@ -68,36 +72,27 @@ export default function Hero() {
             <KyGuiButton />
           </div>
 
+          {/* 💡 2. TÁI CẤU TRÚC GRID: Gọn hơn 60% code cũ, tự động chèn vạch kẻ */}
           <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-900/10">
-            <div className="flex flex-col">
-              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <Building2 className="w-4 h-4 text-orange-600" />
-                500+
-              </span>
-              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
-                Sản Phẩm
-              </span>
-            </div>
-
-            <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
-              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <MapPin className="w-4 h-4 text-orange-600" />
-                100%
-              </span>
-              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
-                Chính Chủ
-              </span>
-            </div>
-
-            <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
-              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <TrendingUp className="w-4 h-4 text-orange-600" />
-                Siêu
-              </span>
-              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
-                Đầu Tư
-              </span>
-            </div>
+            {HERO_STATS.map((stat, idx) => {
+              const IconComponent = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className={`flex flex-col ${
+                    idx > 0 ? 'border-l border-slate-900/10 pl-3 md:pl-4' : ''
+                  }`}
+                >
+                  <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
+                    <IconComponent className="w-4 h-4 text-orange-600 shrink-0" />
+                    {stat.value}
+                  </span>
+                  <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
+                    {stat.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
