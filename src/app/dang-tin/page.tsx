@@ -200,18 +200,21 @@ export default function DangTinPage() {
       newFormData.khuVuc = foundWard;
     }
 
-    // 🔥 ĐÃ CẢI TIẾN: BỘ QUÉT TÊN ĐƯỜNG THÔNG MINH (CHỐNG CHỮ "ĐƯỜNG" & CHẶT ĐUÔI "-")
-    const streetMatch = text.match(/(k|kiệt|mt|mặt tiền|đường)\s*(\d+[\d\/a-zA-Z]*)?\s+([^,\n\-\–\—]+?)(?=\s+phường|\s+quận|,|-|–|—|\n|$)/i);
+    // 🔥 SIÊU PHANH TỪ TRƯỜNG: DỪNG LẠI TRƯỚC BẤT KỲ DẤU CÂU / KÝ TỰ ĐẶC BIỆT NÀO
+    const streetMatch = text.match(/(k|kiệt|mt|mặt tiền|đường)\s*(\d+[\d\/a-zA-Z]*)?\s+([^,\.\;\:\(\)\[\]\{\}\+\*\_\-\–\—\n]+?)(?=\s+phường|\s+quận|[,;\:\.\(\)\[\]\{\}\+\*\_\-\–\—]|\n|$)/i);
+    
     if (streetMatch) {
       const prefix = streetMatch[1].toLowerCase(); 
       const num = streetMatch[2]; 
       const rawStreet = streetMatch[3].trim(); 
 
-      // 1. Tẩy sạch chữ "đường" hoặc "duong" ở đầu nếu bị dính
-      // 2. Cắt đứt đuôi mọi thứ nằm sau các loại dấu gạch ngang (- / – / —)
+      // 1. Tẩy sạch chữ "đường" / "duong" ở đầu
+      // 2. Tẩy dấu dính liền phía trước (VD gõ: "Đường : Xô Viết" -> xóa dấu :)
+      // 3. Phanh đứng hình ngay khi gặp BẤT KỲ dấu nào ở phía sau (, . ; : ( ) [ ] { } + * _ - – — |)
       const cleanStreetName = rawStreet
         .replace(/^(?:đường|duong)\s+/i, '')
-        .split(/[\-\–\—]/)[0]
+        .replace(/^[,;\:\.\*\-\–\—\s]+/, '') 
+        .split(/[,;\:\.\(\)\[\]\{\}\+\*\_\-\–\—\|]/)[0]
         .trim();
 
       newFormData.duong = cleanStreetName;
