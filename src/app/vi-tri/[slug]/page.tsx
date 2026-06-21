@@ -1,98 +1,69 @@
-import { getBdsData } from "@/lib/googleSheets";
+'use client';
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { Home, ChevronRight, ChevronDown } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import ListingSection from "@/components/ListingSection";
-import { Metadata } from "next";
-import React from "react";
-import Link from "next/link"; // 🚀 Thêm Link tối ưu chuyển trang
-import { Home, ChevronRight } from "lucide-react"; // 🚀 Thêm bộ icon điều hướng trực quan
 
-// 🚀 KÍCH HOẠT ISR CACHE: Tự động làm mới dữ liệu mỗi 60 giây y như trang chủ
-export const revalidate = 60;
+// Danh sách các phường để hiển thị trong dropdown
+const ALL_LOCATIONS = [
+  { name: "Hải Châu", slug: "hai-chau" },
+  { name: "Hòa Cường", slug: "hoa-cuong" },
+  { name: "Hòa Xuân", slug: "hoa-xuan" },
+  { name: "Thanh Khê", slug: "thanh-khe" },
+  { name: "Cẩm Lệ", slug: "cam-le" },
+  { name: "Sơn Trà", slug: "son-tra" },
+  { name: "Liên Chiểu", slug: "lien-chieu" },
+];
 
-// 🗺️ TỪ ĐIỂN MAP URL SANG TÊN VỊ TRÍ CHUẨN (Cập nhật sáp nhập Phường mới nhất)
-const LOCATION_MAP: Record<string, string> = {
-  "an-hai": "An Hải",
-  "an-khe": "An Khê",
-  "ba-na": "Bà Nà",
-  "cam-le": "Cẩm Lệ",
-  "hai-chau": "Hải Châu",
-  "hai-van": "Hải Vân",
-  "hoa-bac": "Hòa Bắc",
-  "hoa-cuong": "Hòa Cường",
-  "hoa-khanh": "Hòa Khánh",
-  "hoa-lien": "Hòa Liên",
-  "hoa-ninh": "Hòa Ninh",
-  "hoa-phuoc": "Hòa Phước",
-  "hoa-tien": "Hòa Tiến",
-  "hoa-vang": "Hòa Vang",
-  "hoa-xuan": "Hòa Xuân",
-  "lien-chieu": "Liên Chiểu",
-  "ngu-hanh-son": "Ngũ Hành Sơn",
-  "son-tra": "Sơn Trà",
-  "thanh-khe": "Thanh Khê"
-};
-
-interface Props {
-  params: Promise<{ slug: string }>;
-}
-
-// 🌐 1. TỰ ĐỘNG BƠM THẺ SEO CHO GOOGLE THEO TỪNG VỊ TRÍ MỚI
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  
-  // Lấy tên chuẩn từ từ điển, nếu không có thì tự động viết hoa chữ cái đầu
-  const exactName = LOCATION_MAP[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-
-  return {
-    title: `Mua bán nhà đất ${exactName}, Đà Nẵng giá tốt nhất | Trần Huy Land`,
-    description: `Danh sách bất động sản, nhà đất chính chủ tại ${exactName}, Đà Nẵng. Cập nhật mới nhất, giá rẻ, vị trí đẹp, thông tin minh bạch.`,
-    openGraph: {
-      title: `Nhà đất ${exactName}, Đà Nẵng | Trần Huy Land`,
-      description: `Khám phá giỏ hàng bất động sản giá tốt tại ${exactName}. Liên hệ Trần Huy Land ngay!`,
-    }
-  };
-}
-
-// 🖥️ 2. GIAO DIỆN HIỂN THỊ TỰ ĐỘNG LỌC SẢN PHẨM
-export default async function LocationPage({ params }: Props) {
-  const { slug } = await params;
-  const exactName = LOCATION_MAP[slug] || slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  const allData = await getBdsData();
+export default function LocationPage({ params, allData, slug, exactName }: any) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
 
-      {/* KHỐI HERO HEADER CHUẨN SEO + TÍCH HỢP BREADCRUMB VIÊN THUỐC */}
-      <div className="pt-28 pb-12 bg-slate-900 text-center px-4 relative overflow-hidden">
-        
-        {/* 🗺️ BREADCRUMB DẠNG PILL (VIÊN THUỐC) - Thiết kế tinh tế trên nền tối */}
-        <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs sm:text-sm text-slate-300 mb-6 backdrop-blur-md shadow-inner">
-          <Link 
-            href="/" 
-            className="flex items-center gap-1 hover:text-orange-400 transition-colors font-semibold"
-          >
-            <Home className="w-3.5 h-3.5 text-slate-400" />
-            Trang chủ
+      {/* 🛠️ BREADCRUMB CỐ ĐỊNH SÁT HEADER */}
+      <div className="sticky top-[72px] z-40 bg-slate-50/80 backdrop-blur-md border-b border-slate-200 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center gap-2 text-sm">
+          <Link href="/" className="flex items-center gap-1 text-slate-500 hover:text-orange-600">
+            <Home className="w-4 h-4" />
           </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-          <span className="text-slate-400 font-medium">Khu vực</span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-          <span className="text-orange-400 font-bold">{exactName}</span>
-        </div>
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+          
+          {/* Dropdown Phường */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-1 font-bold text-orange-600 bg-orange-100 px-3 py-1 rounded-lg hover:bg-orange-200 transition-all"
+            >
+              {exactName}
+              <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+            </button>
 
-        <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-          Nhà đất <span className="text-orange-500">{exactName}</span>, Đà Nẵng
-        </h1>
-        <p className="text-slate-300 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-          Tổng hợp giỏ hàng bất động sản chính chủ, giá tốt nhất tại khu vực {exactName}. Thông tin minh bạch, cập nhật mới nhất hôm nay.
-        </p>
+            {isDropdownOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                {ALL_LOCATIONS.map((loc) => (
+                  <Link 
+                    key={loc.slug}
+                    href={`/phuong/${loc.slug}`}
+                    className="block px-4 py-2 hover:bg-slate-50 text-slate-700 font-medium transition-colors"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    {loc.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* KHỐI DANH SÁCH ÉP LỌC SẴN THEO VỊ TRÍ */}
-      <div className="flex-grow -mt-4">
+      {/* NỘI DUNG CHÍNH */}
+      <div className="flex-grow pt-4">
         <ListingSection allBdsItems={allData} forceDistrict={exactName} />
       </div>
 
