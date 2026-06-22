@@ -120,6 +120,13 @@ export default async function NhaDatDetail({ params }: Props) {
     },
   };
 
+  // 🔥 ĐẢM BẢO CHUYỂN TIẾP TRỌN VẸN LINK MAP & MÃ NHÚNG MAP XUỐNG PROPERTYCLIENT
+  const enrichedItem = {
+    ...item,
+    linkMap: item.linkMap || item.toado || item.toaDo || "",
+    maNhungMap: item.maNhungMap || item.manhungmap || ""
+  };
+
   return (
     <>
       <Script
@@ -165,10 +172,11 @@ export default async function NhaDatDetail({ params }: Props) {
       </nav>
 
       <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8 flex-1 w-full overflow-hidden">
-        <PropertyClient item={item} />
+        {/* Nạp trọn bộ dữ liệu đã được làm giàu xuống Client Component */}
+        <PropertyClient item={enrichedItem} />
 
         <div className="mt-8 sm:mt-12">
-          <RelatedProducts currentItem={item} allItems={allItems} />
+          <RelatedProducts currentItem={enrichedItem} allItems={allItems} />
         </div>
       </main>
 
