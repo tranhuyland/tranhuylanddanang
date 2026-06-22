@@ -42,22 +42,23 @@ export default async function LocationPage({ params }: Props) {
     <main className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
 
-      {/* 🗺️ BREADCRUMB CỐ ĐỊNH SÁT HEADER */}
+      {/* 🗺️ BREADCRUMB DÁN SÁT HEADER */}
+      {/* top-[72px] là độ cao Header, nếu header anh cao hơn/thấp hơn thì chỉnh số này */}
       <nav className="sticky top-[72px] z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center text-sm text-slate-600">
-          <Link href="/" className="hover:text-orange-600 flex items-center">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center text-sm text-slate-600">
+          <Link href="/" className="hover:text-orange-600 flex items-center shrink-0">
             <Home className="w-4 h-4 mr-1" />
             Trang chủ
           </Link>
           <ChevronRight className="w-4 h-4 mx-2 text-slate-400" />
-          <span className="font-medium text-slate-900">Khu vực</span>
+          <span className="font-medium text-slate-900 shrink-0">Khu vực</span>
           <ChevronRight className="w-4 h-4 mx-2 text-slate-400" />
-          <span className="font-bold text-orange-600">{exactName}</span>
+          <span className="font-bold text-orange-600 truncate">{exactName}</span>
         </div>
       </nav>
 
-      {/* KHỐI HERO HEADER */}
-      <div className="pt-16 pb-12 bg-slate-900 text-center px-4">
+      {/* KHỐI HERO HEADER - GIẢM PT ĐỂ DÍNH SÁT BREADCRUMB */}
+      <div className="pt-4 pb-12 bg-slate-900 text-center px-4">
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
           Nhà đất <span className="text-orange-500">{exactName}</span>, Đà Nẵng
         </h1>
