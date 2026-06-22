@@ -145,13 +145,13 @@ export default async function NhaDatDetail({ params }: Props) {
             href="/"
             className="flex items-center gap-1 text-slate-600 hover:text-orange-600 transition-colors font-semibold shrink-0"
           >
-            <Home className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <Home className="w-4 h-4 text-slate-500 shrink-0" />
             Trang chủ
           </Link>
 
           {locationName && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               <Link
                 href={`/vi-tri/${locationSlug}`}
                 className="text-slate-700 hover:text-orange-600 transition-colors font-semibold shrink-0 truncate max-w-[120px] sm:max-w-none"
@@ -161,7 +161,7 @@ export default async function NhaDatDetail({ params }: Props) {
             </>
           )}
 
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
           
           {/* 🔥 Tên sản phẩm bôi đậm (font-extrabold), màu cam (orange-600), cỡ chữ to */}
           <span className="text-orange-600 font-extrabold min-w-0 flex-1 truncate text-[13px] sm:text-[14.5px] tracking-tight">
