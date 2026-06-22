@@ -32,9 +32,7 @@ const extractRooms = (item: any) => {
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
   if (!pn) {
-    // Regex 1: Số nằm trước chữ (VD: 3 pn, 3 phòng ngủ). Dùng (?![a-z]) để CHẮC CHẮN chặn chữ "nguyen" ngay sau đó.
     const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
-    // Regex 2: Chữ nằm trước số (VD: pn: 3, phòng ngủ 3)
     const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
     
     if (matchPhong1 && parseInt(matchPhong1[1]) > 0) {
@@ -220,7 +218,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           alt={item.tieude || item.Title || "Trần Huy Land"} 
           videoUrl={item.videoUrl || item.VideoUrl} 
           linkMap={item.linkMap || item.LinkMap || item.toado} 
-          maNhungMap={item.maNhungMap || item.manhungmap} {/* 🔥 ĐÃ BƠM NỐT MÃ NHÚNG VÀO ĐÂY! */}
+          maNhungMap={item.maNhungMap || item.manhungmap}
         />
       </div>
 
