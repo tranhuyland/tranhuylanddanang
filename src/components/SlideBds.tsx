@@ -17,9 +17,10 @@ interface PropertyGalleryProps {
   alt: string;
   videoUrl?: string; 
   linkMap?: string;  
+  maNhungMap?: string; // 🔥 BỔ SUNG PROP: Đón mã nhúng Iframe từ Google Sheet
 }
 
-export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGalleryProps) {
+export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap }: PropertyGalleryProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
@@ -48,18 +49,31 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // Logic bóc tách link bản đồ thông minh (Tránh lỗi màn hình trắng)
-  const getMapIframeSrc = (mapStr?: string) => {
-    if (!mapStr) return '';
-    if (mapStr.includes('<iframe')) {
-      const match = mapStr.match(/src=["'](.*?)["']/);
-      return match ? match[1] : '';
+  // 🧠 THUẬT TOÁN PHÂN GIẢI BẢN ĐỒ SIÊU VIỆT (Ưu tiên quét mã nhúng Iframe trước)
+  const resolveMapData = () => {
+    const targetStr = maNhungMap || linkMap || '';
+    if (!targetStr) return { src: '', isEmbed: false };
+
+    // 1. Nếu chuỗi có chứa thẻ <iframe src="..."> (Tự động bóc tách lấy đúng đường link bên trong)
+    if (targetStr.includes('<iframe')) {
+      const match = targetStr.match(/src=["'](.*?)["']/);
+      return {
+        src: match ? match[1] : '',
+        isEmbed: true
+      };
     }
-    return mapStr;
+
+    // 2. Nếu là link web bình thường nhưng có chứa từ khóa embed
+    if (targetStr.includes('/embed') || targetStr.includes('output=embed')) {
+      return { src: targetStr, isEmbed: true };
+    }
+
+    // 3. Fallback: Là một đường link map thường để mở sang tab mới
+    return { src: targetStr, isEmbed: false };
   };
 
-  const mapSrc = getMapIframeSrc(linkMap);
-  const isEmbedMap = mapSrc.includes('/embed') || (linkMap && linkMap.includes('<iframe'));
+  const mapInfo = resolveMapData();
+  const hasMap = Boolean(maNhungMap || linkMap);
 
   if (!images || images.length === 0) return null;
 
@@ -119,7 +133,9 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
               <button onClick={() => setActiveTab('images')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'images' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
                 <ImageIcon className="w-4 h-4" /> Hình ảnh
               </button>
-              {linkMap && (
+
+              {/* Tự động mọc ra nút "Bản đồ" nếu Sheet có linkMap HOẶC maNhungMap */}
+              {hasMap && (
                 <button onClick={() => setActiveTab('map')} className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full border text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${activeTab === 'map' ? 'bg-white text-black border-white font-semibold' : 'border-white/40 text-white hover:bg-white/10'}`}>
                   <Map className="w-4 h-4" /> Bản đồ
                 </button>
@@ -175,11 +191,11 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
               </div>
             )}
 
-            {/* BẢN ĐỒ ĐƯỢC TỐI ƯU HÓA CHỐNG LỖI MÀN HÌNH TRẮNG */}
-            {activeTab === 'map' && linkMap && (
+            {/* BẢN ĐỒ ĐƯỢC RẢI MÃ NHÚNG TRỰC TIẾP */}
+            {activeTab === 'map' && hasMap && (
               <div className="w-full h-[50vh] sm:h-[80vh] max-w-5xl mx-auto px-4 flex items-center justify-center">
-                {isEmbedMap ? (
-                  <iframe src={mapSrc} className="w-full h-full border-0 rounded-lg bg-white shadow-xl" allowFullScreen loading="lazy"></iframe>
+                {mapInfo.isEmbed ? (
+                  <iframe src={mapInfo.src} className="w-full h-full border-0 rounded-lg bg-white shadow-xl" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
                 ) : (
                   <div className="w-full max-w-md bg-gray-900 rounded-2xl flex flex-col items-center justify-center text-center p-8 border border-gray-800 shadow-2xl">
                     <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-5">
@@ -190,7 +206,7 @@ export default function SlideBds({ images, alt, videoUrl, linkMap }: PropertyGal
                       Do chính sách bảo mật, bản đồ này cần được mở trong một cửa sổ riêng biệt để xem chi tiết.
                     </p>
                     <a 
-                      href={linkMap} 
+                      href={mapInfo.src} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-full font-semibold transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
