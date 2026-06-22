@@ -96,7 +96,7 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
           {/* Badge Cập nhật (Chỉ mọc ra khi tin từ 8-30 ngày) */}
           {isCapNhat && (
             <span className="bg-amber-500 text-white font-extrabold text-[10px] px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">
-              🟡 Cập nhật
+              🟡 Cập nhật gần đây
             </span>
           )}
 
