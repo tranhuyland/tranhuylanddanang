@@ -23,6 +23,47 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
   const tags = useMemo(() => parsePropertyTags(item), [item]);
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
+  // 🔥 THUẬT TOÁN TÍNH SỐ NGÀY ĐỂ MỌC BADGE TIN MỚI (useMemo giúp web không bị lag khi lướt)
+  const statusBadge = useMemo(() => {
+    const rawDate = item.ngayDang || item.ngay || "";
+    if (!rawDate) return null;
+
+    let d: Date;
+    if (rawDate.includes("T")) {
+      d = new Date(rawDate);
+    } else {
+      const dateOnly = rawDate.trim().split(" ")[0]; // Bóc vứt đi phần giờ phút nếu có
+      const parts = dateOnly.split(/[-/]/);
+      if (parts.length >= 3) {
+        if (parts[0].length === 4) {
+          d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])); // YYYY-MM-DD
+        } else {
+          d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])); // DD/MM/YYYY
+        }
+      } else {
+        d = new Date(dateOnly);
+      }
+    }
+
+    if (isNaN(d.getTime())) return null;
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+
+    const diffTime = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const days = diffDays < 0 ? 0 : diffDays; // Nếu gõ nhầm ngày tương lai, ngầm coi là 0 ngày
+
+    if (days <= 7) {
+      return { label: "🟢 Tin mới", className: "bg-emerald-500 text-white animate-pulse" };
+    }
+    if (days <= 30) {
+      return { label: "🟡 Cập nhật", className: "bg-amber-500 text-white font-extrabold" };
+    }
+    return null; // Quá 30 ngày -> ngầm ẩn (trả về null)
+  }, [item.ngayDang, item.ngay]);
+
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     const url = `${window.location.origin}/nha-dat/${item.slug}`;
@@ -41,8 +82,17 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           {rank && <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider uppercase">THL # {rank}</span>}
+          
+          {/* 🌟 ĐÃ TÍCH HỢP: Badge trạng thái thời gian nằm ngay hàng lối dưới THL Rank */}
+          {statusBadge && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider ${statusBadge.className}`}>
+              {statusBadge.label}
+            </span>
+          )}
+
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {tags.isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
           {tags.isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
@@ -53,6 +103,7 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
           {tags.isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
           {tags.isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
         </div>
+
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
           <ImageIcon size={12} aria-hidden="true" /><span className="text-white">{soLuongAnh}</span>
         </div>
@@ -88,7 +139,6 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
           </div>
           
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* 🌟 ĐÃ FIX TRIỆT ĐỂ LỖI #418: Chuyển hoàn toàn button lồng nhau thành div có role="button" */}
             <div role="button" tabIndex={0} aria-label="Chia sẻ tin này" className="px-3 py-2 sm:px-3 min-h-[44px] border rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 cursor-pointer" onClick={handleShare} title="Chia sẻ tin">
               <Share2 size={15} aria-hidden="true" />
               <span className="text-[12px] sm:text-[13px] font-bold whitespace-nowrap">Chia sẻ</span>
