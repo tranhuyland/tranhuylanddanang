@@ -45,8 +45,9 @@ export default async function LocationPage({ params }: Props) {
       */}
       <Header />
 
-      {/* 🗺️ BREADCRUMB: Đặt top-[72px] (hoặc độ cao Header) để dán sát mép dưới */}
-      <nav className="sticky top-[72px] z-40 bg-white border-b border-slate-200 shadow-sm w-full">
+            {/* 🗺️ BREADCRUMB - CỐ ĐỊNH SÁT HEADER */}
+      {/* Anh thay top-[72px] bằng chiều cao thực tế của Header (nếu Header cao 56px thì để top-[56px]) */}
+      <nav className="sticky top-[56px] z-40 bg-white border-b border-slate-200 shadow-sm w-full">
         <div className="max-w-7xl mx-auto px-4 py-2 flex items-center text-sm text-slate-600">
           <Link href="/" className="hover:text-orange-600 flex items-center shrink-0">
             <Home className="w-4 h-4 mr-1" />
@@ -59,8 +60,8 @@ export default async function LocationPage({ params }: Props) {
         </div>
       </nav>
 
-      {/* KHỐI HERO: Giảm pt-4 xuống pt-1 để dính sát Breadcrumb */}
-      <div className="pt-1 pb-12 bg-slate-900 text-center px-4">
+      {/* KHỐI HERO: DÙNG !mt-0 ĐỂ ÉP SÁT LÊN TRÊN */}
+      <div className="pt-2 pb-12 bg-slate-900 text-center px-4 !mt-0">
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
           Nhà đất <span className="text-orange-500">{exactName}</span>, Đà Nẵng
         </h1>
@@ -68,6 +69,7 @@ export default async function LocationPage({ params }: Props) {
           Tổng hợp giỏ hàng bất động sản chính chủ, giá tốt nhất tại khu vực {exactName}.
         </p>
       </div>
+
 
       <div className="flex-grow -mt-4">
         <ListingSection allBdsItems={allData} forceDistrict={exactName} />
