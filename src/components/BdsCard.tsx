@@ -56,10 +56,10 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
     return diffDays < 0 ? 0 : diffDays; 
   }, [item.ngayDang, item.ngay]);
 
-  // 1. Phân rã mốc thời gian (Chỉ còn đúng 1 ranh giới <= 7 ngày)
-  const isTinMoi = daysOld <= 7;
+  // 1. Mốc 48 giờ (Tương đương <= 2 ngày: Hôm nay, Hôm qua, Hôm kia)
+  const isTinMoi = daysOld <= 2;
 
-  // 2. Chuỗi text gộp thông minh tuyệt đối cho Tem đỏ
+  // 2. Chuỗi text gộp thông minh cho Tem đỏ
   const rankBadgeText = isTinMoi 
     ? `Tin mới ${rank ? `#${rank}` : ''}`.trim()
     : rank ? `THL #${rank}` : 'THL';
@@ -85,8 +85,8 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
         
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           
-          {/* 🌟 DUY NHẤT 1 TEM ĐỎ: Tự động biến hình (Tin mới #1 <--> THL #17) */}
-          <span className={`bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider ${isTinMoi ? 'animate-pulse' : ''}`}>
+          {/* 🌟 DUY NHẤT 1 TEM ĐỎ TĨNH: Sang trọng, đứng im đĩnh đạc, không nhấp nháy */}
+          <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider">
             {rankBadgeText}
           </span>
 
