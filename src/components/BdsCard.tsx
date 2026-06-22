@@ -56,14 +56,13 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
     return diffDays < 0 ? 0 : diffDays; 
   }, [item.ngayDang, item.ngay]);
 
-  // Phân rã mốc thời gian
+  // 1. Phân rã mốc thời gian (Chỉ còn đúng 1 ranh giới <= 7 ngày)
   const isTinMoi = daysOld <= 7;
-  const isCapNhat = daysOld > 7 && daysOld <= 30;
 
-  // Chuỗi text gộp thông minh cho Badge góc trái
+  // 2. Chuỗi text gộp thông minh tuyệt đối cho Tem đỏ
   const rankBadgeText = isTinMoi 
     ? `Tin mới ${rank ? `#${rank}` : ''}`.trim()
-    : `THL #${rank}`;
+    : rank ? `THL #${rank}` : 'THL';
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -86,19 +85,10 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
         
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           
-          {/* 🌟 BADGE KẾT HỢP (TIN MỚI # / THL #) - Nằm y vị trí cũ, màu đỏ chuẩn */}
-          {(rank || isTinMoi) && (
-            <span className={`bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider ${isTinMoi ? 'animate-pulse' : ''}`}>
-              {rankBadgeText}
-            </span>
-          )}
-
-          {/* Badge Cập nhật (Chỉ mọc ra khi tin từ 8-30 ngày) */}
-          {isCapNhat && (
-            <span className="bg-amber-500 text-white font-extrabold text-[10px] px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">
-              🟡 Cập nhật gần đây
-            </span>
-          )}
+          {/* 🌟 DUY NHẤT 1 TEM ĐỎ: Tự động biến hình (Tin mới #1 <--> THL #17) */}
+          <span className={`bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider ${isTinMoi ? 'animate-pulse' : ''}`}>
+            {rankBadgeText}
+          </span>
 
           {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
           {tags.isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
