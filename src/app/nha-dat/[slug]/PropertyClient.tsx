@@ -220,6 +220,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           alt={item.tieude || item.Title || "Trần Huy Land"} 
           videoUrl={item.videoUrl || item.VideoUrl} 
           linkMap={item.linkMap || item.LinkMap || item.toado} 
+          maNhungMap={item.maNhungMap || item.manhungmap} {/* 🔥 ĐÃ BƠM NỐT MÃ NHÚNG VÀO ĐÂY! */}
         />
       </div>
 
