@@ -29,6 +29,7 @@ const INITIAL_FORM_STATE = {
   anh: '', 
   anhSoDo: '', 
   linkMap: '', 
+  maNhungMap: '', // 💡 ĐÃ THÊM: Trường lưu mã nhúng Iframe Google Map
   toaDo: '',
   moTa: '', 
   tag: 'all',
@@ -157,6 +158,7 @@ export default function DangTinPage() {
     );
   };
 
+  // 🗺️ HÀM TẠO LINK MAP
   const updateMapLink = (soNha: string, duong: string, phuong: string, currentLink: string) => {
     if (currentLink && !currentLink.includes('maps.google.com/?q=')) {
       return currentLink;
@@ -166,6 +168,20 @@ export default function DangTinPage() {
       return `https://maps.google.com/?q=$${encodeURIComponent(query)}`;
     }
     return currentLink;
+  };
+
+  // 🤖 HÀM TỰ ĐỘNG TẠO MÃ NHÚNG IFRAME GOOGLE MAP CHUẨN
+  const updateMapEmbed = (soNha: string, duong: string, phuong: string, currentEmbed: string) => {
+    // Nếu người dùng đã tự gõ tay mã nhúng custom (không chứa cụm 'output=embed' tự động), thì giữ nguyên
+    if (currentEmbed && !currentEmbed.includes('output=embed')) {
+      return currentEmbed;
+    }
+    if (duong && phuong) {
+      const query = soNha ? `${soNha} ${duong}, ${phuong}, Đà Nẵng` : `${duong}, ${phuong}, Đà Nẵng`;
+      const safeEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+      return `<iframe src="${safeEmbedUrl}" width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    }
+    return currentEmbed;
   };
 
   const handleAutoScanDescription = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -208,9 +224,6 @@ export default function DangTinPage() {
       const num = streetMatch[2]; 
       const rawStreet = streetMatch[3].trim(); 
 
-      // 1. Tẩy sạch chữ "đường" / "duong" ở đầu
-      // 2. Tẩy dấu dính liền phía trước (VD gõ: "Đường : Xô Viết" -> xóa dấu :)
-      // 3. Phanh đứng hình ngay khi gặp BẤT KỲ dấu nào ở phía sau (, . ; : ( ) [ ] { } + * _ - – — |)
       const cleanStreetName = rawStreet
         .replace(/^(?:đường|duong)\s+/i, '')
         .replace(/^[,;\:\.\*\-\–\—\s]+/, '') 
@@ -235,23 +248,41 @@ export default function DangTinPage() {
       if (dir) newFormData.huong = dir;
     }
 
+    // Cập nhật song song cả Link và Mã nhúng
     newFormData.linkMap = updateMapLink(newFormData.soNha, newFormData.duong, newFormData.khuVuc, newFormData.linkMap);
+    newFormData.maNhungMap = updateMapEmbed(newFormData.soNha, newFormData.duong, newFormData.khuVuc, newFormData.maNhungMap);
+
     setFormData(newFormData);
   };
 
   const handleSoNhaChange = (e: ChangeEvent<HTMLInputElement>) => {
     const soNha = e.target.value;
-    setFormData(prev => ({ ...prev, soNha, linkMap: updateMapLink(soNha, prev.duong, prev.khuVuc, prev.linkMap) }));
+    setFormData(prev => ({ 
+      ...prev, 
+      soNha, 
+      linkMap: updateMapLink(soNha, prev.duong, prev.khuVuc, prev.linkMap),
+      maNhungMap: updateMapEmbed(soNha, prev.duong, prev.khuVuc, prev.maNhungMap)
+    }));
   };
 
   const handleDuongChange = (e: ChangeEvent<HTMLInputElement>) => {
     const duong = e.target.value;
-    setFormData(prev => ({ ...prev, duong, linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap) }));
+    setFormData(prev => ({ 
+      ...prev, 
+      duong, 
+      linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap),
+      maNhungMap: updateMapEmbed(prev.soNha, duong, prev.khuVuc, prev.maNhungMap)
+    }));
   };
 
   const handleKhuVucChange = async (e: ChangeEvent<HTMLSelectElement>) => {
     const khuVuc = e.target.value;
-    setFormData(prev => ({ ...prev, khuVuc, linkMap: updateMapLink(prev.soNha, prev.duong, khuVuc, prev.linkMap) }));
+    setFormData(prev => ({ 
+      ...prev, 
+      khuVuc, 
+      linkMap: updateMapLink(prev.soNha, prev.duong, khuVuc, prev.linkMap),
+      maNhungMap: updateMapEmbed(prev.soNha, prev.duong, khuVuc, prev.maNhungMap)
+    }));
 
     if (!khuVuc) return;
 
@@ -362,6 +393,7 @@ export default function DangTinPage() {
     const today = new Date();
     const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 
+    // Payload tự động mang theo trường formData.maNhungMap gửi sang Google Sheet
     const payload = {
       ...formData,
       tieude: tieudeClean, 
@@ -401,7 +433,7 @@ export default function DangTinPage() {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-400 font-bold">Đang kiểm tra quyền truy cập...</div>;
   }
 
-  // 🔒 GIAO DIỆN KHÓA BẢO VỆ NẾU CHƯA NHẬP MẬT KHẨU
+  // 🔒 GIAO DIỆN KHÓA BẢO VỆ
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -431,7 +463,7 @@ export default function DangTinPage() {
     );
   }
 
-  // 🔓 GIAO DIỆN CHÍNH SAU KHI ĐÃ ĐĂNG NHẬP THÀNH CÔNG
+  // 🔓 GIAO DIỆN CHÍNH
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-xl p-6 sm:p-8">
@@ -528,6 +560,12 @@ export default function DangTinPage() {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Đường dẫn Google Maps</label>
             <input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Hệ thống sẽ tự tạo link nếu có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700 text-blue-600" />
+          </div>
+
+          {/* 🔥 CHÈN MỚI: Ô MÃ NHÚNG GOOGLE MAP */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Mã nhúng Google Maps (Iframe Website)</label>
+            <textarea rows={2} value={formData.maNhungMap} onChange={(e) => setFormData({ ...formData, maNhungMap: e.target.value })} placeholder="<iframe src='...' > Hệ thống tự tạo mã nhúng Iframe khi có Tên Đường và Phường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:border-amber-500 text-slate-600 leading-relaxed" />
           </div>
 
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
