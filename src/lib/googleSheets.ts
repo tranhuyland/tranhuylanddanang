@@ -147,3 +147,51 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     return []; 
   }
 }
+
+// 🔥 BỔ SUNG HÀM LẤY DỮ LIỆU TAB BLOG TỪ GOOGLE SHEET
+export async function getBlogData(): Promise<any[]> {
+  try {
+    // Gọi đến tab Blog bằng tham số gid hoặc tq (Sử dụng cấu trúc xuất dữ liệu CSV quen thuộc)
+    // Thay thế ID spreadsheet của anh nếu dùng file khác, mặc định dùng chung file hiện tại
+    const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
+    const sheetName = encodeURIComponent("Blog");
+    const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+
+    const res = await fetch(url, {
+      next: { revalidate: 60 } // Thiết lập bùa chú ISR: Tự làm mới danh sách bài blog sau 60 giây
+    });
+
+    if (!res.ok) return [];
+    const csvText = await res.text();
+    
+    // Thuật toán bóc tách chuỗi CSV bằng biểu thức Regex an toàn, không sợ dính dấu phẩy nội dung
+    const rows = csvText.split(/\r?\n/);
+    if (rows.length <= 1) return [];
+
+    const headers = rows[0].split(',').map(h => h.replace(/^"(.*)"$/, '$1').trim().toLowerCase());
+    const blogItems: any[] = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row.trim()) continue;
+
+      // Biểu thức Regex chẻ dòng dựa vào dấu phẩy nằm ngoài dấu ngoặc kép
+      const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+      const cleanCells = matches.map(cell => cell.replace(/^"(.*)"$/, '$1').replace(/""/g, '"').trim());
+
+      const item: any = {};
+      headers.forEach((header, index) => {
+        item[header] = cleanCells[index] || "";
+      });
+
+      if (item.slug && item.title) {
+        blogItems.push(item);
+      }
+    }
+    return blogItems;
+  } catch (error) {
+    console.error("Lỗi fetch dữ liệu Blog:", error);
+    return [];
+  }
+}
+
