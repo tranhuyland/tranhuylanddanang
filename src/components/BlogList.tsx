@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Heart, Share2 } from "lucide-react"; // 🚀 Import thêm 2 Icon giao diện xịn
 
 // 📁 DANH SÁCH DANH MỤC ĐỒNG BỘ VỚI TRANG ĐĂNG TIN
 const CATEGORIES = [
@@ -20,16 +21,70 @@ interface BlogListProps {
 }
 
 export default function BlogList({ allBlogItems = [] }: BlogListProps) {
-  // Lớp phòng vệ chống crash nếu mảng truyền từ server bị lỗi hoặc trống
   const safeBlogs = Array.isArray(allBlogItems) ? allBlogItems : [];
   const [activeTab, setActiveTab] = useState("all");
+
+  // ==========================================
+  // 🌟 STATE & HYDRATION CHO NÚT LƯU BÀI VIẾT
+  // ==========================================
+  const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const saved = localStorage.getItem("thl_blog_favorites");
+    if (saved) {
+      try {
+        setFavoriteSlugs(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  // 1. HÀM XỬ LÝ LƯU TIN (Bấm vào không bị văng nhảy trang)
+  const toggleFavorite = (slug: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const updated = favoriteSlugs.includes(slug)
+      ? favoriteSlugs.filter(s => s !== slug)
+      : [...favoriteSlugs, slug];
+
+    setFavoriteSlugs(updated);
+    localStorage.setItem("thl_blog_favorites", JSON.stringify(updated));
+  };
+
+  // 2. HÀM XỬ LÝ CHIA SẺ (Tự gọi bảng Share của iOS/Android hoặc Copy link)
+  const handleShare = async (blog: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const targetSlug = blog?.slug || blog?.Slug || "";
+    const fullUrl = `${window.location.origin}/blog/${targetSlug}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: blog?.title || blog?.Title || "Bài viết từ Trần Huy Land",
+          text: blog?.excerpt || blog?.Excerpt || "Chia sẻ kiến thức bất động sản Đà Nẵng",
+          url: fullUrl,
+        });
+      } catch (err) {
+        console.log("Người dùng tắt bảng chia sẻ");
+      }
+    } else {
+      navigator.clipboard.writeText(fullUrl).then(() => {
+        alert("Đã sao chép đường dẫn bài viết thành công!");
+      });
+    }
+  };
 
   // 🚀 THUẬT TOÁN PHÂN LOẠI TAB THEO DANH MỤC CHÍNH XÁC
   const filteredBlogs = useMemo(() => {
     if (activeTab === "all") return safeBlogs;
     const selectedCat = CATEGORIES.find(c => c.id === activeTab);
     return safeBlogs.filter(blog => {
-      // Đọc linh hoạt cả category chữ thường hoặc Category viết hoa đổ từ Google Sheet
       const blogCat = (blog?.category || blog?.Category || "").toString().trim();
       return blogCat === selectedCat?.value;
     });
@@ -37,7 +92,7 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8">
-      {/* 🌟 THANH BẤM CHỌN DANH MỤC (Hỗ trợ lướt ngang mượt mà trên điện thoại) */}
+      {/* 🌟 THANH BẤM CHỌN DANH MỤC */}
       <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
         {CATEGORIES.map((tab) => (
           <button
@@ -71,11 +126,13 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
             const currentDate = blog?.date || blog?.Date || "Mới cập nhật";
             const currentExcerpt = blog?.excerpt || blog?.Excerpt || blog?.description || blog?.Description || "";
 
+            const isSaved = favoriteSlugs.includes(currentSlug);
+
             return (
               <Link
                 href={`/blog/${currentSlug}`}
                 key={blog.id || currentSlug || index}
-                className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:border-orange-200 shadow-xs hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1"
+                className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:border-orange-200 shadow-xs hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 relative"
               >
                 {/* Khung ảnh bài viết */}
                 <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
@@ -86,10 +143,42 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
                     className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     sizes="(max-width: 1280px) 100vw"
                   />
-                  {/* Badge danh mục ghim trên ảnh bài viết */}
-                  <span className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs text-orange-600 font-extrabold text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-xs border border-orange-100">
+                  {/* Badge danh mục (Góc trên Bên Trái) */}
+                  <span className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs text-orange-600 font-extrabold text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-xs border border-orange-100 z-10">
                     {currentCat}
                   </span>
+
+                  {/* 🌟 BỘ ĐÔI NÚT LƯU & CHIA SẺ (Góc trên Bên Phải) */}
+                  <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+                    {/* Nút Chia sẻ */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => handleShare(blog, e)}
+                      className="w-8 h-8 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs text-slate-600 hover:text-orange-500 flex items-center justify-center shadow-md transition-all active:scale-90 cursor-pointer"
+                      title="Chia sẻ bài viết"
+                    >
+                      <Share2 size={15} />
+                    </div>
+
+                    {/* Nút Lưu bài viết */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => toggleFavorite(currentSlug, e)}
+                      className="w-8 h-8 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center shadow-md transition-all active:scale-90 cursor-pointer"
+                      title="Lưu bài viết"
+                    >
+                      <Heart
+                        size={15}
+                        className={`transition-colors duration-300 ${
+                          isClient && isSaved
+                            ? "fill-red-500 text-red-500"
+                            : "text-slate-600 hover:text-red-500"
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Phần thông tin nội dung */}
