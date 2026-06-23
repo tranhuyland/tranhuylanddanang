@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-import { Lock, FileText, Upload, Loader2, CheckCircle, AlertCircle, RefreshCw, Eye } from 'lucide-react';
+import { Lock, FileText, Upload, Loader2, CheckCircle, AlertCircle, RefreshCw, Eye, Sparkles } from 'lucide-react';
 
 // ==========================================
 // 🚨 CẤU HÌNH THÔNG SỐ TRẦN HUY LAND (Giữ nguyên hệ thống cũ của anh)
@@ -28,6 +28,76 @@ function localConvertToSlug(text: string): string {
     .replace(/-+/g, '-');
 }
 
+// ========================================================
+// 🛠️ BỘ LỌC KÉP THÔNG MINH: CHUYỂN ĐỔI VĂN BẢN/HTML THÀNH MARKDOWN
+// ========================================================
+function autoFormatToMarkdown(htmlContent: string, fallbackText: string): string {
+  // TRƯỜNG HỢP 1: Copy từ Web, Google Docs, Word (Có chứa mã HTML ẩn trong Clipboard)
+  if (htmlContent && htmlContent.includes('<')) {
+    let md = htmlContent;
+
+    // 1. Xử lý ngắt đoạn, xuống hàng
+    md = md.replace(/<br\s*[\/]?>/gi, '\n');
+    md = md.replace(/<\/p>/gi, '\n\n');
+    md = md.replace(/<\/div>/gi, '\n');
+
+    // 2. Xử lý Headings -> Biến thành ## Tiêu đề cam
+    md = md.replace(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi, '\n\n## $1\n\n');
+    md = md.replace(/<h[4-6][^>]*>(.*?)<\/h[4-6]>/gi, '\n\n### $1\n\n');
+
+    // 3. Xử lý In đậm -> **chữ**
+    md = md.replace(/<(?:b|strong)[^>]*>(.*?)<\/(?:b|strong)>/gi, '**$1**');
+
+    // 4. Xử lý In nghiêng -> *chữ*
+    md = md.replace(/<(?:i|em)[^>]*>(.*?)<\/(?:i|em)>/gi, '*$1*');
+
+    // 5. Xử lý danh sách Bullet -> - dòng
+    md = md.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+
+    // 6. Xử lý Link siêu liên kết -> [Tên](URL)
+    md = md.replace(/<a[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+
+    // 7. Dọn sạch toàn bộ các thẻ HTML rác còn sót lại
+    md = md.replace(/<[^>]+>/g, '');
+
+    // 8. Giải mã các ký tự đặc biệt của HTML (&nbsp; thành dấu cách...)
+    md = md
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"');
+
+    return md.replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  // TRƯỜNG HỢP 2: Copy Text thuần (Từ Zalo, Notepad, Facebook thô)
+  let text = fallbackText || '';
+
+  // A. Nhận diện các dòng VIẾT HOA TOÀN BỘ (từ 6-60 ký tự) biến thành Heading ##
+  // Ví dụ: "TIỀM NĂNG TĂNG GIÁ" -> "## TIỀM NĂNG TĂNG GIÁ"
+  const uppercaseLineRegex = /^[ \t]*([A-ZĐÁÀẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỗỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỊ0-9 \-\:\,\.]{6,60})$/gm;
+  text = text.replace(uppercaseLineRegex, (match) => {
+    const clean = match.trim();
+    if (clean.startsWith('#')) return clean; // Đã có dấu thăng thì giữ nguyên
+    return `\n## ${clean}\n`;
+  });
+
+  // B. Tự động bôi đậm các thông số BĐS quan trọng (m2, tỷ, triệu) nếu chưa bôi đậm
+  const specRegex = /\b(\d+(?:[\.,]\d+)?\s*(?:m2|m²|tỷ|triệu|tr|vnđ|vnd|ha|hécta))\b/gi;
+  text = text.replace(specRegex, (match, p1, offset, fullStr) => {
+    const trc = fullStr.slice(Math.max(0, offset - 2), offset);
+    const sau = fullStr.slice(offset + match.length, offset + match.length + 2);
+    if (trc === '**' || sau === '**') return match; // Đã bọc ** rồi thì bỏ qua
+    return `**${match.trim()}**`;
+  });
+
+  // C. Chuẩn hóa các gạch đầu dòng thô sơ (+, *, •) thành chuẩn Markdown (-)
+  text = text.replace(/^[ \t]*[•\+\*][ \t]+/gm, '- ');
+
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
 export default function DangBlogPage() {
   // 🔒 STATE BẢO MẬT TRANG NỘI BỘ
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -52,7 +122,7 @@ export default function DangBlogPage() {
   useEffect(() => {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
     setFormData(prev => ({ ...prev, date: `${dd}/${mm}/${yyyy}` }));
   }, [isAuthenticated]);
@@ -84,6 +154,41 @@ export default function DangBlogPage() {
     }
   };
 
+  // 🚀 HÀM CAN THIỆP TỨC THÌ KHI KHÁCH DÁN (CTRL+V) VÀO Ô NỘI DUNG
+  const handleContentPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const htmlClipboard = e.clipboardData.getData('text/html');
+    const plainTextClipboard = e.clipboardData.getData('text/plain');
+
+    if (!htmlClipboard && !plainTextClipboard) return;
+
+    e.preventDefault(); // Khóa hành vi dán thô kệch mặc định của trình duyệt
+
+    const markdownOutput = autoFormatToMarkdown(htmlClipboard, plainTextClipboard);
+
+    // Sửa nội dung state, chèn chính xác vào vị trí con trỏ chuột đang đứng
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentText = formData.content;
+
+    const newText = currentText.substring(0, start) + markdownOutput + currentText.substring(end);
+
+    setFormData(prev => ({ ...prev, content: newText }));
+
+    // Đẩy con trỏ chuột nhảy ra ngay sau đoạn văn vừa dán
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + markdownOutput.length;
+    }, 0);
+  };
+
+  // 🚀 HÀM NÚT BẤM CHỦ ĐỘNG: LÀM ĐẸP VĂN BẢN ĐANG CÓ SẴN TRONG KHUNG
+  const handleFormatExistingContent = () => {
+    if (!formData.content) return;
+    const beautified = autoFormatToMarkdown('', formData.content);
+    setFormData(prev => ({ ...prev, content: beautified }));
+    setMessage({ type: 'success', content: '✨ Đã tự động bôi đậm thông số & dọn dẹp chuẩn Markdown!' });
+  };
+
   // 📸 HÀM TẢI ẢNH BÌA BÀI VIẾT LÊN CLOUDINARY
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -107,7 +212,6 @@ export default function DangBlogPage() {
 
       const uploadedImageData = await res.json();
       
-      // 🚀 Ép bùa tham số f_auto,q_auto của Cloudinary vào link ảnh để nén WebP siêu tốc
       let optimizedUrl = uploadedImageData.secure_url;
       if (optimizedUrl.includes("/image/upload/")) {
         optimizedUrl = optimizedUrl.replace("/image/upload/", "/image/upload/f_auto,q_auto/");
@@ -135,9 +239,8 @@ export default function DangBlogPage() {
     setMessage({ type: '', content: '' });
 
     try {
-      // Chuẩn bị payload gửi đi, ép biến dính chặt với tên cột trên Google Sheet
       const payload = {
-        sheet: 'Blog', // 💡 Chỉ định App Script ghi dữ liệu vào tab tên là Blog
+        sheet: 'Blog',
         slug: formData.slug.trim(),
         title: formData.title.trim(),
         excerpt: formData.excerpt.trim(),
@@ -146,7 +249,6 @@ export default function DangBlogPage() {
         date: formData.date.trim()
       };
 
-      // Gọi API gửi ẩn (no-cors) tránh lỗi tường lửa trình duyệt điện thoại chặn
       await fetch(GOOGLE_WEBAPP_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -156,7 +258,6 @@ export default function DangBlogPage() {
 
       setMessage({ type: 'success', content: '🎉 Bài viết đã được đồng bộ lên Google Sheet và sẽ hiển thị trên web sau 60 giây!' });
       
-      // Reset form giữ lại ngày để soạn bài viết tiếp theo
       setFormData({
         title: '',
         slug: '',
@@ -223,7 +324,6 @@ export default function DangBlogPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-orange-500 selection:text-white">
       
-      {/* THANH ĐẦU TRANG ĐẶC CHỦNG */}
       <header className="bg-slate-900 text-white shadow-md sticky top-0 z-50 px-4 py-4 border-b border-slate-800">
         <div className="max-w-5xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -244,10 +344,8 @@ export default function DangBlogPage() {
         </div>
       </header>
 
-      {/* KHU VỰC ĐIỀN FORM */}
       <main className="flex-1 py-10 px-4 max-w-3xl w-full mx-auto">
         
-        {/* HỘP BÁO CÁO TRẠNG THÁI */}
         {message.content && (
           <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 shadow-sm transition-all duration-300 ${
             message.type === 'success' 
@@ -266,7 +364,7 @@ export default function DangBlogPage() {
             <p className="text-xs text-slate-400">Điền đầy đủ thông tin bên dưới để bọ tìm kiếm Googlebot lập chỉ mục tốt nhất.</p>
           </div>
 
-          {/* Ô 1: TIÊU ĐỀ BÀI VIẾT */}
+          {/* Ô 1: TIÊU ĐỀ */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Tiêu đề bài viết</span>
@@ -283,7 +381,7 @@ export default function DangBlogPage() {
             />
           </div>
 
-          {/* Ô 2: ĐƯỜNG DẪN SLUG TỰ ĐỘNG */}
+          {/* Ô 2: SLUG */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Đường dẫn bài viết (Slug tự động)</span>
@@ -302,7 +400,7 @@ export default function DangBlogPage() {
             </div>
           </div>
 
-          {/* Ô 3: ẢNH BÌA BLOG (Tải trực tiếp lên Cloudinary) */}
+          {/* Ô 3: ẢNH BÌA */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Ảnh bìa đại diện bài viết</span>
@@ -348,7 +446,7 @@ export default function DangBlogPage() {
             </div>
           </div>
 
-          {/* Ô 4: TÓM TẮT NGẮN BÀI VIẾT (EXCERPT) */}
+          {/* Ô 4: TÓM TẮT */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Tóm tắt bài viết (Excerpt)</span>
@@ -365,27 +463,37 @@ export default function DangBlogPage() {
             />
           </div>
 
-          {/* Ô 5: NỘI DUNG CHÍNH (HỖ TRỢ VIẾT MARKDOWN) */}
+          {/* Ô 5: NỘI DUNG CHÍNH (TÍCH HỢP BỘ LỌC MARKDOWN KÉP) */}
           <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center justify-between">
-              <div className="flex items-center gap-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
                 <span>Nội dung chi tiết bài viết</span>
                 <span className="text-red-500">*</span>
-              </div>
-              <span className="text-[10px] text-orange-500 lowercase normal-case font-bold">Hỗ trợ viết đầu mục # và ##</span>
-            </label>
+              </label>
+
+              <button
+                type="button"
+                onClick={handleFormatExistingContent}
+                className="text-[11px] bg-orange-50 hover:bg-orange-100 text-orange-600 font-black px-3 py-1 rounded-lg border border-orange-200 flex items-center gap-1 transition-all active:scale-95 self-start sm:self-auto shadow-2xs"
+              >
+                <Sparkles size={13} />
+                <span>✨ Tự động bôi đậm & làm đẹp Markdown</span>
+              </button>
+            </div>
+
             <textarea
               name="content"
               required
-              rows={12}
+              rows={14}
               value={formData.content}
               onChange={handleInputChange}
-              placeholder="Soạn thảo nội dung bài viết tại đây. Anh có thể nhấn Enter xuống hàng thoải mái.&#10;&#10;Mẹo gõ:&#10;## 1. Tiêu đề mục lớn&#10;### Mục con màu cam&#10;- Dấu gạch đầu dòng liệt kê"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 font-medium text-slate-800 rounded-xl transition-all outline-none text-sm leading-relaxed whitespace-pre-wrap"
+              onPaste={handleContentPaste}
+              placeholder="Soạn thảo hoặc DÁN (Ctrl+V) nội dung bài viết từ Web / Word / Zalo vào đây...&#10;&#10;✨ KHI ANH DÁN, HỆ THỐNG SẼ:&#10;1. Giữ nguyên 100% chữ in đậm, heading, link nếu copy từ Website hoặc Word.&#10;2. Tự động nhận diện dòng viết hoa thành ## và bôi đậm **100m2**, **4.5 tỷ**."
+              className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 font-medium text-slate-800 rounded-xl transition-all outline-none text-sm leading-relaxed whitespace-pre-wrap font-sans"
             />
           </div>
 
-          {/* Ô 6: NGÀY ĐĂNG BÀI */}
+          {/* Ô 6: NGÀY ĐĂNG */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Ngày đăng tin bài viết</span>
@@ -400,7 +508,7 @@ export default function DangBlogPage() {
             />
           </div>
 
-          {/* NÚT SUBMIT LƯU TIN */}
+          {/* NÚT SUBMIT */}
           <div className="pt-2">
             <button
               type="submit"
