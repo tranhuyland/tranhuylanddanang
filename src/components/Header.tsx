@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone, BookOpen } from 'lucide-react';
+import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone, BookOpen, FileText } from 'lucide-react'; // 🚀 ĐÃ BỔ SUNG: icon FileText
 
 export default function Header() {
   const router = useRouter();
@@ -163,19 +163,4 @@ export default function Header() {
                 href="/dang-tin" 
                 onClick={() => setIsMenuOpen(false)} 
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
-                  pathname === '/dang-tin' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
-                }`}
-              >
-                <PlusCircle size={18} className="text-orange-500" aria-hidden="true" /> Úp sản phẩm mới
-              </Link>
-              <div className="border-t border-slate-100 my-2"></div>
-              <a href="tel:0905778852" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
-                <Phone size={18} className="text-orange-500" aria-hidden="true" /> 0905 778 852
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+                  pathname === '/dang-tin' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange
