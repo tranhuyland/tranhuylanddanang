@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
-import { Lock, FileText, Upload, Loader2, CheckCircle, AlertCircle, RefreshCw, Eye, Sparkles, ImageIcon, Quote, Heading2, Bold } from 'lucide-react';
+import { Lock, FileText, Upload, Loader2, CheckCircle, AlertCircle, RefreshCw, Eye, Sparkles, ImageIcon, Quote, Heading2, Bold, ChevronDown } from 'lucide-react';
 
 // ==========================================
 // 🚨 CẤU HÌNH THÔNG SỐ TRẦN HUY LAND
@@ -10,6 +10,16 @@ const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxmcQMTv4d5OH
 const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
 const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland'; 
 const ADMIN_PASSWORD = '123'; 
+
+// 📁 DANH SÁCH DANH MỤC CỐ ĐỊNH
+const BLOG_CATEGORIES = [
+  "Chia sẻ kinh nghiệm",
+  "Kiến thức",
+  "Luật nhà đất",
+  "Nhà đẹp",
+  "Phong thuỷ",
+  "Tin bất động sản"
+];
 
 function localConvertToSlug(text: string): string {
   if (!text) return "";
@@ -68,6 +78,7 @@ export default function DangBlogPage() {
 
   const [formData, setFormData] = useState({
     title: '',
+    category: '', // 🚀 THÊM STATE DANH MỤC
     slug: '',
     excerpt: '',
     image: '',
@@ -75,14 +86,13 @@ export default function DangBlogPage() {
     date: ''
   });
 
-  // 🚀 STATE NÂNG CẤP
-  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false); // Khóa theo dõi sửa Slug
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false); 
   const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingInlineImg, setUploadingInlineImg] = useState(false); // Theo dõi up ảnh giữa bài
+  const [uploadingInlineImg, setUploadingInlineImg] = useState(false); 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null); // Trỏ vào khung text để bắn ảnh
+  const textareaRef = useRef<HTMLTextAreaElement>(null); 
 
   useEffect(() => {
     const today = new Date();
@@ -124,26 +134,24 @@ export default function DangBlogPage() {
     } else { setAuthError('❌ Mật khẩu không chính xác!'); }
   };
 
-  // 🚀 HÀM QUẢN LÝ NHẬP CHỮ (CÓ KHÓA SLUG THÔNG MINH)
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // 🚀 ĐÃ BỌC KIỂU HTMLSelectElement ĐỂ VERCEL KHÔNG BÁO LỖI TYPE
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
     if (name === 'title') {
       setFormData(prev => ({
         ...prev,
         title: value,
-        // Nếu anh chưa đụng tay vào ô Slug -> Tự băm theo Tiêu đề. Nếu sửa rồi -> Giữ nguyên!
         slug: isSlugManuallyEdited ? prev.slug : localConvertToSlug(value)
       }));
     } else if (name === 'slug') {
-      setIsSlugManuallyEdited(true); // Bật chốt: "Chủ web đã can thiệp tay"
-      setFormData(prev => ({ ...prev, slug: localConvertToSlug(value) })); // Vẫn ép băm chuẩn dấu gạch nối
+      setIsSlugManuallyEdited(true); 
+      setFormData(prev => ({ ...prev, slug: localConvertToSlug(value) })); 
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Trả Slug về tự động băm theo tiêu đề
   const handleResetSlugToAuto = () => {
     setIsSlugManuallyEdited(false);
     setFormData(prev => ({ ...prev, slug: localConvertToSlug(prev.title) }));
@@ -174,7 +182,6 @@ export default function DangBlogPage() {
     setMessage({ type: 'success', content: '✨ Đã tự động bôi đậm thông số & dọn dẹp chuẩn Markdown!' });
   };
 
-  // 🚀 HÀM BẮN TAG MARKDOWN NHANH VÀO NỘI DUNG
   const insertMarkdownTagAtCursor = (wrapperStart: string, wrapperEnd: string = '') => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -188,7 +195,6 @@ export default function DangBlogPage() {
     setTimeout(() => { textarea.focus(); textarea.selectionStart = textarea.selectionEnd = start + wrapperStart.length + (selectedText ? selectedText.length : 8); }, 0);
   };
 
-  // 📸 HÀM TẢI ẢNH BÌA
   const handleCoverUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -204,7 +210,6 @@ export default function DangBlogPage() {
     } catch (err) { setMessage({ type: 'error', content: '❌ Lỗi tải ảnh bìa.' }); } finally { setUploadingCover(false); }
   };
 
-  // 🚀 HÀM ĐẶC NHIỆM: TẢI ẢNH CHÈN GIỮA BÀI VIẾT (INLINE IMAGE)
   const handleInlineImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -218,13 +223,11 @@ export default function DangBlogPage() {
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: data });
       const uploaded = await res.json();
       
-      // Ép w_800 vì bề ngang bài blog đọc trên điện thoại/PC chỉ khoảng 700-800px. Siêu tiết kiệm dung lượng!
       let optimized = uploaded.secure_url;
       if (optimized.includes("/image/upload/")) {
         optimized = optimized.replace("/image/upload/", "/image/upload/f_auto,q_auto,w_800/");
       }
 
-      // Lấy vị trí con trỏ hiện tại để bắn ảnh vào đúng tọa độ
       const textarea = textareaRef.current;
       const currentContent = formData.content;
       const cursorPos = textarea ? textarea.selectionStart : currentContent.length;
@@ -235,7 +238,6 @@ export default function DangBlogPage() {
       setFormData(prev => ({ ...prev, content: newContent }));
       setMessage({ type: 'success', content: '🎉 Đã bắn ảnh trực tiếp vào vị trí con trỏ trong bài viết!' });
       
-      // Đẩy con trỏ chuột nhảy ra sau bức ảnh vừa chèn
       setTimeout(() => { if (textarea) textarea.selectionStart = textarea.selectionEnd = cursorPos + markdownImgSnippet.length; textarea?.focus(); }, 0);
 
     } catch (err) { 
@@ -253,6 +255,7 @@ export default function DangBlogPage() {
     try {
       const payload = {
         sheet: 'Blog',
+        category: formData.category.trim(), // 🚀 GỬI DANH MỤC SANG SHEET
         slug: formData.slug.trim(),
         title: formData.title.trim(),
         excerpt: formData.excerpt.trim(),
@@ -263,7 +266,7 @@ export default function DangBlogPage() {
       await fetch(GOOGLE_WEBAPP_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       setMessage({ type: 'success', content: '🎉 Bài viết đã đồng bộ lên Google Sheet! Sẽ hiển thị trên web sau 60s.' });
       localStorage.removeItem('tranhuyland_blog_draft_v1');
-      setFormData({ title: '', slug: '', excerpt: '', image: '', content: '', date: formData.date });
+      setFormData({ title: '', category: '', slug: '', excerpt: '', image: '', content: '', date: formData.date });
       setIsSlugManuallyEdited(false);
     } catch (err) { setMessage({ type: 'error', content: '❌ Lỗi kết nối mạng.' }); } finally { setLoading(false); }
   };
@@ -325,7 +328,29 @@ export default function DangBlogPage() {
             <input type="text" name="title" required value={formData.title} onChange={handleInputChange} placeholder="Ví dụ: Có nên đầu tư mua đất nền Hòa Xuân thời điểm này?" className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 font-bold text-slate-900 rounded-xl text-[16px] md:text-sm outline-none" />
           </div>
 
-          {/* Ô 2: SLUG (ĐÃ MỞ KHÓA CHO SỬA TAY VÀ NÚT RESET) */}
+          {/* Ô 2: CHỌN DANH MỤC (MỚI BỔ SUNG) */}
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+              <span>Danh mục bài viết</span><span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                name="category"
+                required
+                value={formData.category}
+                onChange={handleInputChange}
+                className="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 font-bold text-slate-900 rounded-xl text-[16px] md:text-sm outline-none appearance-none cursor-pointer transition-all"
+              >
+                <option value="" disabled>-- Chọn danh mục bài viết --</option>
+                {BLOG_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+            </div>
+          </div>
+
+          {/* Ô 3: SLUG */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
@@ -353,7 +378,7 @@ export default function DangBlogPage() {
             </div>
           </div>
 
-          {/* Ô 3: ẢNH BÌA */}
+          {/* Ô 4: ẢNH BÌA */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Ảnh bìa đại diện bài viết</span><span className="text-red-500">*</span>
@@ -372,14 +397,13 @@ export default function DangBlogPage() {
             </div>
           </div>
 
-          {/* Ô 4: TÓM TẮT (KÈM GỢI Ý TÂM LÝ HỌC GIỮ CHÂN KHÁCH) */}
+          {/* Ô 5: TÓM TẮT */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
               <span>Tóm tắt bài viết (Excerpt)</span><span className="text-red-500">*</span>
             </label>
             <textarea name="excerpt" required rows={2} value={formData.excerpt} onChange={handleInputChange} placeholder="Gõ 1-2 câu tóm tắt kích thích người click..." className="w-full px-4 py-3 bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 font-semibold text-slate-800 rounded-xl text-[16px] md:text-sm outline-none leading-relaxed" />
             
-            {/* 🚀 TÂM LÝ HỌC GIỮ CHÂN MƯỢT MÀ */}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
               <span className="text-[11px] font-bold text-slate-400">Công thức tít sát thủ:</span>
               {[
@@ -400,7 +424,7 @@ export default function DangBlogPage() {
             <div className="text-right text-[11px] text-slate-400 font-medium">Độ dài chuẩn: <span className={formData.excerpt.length > 160 ? 'text-red-500 font-bold' : ''}>{formData.excerpt.length}/160</span></div>
           </div>
 
-          {/* Ô 5: NỘI DUNG CHÍNH (KÈM THANH MINI MARKDOWN & NÚT BẮN ẢNH) */}
+          {/* Ô 6: NỘI DUNG CHÍNH */}
           <div className="space-y-1">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
               <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
@@ -411,7 +435,6 @@ export default function DangBlogPage() {
               </button>
             </div>
 
-            {/* 🚀 TOOLBAR MINI */}
             <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-200/60 p-2 rounded-t-xl border-t border-x border-slate-300">
               <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => insertMarkdownTagAtCursor('**', '**')} className="px-2.5 py-1 bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-600 font-extrabold rounded text-xs border border-slate-300 flex items-center gap-1 shadow-xs active:scale-95"><Bold size={13}/><span>Bôi đậm</span></button>
@@ -419,7 +442,6 @@ export default function DangBlogPage() {
                 <button type="button" onClick={() => insertMarkdownTagAtCursor('\n> **💡 Lời khuyên chuyên gia:** ', '\n\n')} className="px-2.5 py-1 bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-600 font-extrabold rounded text-xs border border-slate-300 flex items-center gap-1 shadow-xs active:scale-95"><Quote size={13}/><span>Hộp Highlight</span></button>
               </div>
 
-              {/* NÚT BẮN ẢNH VÀO GIỮA ĐOẠN */}
               <div>
                 <label className="text-xs bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-black px-3 py-1.5 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all shadow-md active:scale-95">
                   {uploadingInlineImg ? <Loader2 className="animate-spin" size={14}/> : <ImageIcon size={14}/>}
@@ -442,13 +464,13 @@ export default function DangBlogPage() {
             />
           </div>
 
-          {/* Ô 6: NGÀY ĐĂNG */}
+          {/* Ô 7: NGÀY ĐĂNG */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1"><span>Ngày đăng tin</span></label>
             <input type="text" name="date" value={formData.date} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[16px] md:text-sm font-bold" />
           </div>
 
-          <button type="submit" disabled={loading || uploadingCover || uploadingInlineImg || !formData.title} className="w-full bg-slate-900 hover:bg-orange-600 text-white font-extrabold text-sm uppercase py-4.5 rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2">
+          <button type="submit" disabled={loading || uploadingCover || uploadingInlineImg || !formData.title || !formData.category} className="w-full bg-slate-900 hover:bg-orange-600 text-white font-extrabold text-sm uppercase py-4.5 rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2 active:scale-[0.99]">
             {loading ? (<><RefreshCw className="animate-spin" size={16} /><span>Đang lưu sang Sheet...</span></>) : (<span>🚀 Đăng bài viết lên Blog</span>)}
           </button>
         </form>
