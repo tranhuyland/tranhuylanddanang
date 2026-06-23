@@ -38,14 +38,13 @@ export function convertToSlug(text: string): string {
     .replace(/-+/g, '-');
 }
 
+// ⛳ HÀM 1: LẤY DỮ LIỆU NHÀ ĐẤT (Đã chuẩn hóa)
 export async function getBdsData(): Promise<RealEstateItem[]> {
-  const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv";
+  const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv&sheet=BDS";
   try {
-    // TỐI ƯU SEO & TỐC ĐỘ: Đổi sang cấu hình revalidate sau 60 giây giúp trang tải cực nhanh
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
     const csvText = await response.text();
     
-    // Thuật toán bóc tách dữ liệu cao cấp: Duyệt từng ký tự để giữ nguyên dấu phẩy và dấu Enter trong dấu ngoặc kép ""
     const rows: string[][] = [];
     let currentRow: string[] = [];
     let currentField = '';
@@ -57,21 +56,17 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
 
       if (char === '"') {
         if (inQuotes && nextChar === '"') {
-          // Xử lý dấu ngoặc kép kép bên trong văn bản (escaped quote "")
           currentField += '"';
           i++;
         } else {
-          // Đảo trạng thái ngoặc kép
           inQuotes = !inQuotes;
         }
       } else if (char === ',' && !inQuotes) {
-        // Gặp dấu phẩy phân tách cột ngoài ngoặc kép
         currentRow.push(currentField.trim());
         currentField = '';
       } else if ((char === '\n' || char === '\r') && !inQuotes) {
-        // Gặp dấu xuống hàng kết thúc bản ghi ngoài ngoặc kép
         if (char === '\r' && nextChar === '\n') {
-          i++; // Bỏ qua ký tự \n đi kèm của Windows
+          i++;
         }
         currentRow.push(currentField.trim());
         if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
@@ -80,12 +75,10 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
         currentRow = [];
         currentField = '';
       } else {
-        // Gom ký tự thường vào ô dữ liệu hiện tại
         currentField += char;
       }
     }
     
-    // Gom ô dữ liệu cuối cùng của file nếu không có dấu xuống hàng ở cuối file
     if (currentField || currentRow.length > 0) {
       currentRow.push(currentField.trim());
       if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
@@ -95,7 +88,6 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
 
     if (rows.length < 2) return [];
 
-    // Lấy tiêu đề cột và chuẩn hóa về dạng chữ thường không khoảng cách
     const headers = rows[0].map(h => h.trim().replace(/['"]+/g, '').toLowerCase());
     const items: RealEstateItem[] = [];
 
@@ -104,19 +96,17 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
       const obj: any = {};
       
       headers.forEach((headerName, idx) => {
-        // Loại bỏ dấu ngoặc kép dư thừa ở đầu và cuối chuỗi dữ liệu thô
         let value = rowData[idx] || "";
         obj[headerName] = value.replace(/^"|"$/g, '').trim();
       });
 
-      // Tạo các trường aliases hỗ trợ linh hoạt chữ hoa chữ thường tránh lỗi map dữ liệu
-      const tieuDeBds = obj.tieude || obj.title || "Chưa có tiêu đề";
-      const moTaBds = obj.mota || obj.mota || obj.description || "";
+      const finalTitle = obj.tieude || obj.title || "Chưa có tiêu đề";
+      const moTaBds = obj.mota || obj.description || "";
 
       const item: RealEstateItem = {
         id: parseInt(obj.id) || i,
-        tieude: tieuDeBds,
-        slug: convertToSlug(tieuDeBds),
+        tieude: finalTitle,
+        slug: convertToSlug(finalTitle),
         moTa: moTaBds,
         gia: obj.gia || "",
         soGia: parseFloat(obj.sogia) || 0,
@@ -148,50 +138,90 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   }
 }
 
-// 🔥 BỔ SUNG HÀM LẤY DỮ LIỆU TAB BLOG TỪ GOOGLE SHEET
+// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (🔥 ĐÃ ĐƯỢC NÂNG CẤP BỘ LỌC KHÁNG ENTER)
 export async function getBlogData(): Promise<any[]> {
+  const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&sheet=Blog`;
+
   try {
-    // Gọi đến tab Blog bằng tham số gid hoặc tq (Sử dụng cấu trúc xuất dữ liệu CSV quen thuộc)
-    // Thay thế ID spreadsheet của anh nếu dùng file khác, mặc định dùng chung file hiện tại
-    const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
-    const sheetName = encodeURIComponent("Blog");
-    const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
-
-    const res = await fetch(url, {
-      next: { revalidate: 60 } // Thiết lập bùa chú ISR: Tự làm mới danh sách bài blog sau 60 giây
-    });
-
-    if (!res.ok) return [];
-    const csvText = await res.text();
+    const response = await fetch(url, { next: { revalidate: 60 } });
+    if (!response.ok) return [];
+    const csvText = await response.text();
     
-    // Thuật toán bóc tách chuỗi CSV bằng biểu thức Regex an toàn, không sợ dính dấu phẩy nội dung
-    const rows = csvText.split(/\r?\n/);
-    if (rows.length <= 1) return [];
+    // 🚀 ÁP DỤNG THUẬT TOÁN ĐỌC TỪNG KÝ TỰ: Bảo vệ tuyệt đối dấu xuống dòng nằm trong ô nội dung
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
 
-    const headers = rows[0].split(',').map(h => h.replace(/^"(.*)"$/, '$1').trim().toLowerCase());
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      const nextChar = csvText[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentField += '"';
+          i++; // Bỏ qua dấu kép thoát
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') {
+          i++;
+        }
+        currentRow.push(currentField.trim());
+        if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += char;
+      }
+    }
+    
+    if (currentField || currentRow.length > 0) {
+      currentRow.push(currentField.trim());
+      if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+        rows.push(currentRow);
+      }
+    }
+
+    if (rows.length < 2) return [];
+
+    // Tách headers an toàn
+    const headers = rows[0].map(h => h.trim().replace(/['"]+/g, '').toLowerCase());
     const blogItems: any[] = [];
 
     for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row.trim()) continue;
-
-      // Biểu thức Regex chẻ dòng dựa vào dấu phẩy nằm ngoài dấu ngoặc kép
-      const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-      const cleanCells = matches.map(cell => cell.replace(/^"(.*)"$/, '$1').replace(/""/g, '"').trim());
-
-      const item: any = {};
-      headers.forEach((header, index) => {
-        item[header] = cleanCells[index] || "";
+      const rowData = rows[i];
+      const obj: any = {};
+      
+      headers.forEach((headerName, idx) => {
+        let value = rowData[idx] || "";
+        obj[headerName] = value.replace(/^"|"$/g, '').trim();
       });
 
-      if (item.slug && item.title) {
-        blogItems.push(item);
+      // Ánh xạ dữ liệu đồng bộ với component hiển thị
+      const finalItem = {
+        slug: obj.slug || '',
+        title: obj.title || obj.tieude || '',
+        excerpt: obj.excerpt || obj.mota || '',
+        image: obj.image || obj.anh || '',
+        content: obj.content || obj.noidung || '',
+        date: obj.date || obj.ngay || '24/06/2026'
+      };
+
+      if (finalItem.slug && finalItem.title) {
+        blogItems.push(finalItem);
       }
     }
     return blogItems;
   } catch (error) {
-    console.error("Lỗi fetch dữ liệu Blog:", error);
+    console.error("Lỗi fetch dữ liệu Blog từ Google Sheet:", error);
     return [];
   }
 }
-
