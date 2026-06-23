@@ -138,7 +138,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   }
 }
 
-// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (🔥 ĐÃ ĐƯỢC NÂNG CẤP BỘ LỌC KHÁNG ENTER)
+// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (🔥 ĐÃ VÁ 100% CÁC BẪY NHẬP LIỆU)
 export async function getBlogData(): Promise<any[]> {
   const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&sheet=Blog`;
@@ -147,8 +147,14 @@ export async function getBlogData(): Promise<any[]> {
     const response = await fetch(url, { next: { revalidate: 60 } });
     if (!response.ok) return [];
     const csvText = await response.text();
+
+    // 🚀 VÁ LỖI 1: Tránh trường hợp Google Sheet trả về trang HTML báo lỗi
+    if (csvText.trim().startsWith("<!DOCTYPE") || csvText.trim().startsWith("<html")) {
+      console.error("🚨 Lỗi: Google Sheet trả về trang HTML. Hãy kiểm tra tên Tab dưới Sheet phải gõ đúng chữ 'Blog'");
+      return [];
+    }
     
-    // 🚀 ÁP DỤNG THUẬT TOÁN ĐỌC TỪNG KÝ TỰ: Bảo vệ tuyệt đối dấu xuống dòng nằm trong ô nội dung
+    // Thuật toán đọc từng ký tự bảo vệ ký tự xuống dòng
     const rows: string[][] = [];
     let currentRow: string[] = [];
     let currentField = '';
@@ -161,7 +167,7 @@ export async function getBlogData(): Promise<any[]> {
       if (char === '"') {
         if (inQuotes && nextChar === '"') {
           currentField += '"';
-          i++; // Bỏ qua dấu kép thoát
+          i++; 
         } else {
           inQuotes = !inQuotes;
         }
@@ -192,7 +198,6 @@ export async function getBlogData(): Promise<any[]> {
 
     if (rows.length < 2) return [];
 
-    // Tách headers an toàn
     const headers = rows[0].map(h => h.trim().replace(/['"]+/g, '').toLowerCase());
     const blogItems: any[] = [];
 
@@ -205,17 +210,23 @@ export async function getBlogData(): Promise<any[]> {
         obj[headerName] = value.replace(/^"|"$/g, '').trim();
       });
 
-      // Ánh xạ dữ liệu đồng bộ với component hiển thị
+      // 🚀 VÁ LỖI 2: Quét lấy Tiêu đề (Hỗ trợ người nhập gõ cột tên là 'title' hoặc 'tieude')
+      const rawTitle = obj.title || obj.tieude || "";
+
+      // 🚀 VÁ LỖI 3: Nếu trên Sheet để trống cột slug -> Tự động băm Tiêu đề ra làm slug!
+      const safeSlug = obj.slug ? convertToSlug(obj.slug) : convertToSlug(rawTitle);
+
       const finalItem = {
-        slug: obj.slug || '',
-        title: obj.title || obj.tieude || '',
-        excerpt: obj.excerpt || obj.mota || '',
-        image: obj.image || obj.anh || '',
-        content: obj.content || obj.noidung || '',
-        date: obj.date || obj.ngay || '24/06/2026'
+        slug: safeSlug,
+        title: rawTitle || "Bài viết chưa có tiêu đề",
+        excerpt: obj.excerpt || obj.mota || obj.mo_ta || "",
+        image: obj.image || obj.anh || "",
+        content: obj.content || obj.noidung || obj.noi_dung || "",
+        date: obj.date || obj.ngay || obj.ngaydang || '24/06/2026'
       };
 
-      if (finalItem.slug && finalItem.title) {
+      // 🚀 VÁ LỖI 4: Tiêu chuẩn đẩy bài cực thoáng, có title và slug là cho lên web!
+      if (finalItem.title !== "" && finalItem.slug !== "") {
         blogItems.push(finalItem);
       }
     }
