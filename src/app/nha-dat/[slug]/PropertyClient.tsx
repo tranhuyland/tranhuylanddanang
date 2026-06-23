@@ -4,7 +4,9 @@ import PropertyGallery from "@/components/SlideBds";
 import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw, BedDouble, Bath, Compass, Heart, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import Link from "next/link"; // 🚀 ĐÃ BỔ SUNG THẺ LINK CỦA NEXT.JS
 import { layUrlAnhChuan } from "@/lib/utils";
+import { tuDongGaiLinkMaTran } from "@/lib/matrixLinker"; // 🚀 KẾT NỐI BỘ NÃO MA TRẬN
 
 interface PropertyClientProps {
   item: any;
@@ -18,7 +20,6 @@ const removeAccents = (str: string) => {
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-// 🔥 ĐÃ CẬP NHẬT HÀM BÓC TÁCH PHÒNG NGỦ/WC VỚI NEGATIVE LOOKAHEAD CHỐNG LỖI
 const extractRooms = (item: any) => {
   const currentLoaiHinh = item.phân_loại || item.loaiHinh || '';
   if (removeAccents(currentLoaiHinh).includes("dat")) return { pn: null, wc: null }; 
@@ -26,15 +27,12 @@ const extractRooms = (item: any) => {
   let pn = item.phongNgu || item.phongngu || item.pn || item.soPhongNgu || null;
   let wc = item.wc || item.phongTam || item.phongtam || item.soWc || item.soWC || null;
 
-  // Gom toàn bộ text và xóa dấu tiếng Việt + HTML
   const combinedText = `${item.tieude || ""} ${item.mota || item.moTa || ""}`;
   const textWithoutHtml = combinedText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/[\u200B-\u200D\uFEFF\n\r]/g, ' ');
   const fullText = removeAccents(textWithoutHtml).toLowerCase();
 
   if (!pn) {
-    // Regex 1: Số nằm trước chữ (VD: 3 pn, 3 phòng ngủ). Dùng (?![a-z]) để CHẮC CHẮN chặn chữ "nguyen" ngay sau đó.
     const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
-    // Regex 2: Chữ nằm trước số (VD: pn: 3, phòng ngủ 3)
     const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
     
     if (matchPhong1 && parseInt(matchPhong1[1]) > 0) {
@@ -158,7 +156,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     tatCaAnhGallery.push(anhSoDoGoc);
   }
 
-  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông diễn đang được cập nhật...";
+  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
 
@@ -232,10 +230,10 @@ export default function PropertyClient({ item }: PropertyClientProps) {
               {item.tieude || item.Tieude}
             </h1>
             <div className="flex items-center gap-2 shrink-0 self-start">
-              <button onClick={handleCopyLink} className="p-2.5 border border-slate-200 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all bg-white shadow-sm active:scale-95" title="Chia sẻ">
+              <button onClick={handleCopyLink} className="p-2.5 border border-slate-200 rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all bg-white shadow-sm active:scale-95 cursor-pointer" title="Chia sẻ">
                 <Share2 size={18} />
               </button>
-              <button onClick={handleToggleFavorite} className={`p-2.5 border rounded-full transition-all bg-white shadow-sm active:scale-95 ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-500 hover:text-red-500 hover:bg-red-50'}`} title="Lưu tin">
+              <button onClick={handleToggleFavorite} className={`p-2.5 border rounded-full transition-all bg-white shadow-sm active:scale-95 cursor-pointer ${isFavorite ? 'border-red-200 text-red-500 bg-red-50' : 'border-slate-200 text-slate-500 hover:text-red-500 hover:bg-red-50'}`} title="Lưu tin">
                 <Heart size={18} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-pulse" : ""} />
               </button>
             </div>
@@ -317,7 +315,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </div>
 
-        {/* 🔥 NÚT BẤM ĐÃ ĐƯỢC ÉP NẰM TRÊN 1 DÒNG (WHITESPACE-NOWRAP) */}
+        {/* Nút bản đồ & Sổ */}
         {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
           <div className={`grid gap-2.5 sm:gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
@@ -341,7 +339,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         )}
 
-        {/* Cấu trúc Mô tả (Markdown) */}
+        {/* 🚀 LÕI RENDER KẾT HỢP: MARKDOWN + SILO LINK ADAPTER */}
         <h4 className="font-extrabold text-slate-900 text-lg mb-4 flex items-center gap-2">
           Mô tả chi tiết
         </h4>
@@ -355,9 +353,34 @@ export default function PropertyClient({ item }: PropertyClientProps) {
               ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5" {...props} />,
               li: ({node, ...props}) => <li className="" {...props} />,
               strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
+              
+              // 🔥 BỘ LỌC ĐIỀU HƯỚNG MA TRẬN SILO (Thông minh hóa thẻ <a>)
+              a: ({node, ...props}) => {
+                const targetUrl = props.href || '#';
+                // Kiểm tra xem đây là link nội bộ bộ lọc hay link trỏ ra Google Map bên ngoài
+                const isInternalSilo = targetUrl.startsWith('/') || targetUrl.includes('tranhuyland.vn');
+                
+                return isInternalSilo ? (
+                  <Link 
+                    href={targetUrl} 
+                    className="text-[#E03C31] font-bold underline decoration-1 hover:decoration-2 hover:text-red-700 transition-all cursor-pointer"
+                  >
+                    {props.children}
+                  </Link>
+                ) : (
+                  <a 
+                    href={targetUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors cursor-pointer"
+                  >
+                    {props.children}
+                  </a>
+                );
+              }
             }}
           >
-            {noiDungMoTa}
+            {tuDongGaiLinkMaTran(noiDungMoTa)}
           </ReactMarkdown>
         </div>
 
