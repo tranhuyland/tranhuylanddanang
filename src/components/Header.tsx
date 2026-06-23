@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone } from 'lucide-react';
+// 🌟 ĐÃ THÊM: import icon BookOpen cho Góc tư vấn
+import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone, BookOpen } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -60,7 +61,6 @@ export default function Header() {
                 <ChevronLeft size={24} aria-hidden="true" />
               </button>
 
-              {/* 🌟 ĐÃ THAY THẾ: Logo bấm về Trang chủ */}
               <div className="flex-1 flex items-center justify-center mr-6">
                 <Link 
                   href="/" 
@@ -102,13 +102,29 @@ export default function Header() {
             </div>
           )}
 
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="p-2.5 bg-slate-100/80 text-slate-700 hover:text-orange-600 hover:bg-orange-50 active:bg-orange-100 rounded-full transition-all active:scale-95 shrink-0"
-            aria-label="Mở Menu điều hướng"
-          >
-            <Menu size={18} aria-hidden="true" />
-          </button>
+          {/* 🌟 ĐÃ SỬA: Cụm nút bấm góc phải (Gộp Nút Góc Tư Vấn PC + Nút mở Menu) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              href="/blog"
+              className={`hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                pathname.startsWith('/blog')
+                  ? 'bg-orange-500 text-white shadow-xs'
+                  : 'bg-slate-100/80 hover:bg-orange-50 text-slate-700 hover:text-orange-600'
+              }`}
+              aria-label="Xem Góc tư vấn"
+            >
+              <BookOpen size={15} className={pathname.startsWith('/blog') ? 'text-white' : 'text-orange-500'} aria-hidden="true" />
+              <span>Góc tư vấn</span>
+            </Link>
+
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="p-2.5 bg-slate-100/80 text-slate-700 hover:text-orange-600 hover:bg-orange-50 active:bg-orange-100 rounded-full transition-all active:scale-95 shrink-0"
+              aria-label="Mở Menu điều hướng"
+            >
+              <Menu size={18} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -125,20 +141,14 @@ export default function Header() {
             </div>
             
             <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-2 px-3">
-              <Link href="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
+              <Link 
+                href="/" 
+                onClick={() => setIsMenuOpen(false)} 
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
+                  isHomePage ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
+                }`}
+              >
                 <Home size={18} className="text-orange-500" aria-hidden="true" /> Trang chủ
               </Link>
-              <Link href="/dang-tin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
-                <PlusCircle size={18} className="text-orange-500" aria-hidden="true" /> Úp sản phẩm mới
-              </Link>
-              <div className="border-t border-slate-100 my-2"></div>
-              <a href="tel:0905778852" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
-                <Phone size={18} className="text-orange-500" aria-hidden="true" /> 0905 778 852
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+
+              {/* 🌟 ĐÃ SỬA: Chèn liên kết Góc tư vấn vào menu Mobile
