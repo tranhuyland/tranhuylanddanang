@@ -89,11 +89,47 @@ export default async function BlogDetailPage({ params }: Props) {
             components={{
               strong: ({ node, ...props }) => <strong className="font-extrabold text-slate-900" {...props} />,
               p: ({ node, ...props }) => <p className="mb-6 last:mb-0" {...props} />,
-              // Tự động gọt dấu # thành H2 chuẩn SEO cho bọ Googlebot
               h2: ({ node, ...props }) => <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mt-10 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2" {...props} />,
               h3: ({ node, ...props }) => <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-8 mb-3 text-orange-600" {...props} />,
               ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-6 space-y-2 text-slate-700" {...props} />,
-              li: ({ node, ...props }) => <li className="leading-normal" {...props} />
+              li: ({ node, ...props }) => <li className="leading-normal" {...props} />,
+              
+              // 🔥 ĐÂY RỒI! "LÕI MA TRẬN SILO" BIẾN THẺ (A) THÀNH SIÊU LIÊN KẾT NEXT.JS
+              a: ({ node, href, children, ...props }) => {
+                if (!href) return <span {...props}>{children}</span>;
+
+                // Tự động nhận diện: Link bắt đầu bằng "/" hoặc chứa domain nhà mình là Link nội bộ
+                const isInternal = href.startsWith("/") || href.includes("tranhuyland.vn");
+
+                if (isInternal) {
+                  // Gọt bỏ phần "https://tranhuyland.vn" (nếu gõ thừa) để đưa về dạng "/quan/hai-chau" chuẩn Next.js
+                  const cleanHref = href.replace(/^(?:https?:\/\/)?(?:www\.)?tranhuyland\.vn/, "");
+                  
+                  return (
+                    <Link
+                      href={cleanHref || "/"}
+                      className="font-extrabold text-orange-600 hover:text-orange-700 underline decoration-orange-300 hover:decoration-orange-600 decoration-2 underline-offset-4 transition-all bg-orange-50/60 hover:bg-orange-100 px-1.5 py-0.5 rounded"
+                      {...props}
+                    >
+                      {children}
+                    </Link>
+                  );
+                }
+
+                // Link trỏ ra ngoài (Báo đài, tra cứu quy hoạch) -> Ép mở Tab mới + Khóa bảo mật noopener
+                return (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-blue-600 hover:text-blue-800 underline decoration-blue-200 hover:decoration-blue-500 underline-offset-4 transition-all inline-flex items-center gap-0.5 bg-blue-50/50 px-1.5 py-0.5 rounded"
+                    {...props}
+                  >
+                    <span>{children}</span>
+                    <ArrowRight size={13} className="-rotate-45 text-blue-500 inline" />
+                  </a>
+                );
+              }
             }}
           >
             {contentBody}
@@ -115,7 +151,6 @@ export default async function BlogDetailPage({ params }: Props) {
               Trần Huy Land nắm giữ giỏ hàng hơn 500+ sản phẩm chính chủ tại Hải Châu, Cẩm Lệ và rải rác đắc địa khắp Đà Nẵng. Minh bạch pháp lý, làm việc trực tiếp giá gốc.
             </p>
 
-            {/* Phễu 2 hướng: Khách thích tự xem -> Bấm nút 1 | Khách đang vội -> Bấm Hotline */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               <Link 
                 href="/" 
