@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown"; 
+import { usePathname } from 'next/navigation'; // 🚀 ĐÃ CHÈN: Hỗ trợ đọc đường dẫn URL
 
 // 🛠️ DANH SÁCH THẺ BẤM NHANH
 const QUICK_REPLIES = [
@@ -32,6 +33,13 @@ const formatAIResponse = (text: string) => {
 };
 
 export default function AIChatbot() {
+  const pathname = usePathname(); // 🚀 RADAR: Quét xem người dùng đang đứng ở trang nào
+
+  // 🚫 CẤM CỬA: Nếu ngó thấy URL trèo lên 2 trang này thì AI tự động "bốc hơi"
+  if (pathname && (pathname.startsWith('/dang-tin') || pathname.startsWith('/dang-blog'))) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     { role: "ai", text: "Xin chào! Em là trợ lý ảo của **Trần Huy Land**. \n\nAnh/chị đang tìm nhà khu vực nào ạ? Hoặc bấm chọn các gợi ý bên dưới nhé!" }
@@ -70,7 +78,7 @@ export default function AIChatbot() {
     <>
       {!isOpen && (
         <button 
-          aria-label="Mở khung chat hỗ trợ" // 🌟 Thêm nhãn cho Google Bot
+          aria-label="Mở khung chat hỗ trợ" 
           onClick={() => setIsOpen(true)} 
           className="fixed right-4 bottom-[68px] md:right-6 md:bottom-24 z-[9999] w-14 h-14 bg-slate-900 text-amber-400 rounded-full flex items-center justify-center shadow-2xl animate-bounce hover:animate-none transition-transform hover:scale-105"
         >
@@ -139,7 +147,7 @@ export default function AIChatbot() {
               {QUICK_REPLIES.map((reply, i) => (
                 <button
                   key={i}
-                  aria-label={`Hỏi mẫu: ${reply}`} // 🌟 Thêm nhãn
+                  aria-label={`Hỏi mẫu: ${reply}`} 
                   onClick={() => handleSend(reply)}
                   disabled={loading}
                   className="whitespace-nowrap px-3.5 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-[13px] font-semibold hover:bg-orange-100 transition-colors disabled:opacity-50 shrink-0"
@@ -173,7 +181,7 @@ export default function AIChatbot() {
             />
             <button 
               type="submit"
-              aria-label="Gửi tin nhắn" // 🌟 Thêm nhãn
+              aria-label="Gửi tin nhắn" 
               disabled={loading || !input.trim()}
               className="bg-slate-900 text-amber-400 p-3 rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shrink-0"
             >
