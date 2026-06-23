@@ -31,7 +31,7 @@ function convertToSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// 🌟 BẢN VÁ LỖI VERCEL: Lấy dữ liệu và bọc đệm RAM cache an toàn
+// 🌟 RAM CACHE: Tránh Vercel gọi Google Sheet 2 lần trong 1 nhịp render
 const getPropertyBySlug = cache(async (slug: string) => {
   const data = await getBdsData();
   const safeData = Array.isArray(data) ? data : [];
@@ -47,38 +47,29 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const { item } = await getPropertyBySlug(slug);
 
-  if (!item) {
-    return { title: "Không tìm thấy sản phẩm - Trần Huy Land" };
-  }
+  if (!item) return { title: "Không tìm thấy sản phẩm - Trần Huy Land" };
 
   const titleText = item.tieude || item.Tieude || item.title || "Chi tiết bất động sản";
   const priceText = item.gia || item.Gia || item.price || "Liên hệ";
   const areaText = item.dienTich || item.DienTich || item.dientich || "Chưa rõ";
   const locationText = item.khuVucFull || item.khuvucFull || item.diachi || "Đà Nẵng";
-  
   const imageSeo = layUrlAnhChuan(item.anh || item.Anh) || "https://tranhuyland.vn/logo.png";
 
   return {
-    title: `${titleText} - Giá tốt: ${priceText} | Trần Huy Land`,
-    description: `Bán bất động sản chính chủ tại ${locationText}. Diện tích thực tế: ${areaText}, giá bán công khai: ${priceText}. Sổ hồng chính chủ, hỗ trợ tư vấn pháp lý nhanh chóng.`,
+    title: `${titleText} - Giá: ${priceText} | Trần Huy Land`,
+    description: `Bán nhà đất chính chủ tại ${locationText}. Diện tích: ${areaText}, giá công khai: ${priceText}. Sổ hồng chính chủ, hỗ trợ thương lượng giá trực tiếp.`,
     openGraph: {
       title: titleText,
-      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại ${locationText}.`,
+      description: `Diện tích ${areaText} - Giá ${priceText} tại ${locationText}.`,
       url: `https://tranhuyland.vn/nha-dat/${slug}`,
       siteName: "Trần Huy Land",
       images: [{ url: imageSeo, width: 1200, height: 630, alt: titleText }],
       type: "website",
     },
-    twitter: {
-      card: "summary_large_image",
-      title: titleText,
-      description: `Diện tích ${areaText} - Giá công khai ${priceText} tại ${locationText}.`,
-      images: [imageSeo],
-    },
   };
 }
 
-// 🖥️ 2. GIAO DIỆN CHI TIẾT SẢN PHẨM
+// 🖥️ 2. KHUNG KẾT NỐI GIAO DIỆN
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
   const { item, allItems } = await getPropertyBySlug(slug);
@@ -86,41 +77,11 @@ export default async function NhaDatDetail({ params }: Props) {
   if (!item) notFound();
 
   const titleText = item.tieude || item.Tieude || item.title || "";
-  
-  const rawPrice = String(item.gia || item.Gia || "0");
-  const cleanPrice = rawPrice.replace(/[^0-9]/g, "");
-  const priceNumber = cleanPrice ? parseFloat(cleanPrice) : 0;
-
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   const locationName = item.khuVuc || item.KhuVuc || "";
   const locationSlug = convertToSlug(locationName);
-  const imageSeo = layUrlAnhChuan(item.anh || item.Anh) || "https://tranhuyland.vn/logo.png";
 
-  // Cấu trúc dữ liệu chuẩn Schema.org cho Bất động sản
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "RealEstateListing",
-    "name": titleText,
-    "description": `${titleText} tại khu vực ${locationText}.`,
-    "datePosted": item.ngayDang || item.NgayDang || new Date().toISOString().split("T")[0],
-    "image": imageSeo,
-    "priceCurrency": "VND",
-    "price": priceNumber > 0 ? priceNumber : 0, 
-    "about": {
-      "@type": "Residence",
-      "name": titleText,
-      "description": `Bất động sản diện tích ${item.dienTich || item.DienTich || "Chưa rõ"}`,
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": locationText,
-        "addressLocality": "Đà Nẵng",
-        "addressRegion": "Đà Nẵng",
-        "addressCountry": "VN",
-      },
-    },
-  };
-
-  // 🔥 ĐẢM BẢO CHUYỂN TIẾP TRỌN VẸN LINK MAP & MÃ NHÚNG MAP XUỐNG PROPERTYCLIENT
+  // Đảm bảo dữ liệu map không bị thất lạc
   const enrichedItem = {
     ...item,
     linkMap: item.linkMap || item.toado || item.toaDo || "",
@@ -128,54 +89,35 @@ export default async function NhaDatDetail({ params }: Props) {
   };
 
   return (
-    <>
-      <Script
-        id="bds-structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-orange-500 selection:text-white">
       <Header />
 
-      {/* 🗺️ BREADCRUMB DÁN SÁT HEADER + CHỮ SẢN PHẨM MÀU CAM CỰC ĐẸP */}
-      <nav className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs transition-all">
-        <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-slate-500 flex-nowrap overflow-hidden">
-          
-          <Link
-            href="/"
-            className="flex items-center gap-1 text-slate-600 hover:text-orange-600 transition-colors font-semibold shrink-0"
-          >
-            <Home className="w-4 h-4 text-slate-500 shrink-0" />
-            Trang chủ
+      {/* BREADCRUMB DÁN SÁT HEADER */}
+      <nav className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-1.5 text-xs md:text-sm text-slate-500 overflow-hidden">
+          <Link href="/" className="flex items-center gap-1 hover:text-orange-600 font-semibold shrink-0">
+            <Home className="w-3.5 h-3.5" /> Trang chủ
           </Link>
-
           {locationName && (
             <>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-              <Link
-                href={`/vi-tri/${locationSlug}`}
-                className="text-slate-700 hover:text-orange-600 transition-colors font-semibold shrink-0 truncate max-w-[120px] sm:max-w-none"
-              >
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <Link href={`/vi-tri/${locationSlug}`} className="hover:text-orange-600 font-semibold shrink-0">
                 {locationName}
               </Link>
             </>
           )}
-
-          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-          
-          {/* 🔥 Tên sản phẩm bôi đậm (font-extrabold), màu cam (orange-600), cỡ chữ to */}
-          <span className="text-orange-600 font-extrabold min-w-0 flex-1 truncate text-[13px] sm:text-[14.5px] tracking-tight">
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="text-orange-600 font-extrabold truncate tracking-tight">
             {titleText}
           </span>
-
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8 flex-1 w-full overflow-hidden">
-        {/* Nạp trọn bộ dữ liệu đã được làm giàu xuống Client Component */}
+      <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+        {/* NẠP TỚI THỂ XÁC CLIENT COMPONENT */}
         <PropertyClient item={enrichedItem} />
 
-        <div className="mt-8 sm:mt-12">
+        <div className="mt-16">
           <RelatedProducts currentItem={enrichedItem} allItems={allItems} />
         </div>
       </main>
@@ -183,6 +125,6 @@ export default async function NhaDatDetail({ params }: Props) {
       <BackButton />
       <Footer />
       <FloatingWidgets />
-    </>
+    </div>
   );
 }
