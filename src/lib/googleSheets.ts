@@ -38,9 +38,10 @@ export function convertToSlug(text: string): string {
     .replace(/-+/g, '-');
 }
 
-// ⛳ HÀM 1: LẤY DỮ LIỆU NHÀ ĐẤT (Đã chuẩn hóa)
+// ⛳ HÀM 1: LẤY DỮ LIỆU NHÀ ĐẤT (Đã chuẩn hóa tách biệt Tab BDS)
 export async function getBdsData(): Promise<RealEstateItem[]> {
-  const sheetUrl = "https://docs.google.com/spreadsheets/d/1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA/export?format=csv&sheet=BDS";
+  const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=BDS`;
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
     const csvText = await response.text();
@@ -133,28 +134,26 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
     }
     return items;
   } catch (e) { 
-    console.error("Lỗi parse file Google Sheet CSV:", e);
+    console.error("Lỗi parse file Google Sheet CSV BDS:", e);
     return []; 
   }
 }
 
-// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (🔥 ĐÃ VÁ 100% CÁC BẪY NHẬP LIỆU)
+// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (🔥 ĐÃ ĐƯỢC ÉP LẤY ĐÚNG ĐƯỜNG DẪN TAB BLOG)
 export async function getBlogData(): Promise<any[]> {
   const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
-  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&sheet=Blog`;
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=Blog`;
 
   try {
     const response = await fetch(url, { next: { revalidate: 60 } });
     if (!response.ok) return [];
     const csvText = await response.text();
 
-    // 🚀 VÁ LỖI 1: Tránh trường hợp Google Sheet trả về trang HTML báo lỗi
     if (csvText.trim().startsWith("<!DOCTYPE") || csvText.trim().startsWith("<html")) {
       console.error("🚨 Lỗi: Google Sheet trả về trang HTML. Hãy kiểm tra tên Tab dưới Sheet phải gõ đúng chữ 'Blog'");
       return [];
     }
     
-    // Thuật toán đọc từng ký tự bảo vệ ký tự xuống dòng
     const rows: string[][] = [];
     let currentRow: string[] = [];
     let currentField = '';
@@ -210,10 +209,7 @@ export async function getBlogData(): Promise<any[]> {
         obj[headerName] = value.replace(/^"|"$/g, '').trim();
       });
 
-      // 🚀 VÁ LỖI 2: Quét lấy Tiêu đề (Hỗ trợ người nhập gõ cột tên là 'title' hoặc 'tieude')
       const rawTitle = obj.title || obj.tieude || "";
-
-      // 🚀 VÁ LỖI 3: Nếu trên Sheet để trống cột slug -> Tự động băm Tiêu đề ra làm slug!
       const safeSlug = obj.slug ? convertToSlug(obj.slug) : convertToSlug(rawTitle);
 
       const finalItem = {
@@ -225,7 +221,6 @@ export async function getBlogData(): Promise<any[]> {
         date: obj.date || obj.ngay || obj.ngaydang || '24/06/2026'
       };
 
-      // 🚀 VÁ LỖI 4: Tiêu chuẩn đẩy bài cực thoáng, có title và slug là cho lên web!
       if (finalItem.title !== "" && finalItem.slug !== "") {
         blogItems.push(finalItem);
       }
