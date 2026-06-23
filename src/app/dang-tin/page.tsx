@@ -32,7 +32,7 @@ const INITIAL_FORM_STATE = {
   maNhungMap: '', 
   toaDo: '',
   moTa: '', 
-  tag: 'all', // 💡 ĐÃ KHÔI PHỤC DROPDOWN CHO BIẾN NÀY
+  tag: 'all', 
   isMatTien: false,
   ngayDang: ''
 };
@@ -61,7 +61,7 @@ export default function DangTinPage() {
   const [isSearchingLoc, setIsSearchingLoc] = useState(false);
   const [mapMountKey, setMapMountKey] = useState(Date.now());
 
-  // 🚀 TÍNH NĂNG 1: TỰ ĐỘNG LƯU BẢN THẢO VÀO LOCALSTORAGE
+  // TỰ ĐỘNG LƯU BẢN THẢO
   useEffect(() => {
     if (!isAuthenticated) return;
     const timer = setTimeout(() => {
@@ -85,7 +85,6 @@ export default function DangTinPage() {
       setIsAuthenticated(true);
       setAuthError('');
 
-      // 🚀 PHỤC HỒI BẢN THẢO NẾU BỊ VĂNG TRANG
       const savedDraft = localStorage.getItem('thl_bds_draft_v2');
       if (savedDraft) {
         try {
@@ -97,7 +96,6 @@ export default function DangTinPage() {
           }
         } catch(err) {}
       }
-
     } else {
       setAuthError('Mật khẩu không chính xác!');
     }
@@ -111,7 +109,7 @@ export default function DangTinPage() {
     }
   };
 
-  // 📸 HÀM ÚP ẢNH CLOUDINARY (PHÂN TÁCH ĐỘ NÉT SỔ ĐỎ)
+  // 📸 HÀM ÚP ẢNH CLOUDINARY
   const uploadImagesToCloudinary = async (
     files: FileList | null,
     setUploadStatus: (status: boolean) => void,
@@ -149,13 +147,10 @@ export default function DangTinPage() {
           const fileData = await res.json();
           let optimizedUrl = fileData.secure_url;
           
-          // 🚀 TÍNH NĂNG 2: PHÂN TÁCH BÙA NẾN
           if (optimizedUrl.includes("/image/upload/")) {
             if (formField === 'anhSoDo') {
-              // Sổ đỏ: q_auto:best, w_1600 -> Giữ nguyên con số tọa độ
               optimizedUrl = optimizedUrl.replace("/image/upload/", "/image/upload/f_auto,q_auto:best,w_1600/");
             } else {
-              // Ảnh nhà: q_auto, w_1200 -> Siêu nén
               optimizedUrl = optimizedUrl.replace("/image/upload/", "/image/upload/f_auto,q_auto,w_1200/");
             }
           }
@@ -178,7 +173,7 @@ export default function DangTinPage() {
     selectedImagesPreview.forEach(url => URL.revokeObjectURL(url)); 
     uploadImagesToCloudinary(
       e.target.files, setUploading, setUploadProgress, setSelectedImagesPreview,
-      'anh', `📸 Đã tải thành công ${e.target.files?.length} ảnh thực tế lên Cloudinary!`, '❌ Gặp lỗi khi úp ảnh thực tế.'
+      'anh', `📸 Đã tải thành công ${e.target.files?.length} ảnh thực tế!`, '❌ Gặp lỗi khi úp ảnh thực tế.'
     );
   };
 
@@ -186,7 +181,7 @@ export default function DangTinPage() {
     soDoImagesPreview.forEach(url => URL.revokeObjectURL(url)); 
     uploadImagesToCloudinary(
       e.target.files, setUploadingSoDo, setUploadProgressSoDo, setSoDoImagesPreview,
-      'anhSoDo', `📑 Đã tải nét chuẩn ${e.target.files?.length} ảnh Sổ đỏ lên Cloudinary!`, '❌ Gặp lỗi khi úp ảnh sổ đỏ.'
+      'anhSoDo', `📑 Đã tải nét chuẩn ${e.target.files?.length} ảnh Sổ đỏ!`, '❌ Gặp lỗi khi úp ảnh sổ đỏ.'
     );
   };
 
@@ -207,6 +202,28 @@ export default function DangTinPage() {
       return `<iframe src="${safeEmbedUrl}" width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
     }
     return currentEmbed;
+  };
+
+  // 💡 ĐÃ KHÔI PHỤC HÀM XỬ LÝ SỐ NHÀ CHUẨN ĐÉT
+  const handleSoNhaChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const soNha = e.target.value;
+    setFormData(prev => ({ 
+      ...prev, 
+      soNha, 
+      linkMap: updateMapLink(soNha, prev.duong, prev.khuVuc, prev.linkMap),
+      maNhungMap: updateMapEmbed(soNha, prev.duong, prev.khuVuc, prev.maNhungMap)
+    }));
+  };
+
+  // 💡 ĐÃ KHÔI PHỤC HÀM XỬ LÝ TÊN ĐƯỜNG CHUẨN ĐÉT
+  const handleDuongChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const duong = e.target.value;
+    setFormData(prev => ({ 
+      ...prev, 
+      duong, 
+      linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap),
+      maNhungMap: updateMapEmbed(prev.soNha, duong, prev.khuVuc, prev.maNhungMap)
+    }));
   };
 
   // 🤖 HÀM QUÉT MÔ TẢ TỔNG LỰC
@@ -248,7 +265,6 @@ export default function DangTinPage() {
       if (dir) newFormData.huong = dir;
     }
 
-    // 🚀 TÍNH NĂNG 3: AI TỰ ĐỘNG DÒ TÌM NHÃN TAG
     const txtLower = text.toLowerCase();
     if (txtLower.includes('chính chủ') || txtLower.includes('chinh chu')) {
       newFormData.tag = 'Hàng Chính Chủ';
@@ -263,7 +279,6 @@ export default function DangTinPage() {
     setFormData(newFormData);
   };
 
-  // 🚀 TÍNH NĂNG 4: TỰ ĐỘNG "NẮN" SỐ KHI GÕ TAY VÀO Ô GIÁ / DIỆN TÍCH
   const handleFormatNumberBlur = (field: 'gia' | 'dienTich', suffix: string) => {
     let val = formData[field].trim();
     if (!val) return;
@@ -349,7 +364,7 @@ export default function DangTinPage() {
     try {
       await fetch(GOOGLE_WEBAPP_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       localStorage.setItem('lastSubmitTimeTranHuyLand', Date.now().toString());
-      localStorage.removeItem('thl_bds_draft_v2'); // Xóa bản thảo
+      localStorage.removeItem('thl_bds_draft_v2'); 
 
       setMessage({ type: 'success', content: '🎉 Đăng sản phẩm BĐS lên Google Sheet thành công!' });
       window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -428,7 +443,6 @@ export default function DangTinPage() {
                 <option value="Đông">Đông</option><option value="Tây">Tây</option><option value="Nam">Nam</option><option value="Bắc">Bắc</option><option value="Đông Nam">Đông Nam</option><option value="Đông Bắc">Đông Bắc</option><option value="Tây Nam">Tây Nam</option><option value="Tây Bắc">Tây Bắc</option>
               </select>
             </div>
-            {/* 💡 ĐÃ KHÔI PHỤC HỘP CHỌN TAG */}
             <div>
               <label className="block text-xs font-bold text-amber-600 uppercase mb-2 ml-1">Nhãn Đặc Quyền</label>
               <select value={formData.tag} onChange={(e) => setFormData({ ...formData, tag: e.target.value })} className="w-full bg-amber-50 border border-amber-300 rounded-xl px-3 py-3 text-[16px] font-bold focus:outline-none focus:border-amber-500 text-amber-900">
@@ -447,7 +461,7 @@ export default function DangTinPage() {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tên Đường</label>
-              <input type="text" value={formData.duong} onChange={(e) => { const duong = e.target.value; setFormData(prev => ({ ...prev, duong, linkMap: updateMapLink(prev.soNha, duong, prev.khuVuc, prev.linkMap), maNhungMap: updateMapEmbed(prev.soNha, duong, prev.khuVuc, prev.maNhungMap) })); }} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
+              <input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
           </div>
 
@@ -506,14 +520,12 @@ export default function DangTinPage() {
             <label htmlFor="isMatTien" className="text-xs font-bold text-slate-600 uppercase cursor-pointer select-none">Bất động sản này là mặt tiền kinh doanh</label>
           </div>
 
-          {/* NÚT ĐĂNG TIN MÁY TÍNH */}
           <button type="submit" disabled={loading || uploading || uploadingSoDo} className="w-full bg-slate-900 text-white font-bold text-[16px] uppercase py-4 rounded-xl shadow-md hover:bg-slate-800 transition-colors disabled:bg-slate-400 mt-4">
             {loading ? 'Đang gửi sang Sheet...' : (uploading || uploadingSoDo) ? '⏳ Đang xử lý ảnh...' : '🚀 Xác Nhận Đăng Tin BĐS'}
           </button>
         </form>
       </div>
 
-      {/* 🚀 TÍNH NĂNG 5: THANH CHỐT ĐƠN BÁM ĐÁY RIÊNG CHO MOBILE */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-3 px-4 sm:hidden flex items-center justify-between z-50 shadow-2xl">
         <div className="text-xs font-bold text-slate-700 truncate pr-2">
           {formData.tieude ? `🏠 ${formData.tieude}` : '✍️ Đang soạn tin...'}
