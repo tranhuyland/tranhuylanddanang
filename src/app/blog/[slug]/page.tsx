@@ -118,7 +118,7 @@ export default async function BlogDetailPage({ params }: Props) {
             {/* Phễu 2 hướng: Khách thích tự xem -> Bấm nút 1 | Khách đang vội -> Bấm Hotline */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               <Link 
-                href="/nha-dat" 
+                href="/" 
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-sm uppercase tracking-wider px-7 py-4 rounded-2xl shadow-lg hover:shadow-orange-500/25 transition-all"
               >
                 <Building2 size={18} />
