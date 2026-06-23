@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-// 🌟 ĐÃ THÊM: import icon BookOpen cho Góc tư vấn
 import { ChevronLeft, Search, SlidersHorizontal, Menu, X, Home, PlusCircle, Phone, BookOpen } from 'lucide-react';
 
 export default function Header() {
@@ -102,7 +101,6 @@ export default function Header() {
             </div>
           )}
 
-          {/* 🌟 ĐÃ SỬA: Cụm nút bấm góc phải (Gộp Nút Góc Tư Vấn PC + Nút mở Menu) */}
           <div className="flex items-center gap-1.5 shrink-0">
             <Link
               href="/blog"
@@ -151,4 +149,33 @@ export default function Header() {
                 <Home size={18} className="text-orange-500" aria-hidden="true" /> Trang chủ
               </Link>
 
-              {/* 🌟 ĐÃ SỬA: Chèn liên kết Góc tư vấn vào menu Mobile
+              <Link 
+                href="/blog" 
+                onClick={() => setIsMenuOpen(false)} 
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
+                  pathname.startsWith('/blog') ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
+                }`}
+              >
+                <BookOpen size={18} className="text-orange-500" aria-hidden="true" /> Góc tư vấn
+              </Link>
+
+              <Link 
+                href="/dang-tin" 
+                onClick={() => setIsMenuOpen(false)} 
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
+                  pathname === '/dang-tin' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
+                }`}
+              >
+                <PlusCircle size={18} className="text-orange-500" aria-hidden="true" /> Úp sản phẩm mới
+              </Link>
+              <div className="border-t border-slate-100 my-2"></div>
+              <a href="tel:0905778852" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-orange-50 hover:text-orange-600 rounded-2xl font-bold transition-colors">
+                <Phone size={18} className="text-orange-500" aria-hidden="true" /> 0905 778 852
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
