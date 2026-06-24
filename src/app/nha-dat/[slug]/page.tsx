@@ -89,12 +89,13 @@ export default async function NhaDatDetail({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-orange-500 selection:text-white">
+    // 🚀 Đã đổi text-slate-900 thành Soft Charcoal #222222 để triệt tiêu lóa sáng
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-[#222222] selection:bg-orange-500 selection:text-white">
       <Header />
 
       {/* BREADCRUMB DÁN SÁT HEADER */}
       <nav className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-1.5 text-xs md:text-sm text-slate-500 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-1.5 text-xs md:text-sm text-slate-500 overflow-hidden font-medium">
           <Link href="/" className="flex items-center gap-1 hover:text-orange-600 font-semibold shrink-0">
             <Home className="w-3.5 h-3.5" /> Trang chủ
           </Link>
@@ -107,7 +108,8 @@ export default async function NhaDatDetail({ params }: Props) {
             </>
           )}
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="text-orange-600 font-extrabold truncate tracking-tight">
+          {/* 🚀 Hạ font-extrabold xuống font-bold để dải ghim nhìn đắt giá hơn */}
+          <span className="text-orange-600 font-bold truncate tracking-tight">
             {titleText}
           </span>
         </div>
