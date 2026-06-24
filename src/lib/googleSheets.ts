@@ -17,6 +17,7 @@ export interface RealEstateItem {
   anh: string;
   anhSoDo: string;
   linkMap: string;
+  toaDo: string; // 💡 ĐÃ BỔ SUNG: Khai báo trường Tọa độ
   videoUrl: string;
   ngayDang: string;
   isMatTien: boolean;
@@ -123,6 +124,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
         anh: obj.anh || obj.image || "",
         anhSoDo: obj.anhsodo || obj.sodo || "",
         linkMap: obj.linkmap || "",
+        toaDo: obj.toado || obj.toa_do || "", // 💡 ĐÃ BỔ SUNG: Gắp đúng cột toado dưới Excel đưa lên
         videoUrl: obj.videourl || "",
         ngayDang: obj.ngaydang || "Tin mới",
         isMatTien: ((obj.tag?.toLowerCase().includes("mặt tiền")) || obj.ismattien === "TRUE")
@@ -139,7 +141,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
   }
 }
 
-// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (🔥 ĐÃ ĐƯỢC ÉP LẤY ĐÚNG ĐƯỜNG DẪN TAB BLOG)
+// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG
 export async function getBlogData(): Promise<any[]> {
   const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=Blog`;
