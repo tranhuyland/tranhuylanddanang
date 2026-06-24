@@ -1,4 +1,3 @@
-import React from "react";
 import { BookOpen } from "lucide-react";
 import { getBlogData } from "@/lib/googleSheets";
 import Header from "@/components/Header";
@@ -6,14 +5,19 @@ import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import BlogList from "@/components/BlogList";
 
-export const dynamic = "force-dynamic";
+// 🚀 TỐI ƯU 1: Chuyển từ "force-dynamic" sang ISR 60 giây (Load tức thì, không làm sập Google Sheet)
+export const revalidate = 60;
 
-// 🌐 NÂNG CẤP VŨ KHÍ SEO META ĐẦY ĐỦ CHO GOOGLE & ZALO
+// 🌐 VŨ KHÍ SEO META ĐẦY ĐỦ CHO GOOGLE & ZALO
 export const metadata = {
   title: "Góc Tư Vấn Bất Động Sản Đà Nẵng | Trần Huy Land",
   description: "Chuyên mục chia sẻ kinh nghiệm mua bán nhà đất, thủ tục pháp lý, sổ đỏ và phân tích thị trường bất động sản thực tế tại Đà Nẵng.",
   alternates: {
     canonical: "https://tranhuyland.vn/blog",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   openGraph: {
     title: "Góc Tư Vấn Bất Động Sản Đà Nẵng | Trần Huy Land",
@@ -23,7 +27,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "https://tranhuyland.vn/banner-blog-seo.jpg", // Link ảnh đại diện chuyên mục Blog của anh
+        url: "https://tranhuyland.vn/banner-blog-seo.jpg",
         width: 1200,
         height: 630,
         alt: "Góc tư vấn kiến thức nhà đất Trần Huy Land",
@@ -33,8 +37,8 @@ export const metadata = {
 };
 
 export default async function BlogPage() {
-  // 1. Máy chủ kéo toàn bộ bài viết từ Google Sheet
-  const blogs = await getBlogData();
+  // 🚀 TỐI ƯU 2 & 3: Bọc giáp an toàn (Defensive programming)
+  const blogs = (await getBlogData()) || [];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-orange-500 selection:text-white">
