@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-// 🚀 KẾT NỐI VỚI NÃO BỘ THUẬT TOÁN VỪA TẠO
 import { formatCleanPrice, generateMapLink, autoParseRealEstateText, uploadImagesCloudinary } from '@/lib/dangTinHelpers';
 
 const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap'), {
@@ -82,7 +81,6 @@ export default function DangTinPage() {
     }
   };
 
-  // 📸 CÁC HÀM ÚP ẢNH ĐÃ RÚT GỌN CHỈ CÒN VÀI DÒNG
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     selectedImagesPreview.forEach(url => URL.revokeObjectURL(url)); 
     uploadImagesCloudinary({
@@ -94,7 +92,7 @@ export default function DangTinPage() {
       onSuccess: (secureUrls, previewUrls) => {
         setSelectedImagesPreview(previewUrls);
         setFormData(prev => ({ ...prev, anh: secureUrls.join(', ') }));
-        setMessage({ type: 'success', content: `📸 Đã tải thành công ${secureUrls.length} ảnh thực tế!` });
+        setMessage({ type: 'success', content: `📸 Đã bóp nén & tải thành công ${secureUrls.length} ảnh!` });
         setUploading(false);
       },
       onError: (err) => { setMessage({ type: 'error', content: err }); setUploading(false); }
@@ -112,20 +110,31 @@ export default function DangTinPage() {
       onSuccess: (secureUrls, previewUrls) => {
         setSoDoImagesPreview(previewUrls);
         setFormData(prev => ({ ...prev, anhSoDo: secureUrls.join(', ') }));
-        setMessage({ type: 'success', content: `📑 Đã tải thành công ${secureUrls.length} ảnh sổ đỏ!` });
+        setMessage({ type: 'success', content: `📑 Đã bóp nén & tải thành công ${secureUrls.length} ảnh sổ đỏ!` });
         setUploadingSoDo(false);
       },
       onError: (err) => { setMessage({ type: 'error', content: err }); setUploadingSoDo(false); }
     });
   };
 
-  // 🤖 XỬ LÝ QUÉT VĂN BẢN (Gọi 1 dòng duy nhất từ Helper)
-  const handleAutoScanDescription = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    const scanResult = autoParseRealEstateText(e.target.value, formData.linkMap);
-    setFormData(prev => ({ ...prev, ...scanResult }));
+  // ==========================================================================
+  // 🚀 CHIẾN LƯỢC MỚI: ĐỂ CHROME TỰ DÁN NGUYÊN BẢN, XỬ LÝ NGẦM Ở ONCHANGE
+  // ==========================================================================
+  const handleMoTaChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const rawText = e.target.value;
+
+    // Dọn sạch ký tự tàng hình \u2028 của Apple, ép về chuẩn xuống dòng thuần \n
+    const cleanText = rawText.replace(/\r\n|\r|\u2028|\u2029/g, '\n');
+
+    const scanResult = autoParseRealEstateText(cleanText, formData.linkMap);
+
+    setFormData(prev => ({
+      ...prev,
+      ...scanResult,
+      moTa: cleanText
+    }));
   };
 
-  // 🔥 TỰ ĐỘNG GỌT GIÁ KHI GÕ TAY XONG (Click chuột ra ngoài)
   const handlePriceBlur = () => {
     setFormData(prev => ({ ...prev, gia: formatCleanPrice(prev.gia) }));
   };
@@ -208,7 +217,6 @@ export default function DangTinPage() {
     const today = new Date();
     const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 
-    // 🛡️ Bọc gọt giá lần cuối trước khi đẩy lên Google Sheet
     const payload = {
       ...formData,
       tieude: tieudeClean, 
@@ -274,7 +282,18 @@ export default function DangTinPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-amber-600 uppercase mb-2 ml-1">Mô tả chi tiết (Dán vào đây để tự động quét)</label>
-            <textarea required rows={5} value={formData.moTa} onChange={handleAutoScanDescription} placeholder="Dán thông tin tại đây..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700 whitespace-pre-line shadow-inner" />
+            {/* 🔥 Gỡ bỏ onPaste, gài bùa whitespace-pre-wrap ép Chrome vẽ đúng Enter vật lý */}
+            <textarea 
+              required 
+              rows={6} 
+              value={formData.moTa} 
+              onChange={handleMoTaChange} 
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck="false"
+              placeholder="Dán thông tin mô tả chi tiết tại đây..." 
+              className="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-4 py-3 text-[16px] font-medium focus:outline-none focus:border-amber-500 text-slate-700 shadow-inner whitespace-pre-wrap leading-relaxed" 
+            />
           </div>
 
           <div>
@@ -282,21 +301,25 @@ export default function DangTinPage() {
             <input required type="text" value={formData.tieude} onChange={(e) => setFormData({ ...formData, tieude: e.target.value })} placeholder="Ví dụ: Bán nhà mặt tiền..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
           </div>
 
+          {/* 🔥 ĐÃ CÂN BẰNG TỤYỆT ĐỐI: Dùng h-8 flex items-end pb-1 để ghim tọa độ 2 ô input */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Giá bán (Tự gọt số 0 thừa)</label>
-              {/* 🔥 Gắn onBlur để gõ tay "5,900 tỷ" xong bấm chuột ra ngoài tự nhảy thành "5,9 tỷ" */}
+              <label className="text-xs font-bold text-slate-500 uppercase h-8 flex items-end pb-1 ml-1 leading-tight">
+                Giá bán <span className="text-[10px] lowercase font-normal text-amber-600 ml-1">(tự gọt 0)</span>
+              </label>
               <input required type="text" value={formData.gia} onBlur={handlePriceBlur} onChange={(e) => setFormData({ ...formData, gia: e.target.value })} placeholder="Ví dụ: 4,35 tỷ" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700 font-mono text-amber-700" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Diện tích</label>
+              <label className="text-xs font-bold text-slate-500 uppercase h-8 flex items-end pb-1 ml-1 leading-tight">
+                Diện tích
+              </label>
               <input required type="text" value={formData.dienTich} onChange={(e) => setFormData({ ...formData, dienTich: e.target.value })} placeholder="Ví dụ: 100 m2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Phường / Xã</label>
+              <label className="text-xs font-bold text-slate-500 uppercase h-8 flex items-end pb-1 ml-1 leading-tight">Phường / Xã</label>
               <select required value={formData.khuVuc} onChange={handleKhuVucChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="">-- Chọn Vị Trí --</option>
                 <option disabled className="font-bold text-slate-400 bg-slate-100">-- Phường --</option>
@@ -306,7 +329,7 @@ export default function DangTinPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Hướng</label>
+              <label className="text-xs font-bold text-slate-500 uppercase h-8 flex items-end pb-1 ml-1 leading-tight">Hướng</label>
               <select value={formData.huong} onChange={(e) => setFormData({ ...formData, huong: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700">
                 <option value="">-- Để trống hoặc Chọn --</option>
                 <option value="Đông">Đông</option><option value="Tây">Tây</option><option value="Nam">Nam</option><option value="Bắc">Bắc</option><option value="Đông Nam">Đông Nam</option><option value="Đông Bắc">Đông Bắc</option><option value="Tây Nam">Tây Nam</option><option value="Tây Bắc">Tây Bắc</option>
@@ -315,8 +338,8 @@ export default function DangTinPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Số Nhà</label><input type="text" value={formData.soNha} onChange={handleSoNhaChange} placeholder="Ví dụ: K54/2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" /></div>
-            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tên Đường</label><input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" /></div>
+            <div><label className="text-xs font-bold text-slate-500 uppercase h-8 flex items-end pb-1 ml-1 leading-tight">Số Nhà</label><input type="text" value={formData.soNha} onChange={handleSoNhaChange} placeholder="Ví dụ: K54/2" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" /></div>
+            <div><label className="text-xs font-bold text-slate-500 uppercase h-8 flex items-end pb-1 ml-1 leading-tight">Tên Đường</label><input type="text" value={formData.duong} onChange={handleDuongChange} placeholder="Ví dụ: Ông Ích Khiêm" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold focus:outline-none focus:border-amber-500 text-slate-700" /></div>
           </div>
 
           <div><label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Link Google Maps</label><input type="text" value={formData.linkMap} onChange={(e) => setFormData({ ...formData, linkMap: e.target.value })} placeholder="Tự tạo link khi có Tên Đường..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[16px] font-semibold text-blue-600" /></div>
@@ -333,13 +356,13 @@ export default function DangTinPage() {
           </div>
 
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center">
-            <label className="block text-xs font-black text-slate-700 uppercase mb-2 cursor-pointer">{uploading ? `📸 Đang tải: ${uploadProgress}%` : '📸 Bấm chọn loạt ảnh thực tế'}<input type="file" multiple accept="image/*" disabled={uploading} onChange={handleImageChange} className="hidden" /></label>
+            <label className="block text-xs font-black text-slate-700 uppercase mb-2 cursor-pointer">{uploading ? `📸 Đang nén tải: ${uploadProgress}%` : '📸 Bấm chọn loạt ảnh thực tế'}<input type="file" multiple accept="image/*" disabled={uploading} onChange={handleImageChange} className="hidden" /></label>
             {uploading && <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-2"><div className="bg-amber-500 h-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div></div>}
             {selectedImagesPreview.length > 0 && <div className="grid grid-cols-4 gap-2 mt-4">{selectedImagesPreview.map((url, idx) => (<div key={idx} className="relative aspect-square rounded-lg overflow-hidden border bg-white"><img src={url} alt="preview" className="w-full h-full object-cover" /></div>))}</div>}
           </div>
 
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center">
-            <label className="block text-xs font-black text-slate-700 uppercase mb-2 cursor-pointer">{uploadingSoDo ? `📑 Đang tải: ${uploadProgressSoDo}%` : '📑 Bấm chọn ảnh Sổ đỏ (Tùy chọn)'}<input type="file" multiple accept="image/*" disabled={uploadingSoDo} onChange={handleSoDoChange} className="hidden" /></label>
+            <label className="block text-xs font-black text-slate-700 uppercase mb-2 cursor-pointer">{uploadingSoDo ? `📑 Đang nén tải: ${uploadProgressSoDo}%` : '📑 Bấm chọn ảnh Sổ đỏ (Tùy chọn)'}<input type="file" multiple accept="image/*" disabled={uploadingSoDo} onChange={handleSoDoChange} className="hidden" /></label>
             {uploadingSoDo && <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-2"><div className="bg-amber-600 h-full transition-all duration-300" style={{ width: `${uploadProgressSoDo}%` }}></div></div>}
             {soDoImagesPreview.length > 0 && <div className="grid grid-cols-4 gap-2 mt-4">{soDoImagesPreview.map((url, idx) => (<div key={idx} className="relative aspect-square rounded-lg overflow-hidden border bg-white"><img src={url} alt="sodo" className="w-full h-full object-cover" /></div>))}</div>}
           </div>
