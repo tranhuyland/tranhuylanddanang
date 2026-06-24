@@ -42,9 +42,10 @@ export default async function BlogDetailPage({ params }: Props) {
     <div className="min-h-screen bg-white flex flex-col font-sans text-slate-900 selection:bg-orange-500 selection:text-white">
       <Header />
 
-      <main className="flex-1 pt-28 pb-20 max-w-4xl w-full mx-auto px-4">
+      {/* 🚀 BÍ MẬT 1: Thu hẹp max-w-4xl xuống max-w-3xl (768px). Đây là "Kích thước ranh giới mắt" chuẩn Medium */}
+      <main className="flex-1 pt-28 pb-20 max-w-3xl w-full mx-auto px-4 sm:px-6">
         
-        {/* 🚀 VÁ BẪY 3: NÚT QUAY LẠI CHUẨN UX MOBILE (To rõ, dễ bấm) */}
+        {/* NÚT QUAY LẠI */}
         <div className="mb-8">
           <Link 
             href="/blog"
@@ -55,24 +56,26 @@ export default async function BlogDetailPage({ params }: Props) {
           </Link>
         </div>
 
-        {/* TIÊU ĐỀ & THÔNG TIN TÁC GIẢ */}
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight mb-4">
+        {/* 🚀 BÍ MẬT 2: Tiêu đề H1 chuẩn Báo chí (32px - 34px), đậm vừa phải font-bold */}
+        <h1 className="text-[26px] sm:text-[30px] md:text-[34px] font-bold tracking-tight text-[#111111] leading-[1.3] mb-4">
           {blog.title}
         </h1>
 
-        <div className="flex flex-wrap items-center gap-3 text-slate-500 text-xs font-semibold mb-8 pb-6 border-b border-slate-100">
-          <div className="flex items-center gap-1.5 bg-orange-50 text-orange-700 px-3 py-1 rounded-full border border-orange-100">
-            <User size={13} />
-            <span>Chuyên gia: Trần Huy</span>
+        {/* 🚀 BÍ MẬT 3: Gỡ bỏ các "Hộp màu sặc sỡ" ở thanh tác giả, chuyển về text xám thanh lịch */}
+        <div className="flex flex-wrap items-center gap-y-2 gap-x-3 text-slate-500 text-xs md:text-sm font-medium mb-10 pb-6 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 text-slate-800">
+            <User size={15} className="text-orange-500" />
+            <span>Trần Huy</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-slate-600">
-            <Calendar size={13} />
+          <span className="text-slate-300">•</span>
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Calendar size={15} />
             <span>Xuất bản: {blog.date || "Mới nhất"}</span>
           </div>
         </div>
 
         {/* ẢNH BÌA PHÓNG LỚN */}
-        <div className="relative aspect-video rounded-3xl overflow-hidden mb-12 bg-slate-50 border border-slate-100 shadow-md">
+        <div className="relative aspect-video rounded-2xl md:rounded-3xl overflow-hidden mb-12 bg-slate-50 border border-slate-100 shadow-md">
           <Image
             src={blog.image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200&auto=format&fit=crop"}
             alt={blog.title}
@@ -83,32 +86,38 @@ export default async function BlogDetailPage({ params }: Props) {
           />
         </div>
 
-        {/* 🚀 VÁ BẪY 1: BỘ BIÊN DỊCH MARKDOWN CHUẨN SEO BẬC THẦY */}
-        <article className="prose prose-slate max-w-none text-slate-800 leading-relaxed text-base md:text-[17px] whitespace-pre-line">
+        {/* 🚀 BÍ MẬT 4: TYPOGRAPHY THÂN BÀI — 18px, dòng giãn 1.8, màu Soft Charcoal #222222 */}
+        <article className="prose prose-slate max-w-none text-[#222222] text-[17px] md:text-[18px] leading-[1.8] tracking-[0.005em] whitespace-pre-line">
           <ReactMarkdown
             components={{
-              strong: ({ node, ...props }) => <strong className="font-extrabold text-slate-900" {...props} />,
-              p: ({ node, ...props }) => <p className="mb-6 last:mb-0" {...props} />,
-              h2: ({ node, ...props }) => <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mt-10 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2" {...props} />,
-              h3: ({ node, ...props }) => <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-8 mb-3 text-orange-600" {...props} />,
-              ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-6 space-y-2 text-slate-700" {...props} />,
-              li: ({ node, ...props }) => <li className="leading-normal" {...props} />,
+              // Chữ đậm: Trả về font-bold (700) để không bị "nặng cộp" trang viết
+              strong: ({ node, ...props }) => <strong className="font-bold text-[#111111]" {...props} />,
               
-              // 🔥 ĐÂY RỒI! "LÕI MA TRẬN SILO" BIẾN THẺ (A) THÀNH SIÊU LIÊN KẾT NEXT.JS
+              // Đoạn văn: Cách nhau đúng 24px chuẩn nhịp thở mắt
+              p: ({ node, ...props }) => <p className="mb-6 last:mb-0" {...props} />,
+              
+              // Thẻ H2: Sang trọng, có đường gạch chân mờ phân tách chương
+              h2: ({ node, ...props }) => <h2 className="text-[20px] md:text-[22px] font-bold text-[#111111] mt-12 mb-4 pb-2 border-b border-slate-100" {...props} />,
+              
+              // Thẻ H3: Tinh tế
+              h3: ({ node, ...props }) => <h3 className="text-[18px] md:text-[19px] font-bold text-slate-800 mt-8 mb-3" {...props} />,
+              
+              // Danh sách
+              ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-6 space-y-2.5 text-[#222222]" {...props} />,
+              li: ({ node, ...props }) => <li className="leading-[1.8]" {...props} />,
+              
+              // Lõi Ma Trận Silo (Giữ nguyên)
               a: ({ node, href, children, ...props }) => {
                 if (!href) return <span {...props}>{children}</span>;
 
-                // Tự động nhận diện: Link bắt đầu bằng "/" hoặc chứa domain nhà mình là Link nội bộ
                 const isInternal = href.startsWith("/") || href.includes("tranhuyland.vn");
 
                 if (isInternal) {
-                  // Gọt bỏ phần "https://tranhuyland.vn" (nếu gõ thừa) để đưa về dạng "/quan/hai-chau" chuẩn Next.js
                   const cleanHref = href.replace(/^(?:https?:\/\/)?(?:www\.)?tranhuyland\.vn/, "");
-                  
                   return (
                     <Link
                       href={cleanHref || "/"}
-                      className="font-extrabold text-orange-600 hover:text-orange-700 underline decoration-orange-300 hover:decoration-orange-600 decoration-2 underline-offset-4 transition-all bg-orange-50/60 hover:bg-orange-100 px-1.5 py-0.5 rounded"
+                      className="font-bold text-orange-600 hover:text-orange-700 underline decoration-orange-300 hover:decoration-orange-600 decoration-2 underline-offset-4 transition-all bg-orange-50/60 hover:bg-orange-100 px-1 py-0.5 rounded"
                       {...props}
                     >
                       {children}
@@ -116,13 +125,12 @@ export default async function BlogDetailPage({ params }: Props) {
                   );
                 }
 
-                // Link trỏ ra ngoài (Báo đài, tra cứu quy hoạch) -> Ép mở Tab mới + Khóa bảo mật noopener
                 return (
                   <a
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-bold text-blue-600 hover:text-blue-800 underline decoration-blue-200 hover:decoration-blue-500 underline-offset-4 transition-all inline-flex items-center gap-0.5 bg-blue-50/50 px-1.5 py-0.5 rounded"
+                    className="font-bold text-blue-600 hover:text-blue-800 underline decoration-blue-200 hover:decoration-blue-500 underline-offset-4 transition-all inline-flex items-center gap-0.5 bg-blue-50/50 px-1 py-0.5 rounded"
                     {...props}
                   >
                     <span>{children}</span>
@@ -136,7 +144,7 @@ export default async function BlogDetailPage({ params }: Props) {
           </ReactMarkdown>
         </article>
 
-        {/* 🚀 VÁ BẪY 2: HỘP PHỄU CHUYỂN ĐỔI KÉP (2 NÚT BẤM TÂM LÝ) */}
+        {/* HỘP PHỄU CHUYỂN ĐỔI KÉP */}
         <div className="mt-16 bg-gradient-to-br from-slate-900 via-slate-800 to-orange-950 text-white p-8 md:p-10 rounded-3xl relative overflow-hidden border border-slate-800 shadow-2xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(249,115,22,0.15),transparent_50%)]" />
           
