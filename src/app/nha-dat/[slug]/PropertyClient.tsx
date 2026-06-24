@@ -339,20 +339,20 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         )}
 
-        {/* 🚀 LÕI RENDER KẾT HỢP: MARKDOWN + SILO LINK ADAPTER + TYPOGRAPHY TỶ LỆ VÀNG */}
-        <div className="max-w-3xl mx-auto w-full pt-4">
-          <h4 className="font-extrabold text-slate-900 text-lg mb-6 pb-2 border-b border-slate-100 flex items-center gap-2">
+        {/* 🚀 LÕI RENDER MARKDOWN CHUẨN ĐẶC TẢ BẤT ĐỘNG SẢN (SPEC-SCANNING MODE) */}
+        <div className="w-full pt-2">
+          <h4 className="font-extrabold text-slate-900 text-lg mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             Mô tả chi tiết
           </h4>
-          <div className="prose prose-slate max-w-none text-[#222222] text-[17px] sm:text-[18px] leading-[1.8] tracking-[0.005em] whitespace-pre-line text-justify">
+          <div className="prose prose-slate max-w-none text-[#222222] text-[15px] sm:text-[16px] leading-[1.65] whitespace-pre-line text-justify">
             <ReactMarkdown
               components={{
-                h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-4" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-8 mb-3" {...props} />,
-                h3: ({node, ...props}) => <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-6 mb-2 text-orange-600" {...props} />,
-                p: ({node, ...props}) => <p className="mb-6 last:mb-0" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-6 space-y-2 text-[#222222]" {...props} />,
-                li: ({node, ...props}) => <li className="leading-[1.8]" {...props} />,
+                h1: ({node, ...props}) => <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-6 mb-3" {...props} />,
+                h2: ({node, ...props}) => <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-6 mb-2" {...props} />,
+                h3: ({node, ...props}) => <h3 className="text-[15px] sm:text-base font-bold text-orange-600 mt-4 mb-2" {...props} />,
+                p: ({node, ...props}) => <p className="mb-3.5 last:mb-0" {...props} />,
+                ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-4 space-y-1.5 text-slate-800" {...props} />,
+                li: ({node, ...props}) => <li className="leading-[1.65]" {...props} />,
                 strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
                 
                 // 🔥 BỘ LỌC ĐIỀU HƯỚNG MA TRẬN SILO
