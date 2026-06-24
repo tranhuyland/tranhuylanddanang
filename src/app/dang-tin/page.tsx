@@ -9,7 +9,7 @@ const LocationPickerMap = dynamic(() => import('@/components/LocationPickerMap')
 });
 
 // 🚨 CẤU HÌNH THÔNG SỐ
-const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx-L-HqESPfPCLGQD74aRadOlFVkuW12mf6DX-Kpzre6N55h4tvlEALqJ24YgEVfC1fiA/exec';
+const GOOGLE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx6P1elurAW2ToKC-5tNZnQc5o5iKtOba0qtCGl6b-PwKGz7e9LR-bikfdUVcYenXt_lQ/exec';
 const CLOUDINARY_CLOUD_NAME = 'ds6k0kfbz'; 
 const CLOUDINARY_UPLOAD_PRESET = 'tranhuyland';
 
