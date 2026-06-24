@@ -50,54 +50,46 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // 🧠 THUẬT TOÁN BIẾN TỌA ĐỘ THÀNH BẢN ĐỒ GOOGLE MAPS EMBED CHUẨN XỊN NHẤT
+  // 🧠 THUẬT TOÁN BẢN ĐỒ ÉP TÂM VÀ GHIM TRÙNG NHAU 100% (No-Drift Formula)
   const getSafeWorkingMapUrl = () => {
-    // 1. ƯU TIÊN TỐI THƯỢNG: Lấy tọa độ
     if (toaDo && toaDo.trim() !== '') {
-      let cleanCoords = toaDo.trim();
-      
-      // Đề phòng trường hợp nhân sự dán nhầm cả mã iframe vào cột Tọa Độ
-      if (cleanCoords.includes('<iframe')) {
-        const match = cleanCoords.match(/src=["'](.*?)["']/);
-        if (match && match[1]) return match[1];
-      } else if (cleanCoords.includes(',')) {
-        // Dọn dẹp khoảng trắng
-        cleanCoords = cleanCoords.replace(/\s+/g, '');
-        
-        // CẤU TRÚC MIỄN PHÍ TỐI ƯU NHẤT: Ép Google Maps cắm cờ chính xác vào tọa độ
-        // q=tọa độ: Đặt vị trí
-        // ie=UTF8 & iwloc=B: Chống lỗi lệch định vị
-        // z=16: Độ zoom hoàn hảo
-        return `https://maps.google.com/maps?q=${cleanCoords}&hl=vi&z=16&ie=UTF8&iwloc=B&output=embed`;
+      // Gọt sạch mọi ký tự tàng hình (\n, \r, khoảng trắng), chỉ giữ lại đúng số, dấu chấm, dấu phẩy và dấu trừ
+      const pureCoords = toaDo.replace(/[^0-9.,-]/g, '');
+
+      if (pureCoords.includes(',')) {
+        const [lat, lon] = pureCoords.split(',');
+
+        // CÔNG THỨC CHUẨN GOOGLE MAPS EMBED (Đã gỡ bỏ link ảo proxy):
+        // q={lat},{lon}  -> Đặt ghim đỏ đúng tọa độ
+        // ll={lat},{lon} -> Khóa cứng tâm bản đồ tại tọa độ ghim (Cấm trôi)
+        // z=16           -> Zoom chi tiết ngõ hẻm
+        return `https://maps.google.com/maps?q=${lat},${lon}&ll=${lat},${lon}&z=16&output=embed`;
       }
     }
 
-    // 2. DỰ PHÒNG: Lỡ ô Tọa độ trống, quay về kiểm tra linkMap cũ
+    // Dự phòng Fallback nếu ô Tọa độ trong Sheet bị bỏ trống
     const raw = linkMap || maNhungMap || '';
-    if (!raw) return '';
+    if (!raw) {
+      const searchQuery = alt || "Đà Nẵng";
+      return `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&z=15&output=embed`;
+    }
 
     let clean = raw.trim();
     if (clean.includes('<iframe')) {
       const match = clean.match(/src=["'](.*?)["']/);
-      if (match && match[1]) clean = match[1];
+      if (match && match[1]) return match[1];
     }
-    if (clean.startsWith('http://')) {
-      clean = clean.replace('http://', 'https://');
-    }
-    if (clean.includes('/embed') || clean.includes('output=embed')) {
-      if (!clean.includes('googleusercontent')) return clean;
-    }
-
-    // 3. Nếu không có gì cả -> Lấy tên BĐS dò tự động
-    const searchQuery = alt || "Đà Nẵng";
-    return `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&hl=vi&z=15&output=embed`;
+    return clean;
   };
 
-  // 🚀 TẠO LINK BẤM MỞ TRỰC TIẾP VÀO APP GOOGLE MAPS TRÊN ĐIỆN THOẠI
+  // 🚀 DEEP LINK: Mở App Google Maps Native trên điện thoại iOS/Android
   const getDeepLinkMapUrl = () => {
-    if (toaDo && toaDo.includes(',')) {
-      const cleanCoords = toaDo.replace(/\s+/g, '');
-      return `https://www.google.com/maps/search/?api=1&query=${cleanCoords}`;
+    if (toaDo && toaDo.trim() !== '') {
+      const pureCoords = toaDo.replace(/[^0-9.,-]/g, '');
+      if (pureCoords.includes(',')) {
+        // Cú pháp Deep Link Universal chính chủ Google:
+        return `https://www.google.com/maps/search/?api=1&query=${pureCoords}`;
+      }
     }
     return linkMap || getSafeWorkingMapUrl();
   };
@@ -224,6 +216,13 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
             {activeTab === 'map' && workingMapUrl && (
               <div className="w-full h-[55vh] sm:h-[80vh] max-w-5xl mx-auto px-4 flex flex-col items-center justify-center relative z-50">
                 
+                {/* 🚨 HỆ THỐNG RADAR BÁO LỖI: Sẽ hiện băng rôn vàng nếu file cha bên ngoài truyền hụt prop toaDo */}
+                {!toaDo && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 font-bold text-xs px-4 py-1.5 rounded-full z-50 shadow-lg border border-amber-300 flex items-center gap-1.5">
+                    <span className="animate-ping">⚠️</span> Dữ liệu "toaDo" đang bị trống! Đang hiển thị theo tên đường.
+                  </div>
+                )}
+
                 <iframe 
                   src={workingMapUrl} 
                   className="w-full h-full border-0 rounded-2xl bg-white shadow-2xl animate-fade-in" 
@@ -232,7 +231,7 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
                   referrerPolicy="no-referrer-when-downgrade"
                 />
 
-                {/* NÚT DEEP-LINK: Bấm phát mở thẳng Google Maps App chỉ đường */}
+                {/* NÚT DEEP-LINK NGUYÊN BẢN: Bấm phát mở thẳng Google Maps App */}
                 <a 
                   href={directAppMapUrl} 
                   target="_blank" 
