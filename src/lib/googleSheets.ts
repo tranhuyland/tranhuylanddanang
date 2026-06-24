@@ -41,7 +41,7 @@ export function convertToSlug(text: string): string {
 // ⛳ HÀM 1: LẤY DỮ LIỆU NHÀ ĐẤT (Đã chuẩn hóa tách biệt Tab BDS)
 export async function getBdsData(): Promise<RealEstateItem[]> {
   const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
-  const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=BDS`;
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=GIO_HANG_BDS`;
   try {
     const response = await fetch(sheetUrl, { next: { revalidate: 60 } });
     const csvText = await response.text();
