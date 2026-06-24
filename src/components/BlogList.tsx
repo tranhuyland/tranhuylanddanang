@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Heart, Share2 } from "lucide-react";
 
-// 📁 THÊM TAB "BÀI VIẾT ĐÃ LƯU" VÀO CUỐI DANH MỤC
+// 📁 DANH MỤC CÓ TÍCH HỢP TAB "ĐÃ LƯU"
 const CATEGORIES = [
   { id: "all", label: "📚 Tất cả bài viết" },
   { id: "chia-se", label: "💡 Chia sẻ kinh nghiệm", value: "Chia sẻ kinh nghiệm" },
@@ -14,7 +14,7 @@ const CATEGORIES = [
   { id: "nha-dep", label: "🏡 Nhà đẹp", value: "Nhà đẹp" },
   { id: "phong-thuy", label: "🔮 Phong thuỷ", value: "Phong thuỷ" },
   { id: "tin-tuc", label: "📰 Tin bất động sản", value: "Tin bất động sản" },
-  { id: "saved", label: "❤️ Bài viết đã lưu" }, // 👈 TAB MỚI
+  { id: "saved", label: "❤️ Bài viết đã lưu" },
 ];
 
 interface BlogListProps {
@@ -25,7 +25,6 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
   const safeBlogs = Array.isArray(allBlogItems) ? allBlogItems : [];
   const [activeTab, setActiveTab] = useState("all");
 
-  // State quản lý LocalStorage
   const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
 
@@ -68,31 +67,33 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
         });
       } catch (err) {}
     } else {
-      navigator.clipboard.writeText(fullUrl).then(() => alert("Đã sao chép link!"));
+      navigator.clipboard.writeText(fullUrl).then(() => alert("Đã sao chép link chia sẻ!"));
     }
   };
 
-  // 🚀 THUẬT TOÁN LỌC KÉP (HỖ TRỢ LỌC RA BÀI ĐÃ LƯU)
+  // 🚀 TỐI ƯU 1: LỌC RA DANH SÁCH BÀI "ĐÃ LƯU CÓ THẬT" TRÊN SHEET VÀO MỘT BIẾN
+  const actualSavedBlogs = useMemo(() => {
+    return safeBlogs.filter(blog => {
+      const targetSlug = (blog?.slug || blog?.Slug || "").toString();
+      return favoriteSlugs.includes(targetSlug);
+    });
+  }, [safeBlogs, favoriteSlugs]);
+
+  const savedCount = actualSavedBlogs.length; // <--- Con số luôn luôn chính xác tuyệt đối!
+
+  // 🚀 TỐI ƯU 3: THUẬT TOÁN LỌC KÉP KHÁNG LỖI CHỮ HOA/THƯƠNG
   const filteredBlogs = useMemo(() => {
     if (activeTab === "all") return safeBlogs;
+    if (activeTab === "saved") return actualSavedBlogs; // Tái sử dụng mảng trên, tiết kiệm RAM!
 
-    // 1. Nếu khách bấm Tab "Bài viết đã lưu"
-    if (activeTab === "saved") {
-      return safeBlogs.filter(blog => {
-        const targetSlug = (blog?.slug || blog?.Slug || "").toString();
-        return favoriteSlugs.includes(targetSlug);
-      });
-    }
-
-    // 2. Nếu khách bấm các Tab danh mục bình thường
     const selectedCat = CATEGORIES.find(c => c.id === activeTab);
-    return safeBlogs.filter(blog => {
-      const blogCat = (blog?.category || blog?.Category || "").toString().trim();
-      return blogCat === selectedCat?.value;
-    });
-  }, [activeTab, safeBlogs, favoriteSlugs]);
+    const targetVal = (selectedCat?.value || "").toLowerCase().trim();
 
-  const savedCount = favoriteSlugs.length;
+    return safeBlogs.filter(blog => {
+      const blogCat = (blog?.category || blog?.Category || "").toString().toLowerCase().trim();
+      return blogCat === targetVal;
+    });
+  }, [activeTab, safeBlogs, actualSavedBlogs]);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-8">
@@ -100,7 +101,6 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
       <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
         {CATEGORIES.map((tab) => {
           const isSavedTab = tab.id === "saved";
-          // Hiển thị bộ đếm số lượng cho riêng tab Đã lưu
           const labelDisplay = isSavedTab ? `${tab.label} (${isClient ? savedCount : 0})` : tab.label;
 
           return (
@@ -111,7 +111,7 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
                 activeTab === tab.id
                   ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20"
                   : isSavedTab && isClient && savedCount > 0
-                  ? "bg-red-50 text-red-500 border-red-200 hover:bg-red-100" // UI bừng sáng cho tab Đã lưu khi có bài
+                  ? "bg-red-50 text-red-500 border-red-200 hover:bg-red-100" 
                   : "bg-white text-slate-600 border-slate-200 hover:border-orange-300 hover:text-orange-500"
               }`}
             >
@@ -142,36 +142,46 @@ export default function BlogList({ allBlogItems = [] }: BlogListProps) {
             const isSaved = favoriteSlugs.includes(currentSlug);
 
             return (
-              <Link
-                href={`/blog/${currentSlug}`}
+              // 🚀 TỐI ƯU 2: Bọc thẻ div ngoài cùng để bảo vệ DOM, tách thẻ Link ra 2 khúc
+              <div
                 key={currentSlug}
                 className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:border-orange-200 shadow-xs hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 relative"
               >
+                {/* PHẦN 1: KHỐI ẢNH (Bấm vào ảnh nhảy trang) */}
                 <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
-                  <Image src={currentImage} alt={currentTitle} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 1280px) 100vw" />
-                  <span className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs text-orange-600 font-extrabold text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-xs border border-orange-100 z-10">
+                  <Link href={`/blog/${currentSlug}`} className="absolute inset-0 z-0">
+                    <Image src={currentImage} alt={currentTitle} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 1280px) 100vw" />
+                  </Link>
+
+                  <span className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs text-orange-600 font-extrabold text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-xs border border-orange-100 z-10 pointer-events-none">
                     {currentCat}
                   </span>
 
+                  {/* NÚT BẤM NỔI (Đứng độc lập, bấm cực nhạy không bị cản) */}
                   <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
-                    <div role="button" tabIndex={0} onClick={(e) => handleShare(blog, e)} className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-600 hover:text-orange-500 flex items-center justify-center shadow-md transition-all active:scale-90" title="Chia sẻ">
+                    <div role="button" tabIndex={0} onClick={(e) => handleShare(blog, e)} className="w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-600 hover:text-orange-500 flex items-center justify-center shadow-md transition-all active:scale-90 cursor-pointer" title="Chia sẻ">
                       <Share2 size={15} />
                     </div>
-                    <div role="button" tabIndex={0} onClick={(e) => toggleFavorite(currentSlug, e)} className="w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-md transition-all active:scale-90" title="Lưu bài">
+                    <div role="button" tabIndex={0} onClick={(e) => toggleFavorite(currentSlug, e)} className="w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-md transition-all active:scale-90 cursor-pointer" title="Lưu bài">
                       <Heart size={15} className={`transition-colors ${isClient && isSaved ? "fill-red-500 text-red-500" : "text-slate-600 hover:text-red-500"}`} />
                     </div>
                   </div>
                 </div>
 
+                {/* PHẦN 2: KHỐI NỘI DUNG (Bấm vào chữ nhảy trang) */}
                 <div className="p-5 flex flex-col flex-1">
                   <span className="text-xs text-slate-400 font-bold mb-2 block">📅 {currentDate}</span>
-                  <h3 className="text-base font-black text-slate-800 line-clamp-2 group-hover:text-orange-600 mb-2.5 leading-snug">{currentTitle}</h3>
-                  <p className="text-slate-500 text-sm line-clamp-3 leading-relaxed flex-1">{currentExcerpt}</p>
-                  <div className="pt-4 mt-4 border-t border-slate-50 flex items-center text-orange-500 font-bold text-xs gap-1">
-                    <span>Xem chi tiết</span> →
-                  </div>
+                  <Link href={`/blog/${currentSlug}`} className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-base font-black text-slate-800 line-clamp-2 group-hover:text-orange-600 mb-2.5 leading-snug">{currentTitle}</h3>
+                      <p className="text-slate-500 text-sm line-clamp-3 leading-relaxed">{currentExcerpt}</p>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-slate-50 flex items-center text-orange-500 font-bold text-xs gap-1">
+                      <span>Xem chi tiết</span> →
+                    </div>
+                  </Link>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
