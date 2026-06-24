@@ -15,7 +15,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// 🌐 HÀM 1: TỰ ĐỘNG SINH META SEO CHUẨN GOOGLE
+// 🌐 HÀM 1: TỰ ĐỘNG SINH META SEO CHUẨN GOOGLE & MẠNG XÃ HỘI
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const blogs = await getBlogData();
@@ -23,9 +23,35 @@ export async function generateMetadata({ params }: Props) {
 
   if (!blog) return { title: "Không tìm thấy nội dung - Trần Huy Land" };
 
+  // Lấy ảnh bìa, nếu không có thì lấy logo mặc định để đảm bảo không bị lỗi ảnh trắng
+  const imageUrl = blog.image && blog.image.startsWith('http') 
+    ? blog.image 
+    : 'https://www.tranhuyland.vn/logo.png'; 
+
   return {
     title: `${blog.title} | Trần Huy Land`,
     description: blog.excerpt || "Tư vấn và chia sẻ kinh nghiệm đầu tư bất động sản chuyên sâu tại Đà Nẵng.",
+    openGraph: {
+      title: blog.title,
+      description: blog.excerpt || "Tư vấn và chia sẻ kinh nghiệm đầu tư bất động sản chuyên sâu tại Đà Nẵng.",
+      url: `https://www.tranhuyland.vn/blog/${slug}`,
+      siteName: "Trần Huy Land",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: blog.title,
+        },
+      ],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: blog.title,
+      description: blog.excerpt,
+      images: [imageUrl],
+    },
   };
 }
 
