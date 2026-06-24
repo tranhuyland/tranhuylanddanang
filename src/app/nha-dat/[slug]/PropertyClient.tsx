@@ -211,14 +211,17 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   return (
     <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full">
       
-      {/* 🖼️ 1. GALLERY HÌNH ẢNH */}
+            {/* 🖼️ 1. GALLERY HÌNH ẢNH */}
       <div className="relative w-full max-w-full p-2 sm:p-3 pb-0">
         <PropertyGallery 
           images={tatCaAnhGallery} 
           alt={item.tieude || item.Title || "Trần Huy Land"} 
           videoUrl={item.videoUrl || item.VideoUrl} 
-          linkMap={item.linkMap || item.LinkMap || item.toado} 
+          linkMap={item.linkMap || item.LinkMap} 
+          toaDo={item.toaDo || item.ToaDo || item.Toado || item.toado} 
         />
+      </div>
+
       </div>
 
       {/* 📝 2. NỘI DUNG SẢN PHẨM */}
