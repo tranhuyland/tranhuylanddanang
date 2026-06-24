@@ -18,7 +18,7 @@ interface PropertyGalleryProps {
   videoUrl?: string; 
   linkMap?: string;  
   maNhungMap?: string; 
-  toaDo?: string; // 💡 ĐÃ THÊM: Nhận tọa độ từ Google Sheet (vd: "16.0472, 108.2068")
+  toaDo?: string; // Tọa độ từ Google Sheet (vd: "16.0472, 108.2068")
 }
 
 export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, toaDo }: PropertyGalleryProps) {
@@ -50,22 +50,29 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // 🧠 THUẬT TOÁN BIẾN TỌA ĐỘ THÀNH BẢN ĐỒ GOOGLE MAPS EMBED CHUẨN XỊN
+  // 🧠 THUẬT TOÁN BIẾN TỌA ĐỘ THÀNH BẢN ĐỒ GOOGLE MAPS EMBED CHUẨN XỊN NHẤT
   const getSafeWorkingMapUrl = () => {
-    // 1. ƯU TIÊN TỐI THƯỢNG: Nếu trong Google Sheet có nhập Tọa độ
+    // 1. ƯU TIÊN TỐI THƯỢNG: Lấy tọa độ
     if (toaDo && toaDo.trim() !== '') {
-      // Dọn sạch khoảng trắng dư thừa do nhân sự lỡ tay bấm phím Space
-      // Biến " 16.047,  108.206 " thành "16.047,108.206"
-      const cleanCoords = toaDo.replace(/\s+/g, '');
+      let cleanCoords = toaDo.trim();
       
-      if (cleanCoords.includes(',')) {
-        // hl=vi: Ép giao diện bản đồ hiển thị tiếng Việt
-        // z=16: Độ zoom hoàn hảo để nhìn thấy các ngã tư, ngõ hẻm xung quanh
-        return `https://maps.google.com/maps?q=${cleanCoords}&hl=vi&z=16&output=embed`;
+      // Đề phòng trường hợp nhân sự dán nhầm cả mã iframe vào cột Tọa Độ
+      if (cleanCoords.includes('<iframe')) {
+        const match = cleanCoords.match(/src=["'](.*?)["']/);
+        if (match && match[1]) return match[1];
+      } else if (cleanCoords.includes(',')) {
+        // Dọn dẹp khoảng trắng
+        cleanCoords = cleanCoords.replace(/\s+/g, '');
+        
+        // CẤU TRÚC MIỄN PHÍ TỐI ƯU NHẤT: Ép Google Maps cắm cờ chính xác vào tọa độ
+        // q=tọa độ: Đặt vị trí
+        // ie=UTF8 & iwloc=B: Chống lỗi lệch định vị
+        // z=16: Độ zoom hoàn hảo
+        return `https://maps.google.com/maps?q=${cleanCoords}&hl=vi&z=16&ie=UTF8&iwloc=B&output=embed`;
       }
     }
 
-    // 2. PHƯƠNG ÁN DỰ PHÒNG (Fallback): Lỡ ô Tọa độ trống, quay về kiểm tra link cũ
+    // 2. DỰ PHÒNG: Lỡ ô Tọa độ trống, quay về kiểm tra linkMap cũ
     const raw = linkMap || maNhungMap || '';
     if (!raw) return '';
 
@@ -81,12 +88,12 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
       if (!clean.includes('googleusercontent')) return clean;
     }
 
-    // 3. Nếu không có cả tọa độ lẫn link -> Lấy tên BĐS dò tự động
+    // 3. Nếu không có gì cả -> Lấy tên BĐS dò tự động
     const searchQuery = alt || "Đà Nẵng";
     return `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&hl=vi&z=15&output=embed`;
   };
 
-  // 🚀 TẠO LINK BẤM MỞ TRỰC TIẾP VÀO APP GOOGLE MAPS TRÊN IPHONE / ANDROID
+  // 🚀 TẠO LINK BẤM MỞ TRỰC TIẾP VÀO APP GOOGLE MAPS TRÊN ĐIỆN THOẠI
   const getDeepLinkMapUrl = () => {
     if (toaDo && toaDo.includes(',')) {
       const cleanCoords = toaDo.replace(/\s+/g, '');
