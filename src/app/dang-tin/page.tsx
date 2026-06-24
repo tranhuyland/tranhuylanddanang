@@ -590,7 +590,7 @@ export default function DangTinPage() {
                 onLocationSelect={(pos) => setFormData({ ...formData, toaDo: `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}` })} 
               />
             </div>
-
+            
             <input 
               type="text" 
               value={formData.toaDo} 
