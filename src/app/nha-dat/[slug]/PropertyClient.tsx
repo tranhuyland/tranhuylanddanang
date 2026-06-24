@@ -4,9 +4,9 @@ import PropertyGallery from "@/components/SlideBds";
 import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw, BedDouble, Bath, Compass, Heart, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import Link from "next/link"; // 🚀 ĐÃ BỔ SUNG THẺ LINK CỦA NEXT.JS
+import Link from "next/link";
 import { layUrlAnhChuan } from "@/lib/utils";
-import { tuDongGaiLinkMaTran } from "@/lib/matrixLinker"; // 🚀 KẾT NỐI BỘ NÃO MA TRẬN
+import { tuDongGaiLinkMaTran } from "@/lib/matrixLinker";
 
 interface PropertyClientProps {
   item: any;
@@ -339,49 +339,50 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         )}
 
-        {/* 🚀 LÕI RENDER KẾT HỢP: MARKDOWN + SILO LINK ADAPTER */}
-        <h4 className="font-extrabold text-slate-900 text-lg mb-4 flex items-center gap-2">
-          Mô tả chi tiết
-        </h4>
-        <div className="text-slate-700 text-[15px] sm:text-[16px] leading-relaxed w-full prose max-w-none text-justify">
-          <ReactMarkdown
-            components={{
-              h1: ({node, ...props}) => <h1 className="text-xl font-bold text-slate-900 mt-6 mb-3" {...props} />,
-              h2: ({node, ...props}) => <h2 className="text-lg font-bold text-slate-900 mt-5 mb-2" {...props} />,
-              h3: ({node, ...props}) => <h3 className="text-base font-bold text-slate-900 mt-4 mb-2" {...props} />,
-              p: ({node, ...props}) => <p className="mb-4 whitespace-pre-wrap" {...props} />,
-              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5" {...props} />,
-              li: ({node, ...props}) => <li className="" {...props} />,
-              strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
-              
-              // 🔥 BỘ LỌC ĐIỀU HƯỚNG MA TRẬN SILO (Thông minh hóa thẻ <a>)
-              a: ({node, ...props}) => {
-                const targetUrl = props.href || '#';
-                // Kiểm tra xem đây là link nội bộ bộ lọc hay link trỏ ra Google Map bên ngoài
-                const isInternalSilo = targetUrl.startsWith('/') || targetUrl.includes('tranhuyland.vn');
+        {/* 🚀 LÕI RENDER KẾT HỢP: MARKDOWN + SILO LINK ADAPTER + TYPOGRAPHY TỶ LỆ VÀNG */}
+        <div className="max-w-3xl mx-auto w-full pt-4">
+          <h4 className="font-extrabold text-slate-900 text-lg mb-6 pb-2 border-b border-slate-100 flex items-center gap-2">
+            Mô tả chi tiết
+          </h4>
+          <div className="prose prose-slate max-w-none text-[#222222] text-[17px] sm:text-[18px] leading-[1.8] tracking-[0.005em] whitespace-pre-line text-justify">
+            <ReactMarkdown
+              components={{
+                h1: ({node, ...props}) => <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-8 mb-4" {...props} />,
+                h2: ({node, ...props}) => <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-8 mb-3" {...props} />,
+                h3: ({node, ...props}) => <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-6 mb-2 text-orange-600" {...props} />,
+                p: ({node, ...props}) => <p className="mb-6 last:mb-0" {...props} />,
+                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-6 space-y-2 text-[#222222]" {...props} />,
+                li: ({node, ...props}) => <li className="leading-[1.8]" {...props} />,
+                strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
                 
-                return isInternalSilo ? (
-                  <Link 
-                    href={targetUrl} 
-                    className="text-[#E03C31] font-bold underline decoration-1 hover:decoration-2 hover:text-red-700 transition-all cursor-pointer"
-                  >
-                    {props.children}
-                  </Link>
-                ) : (
-                  <a 
-                    href={targetUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors cursor-pointer"
-                  >
-                    {props.children}
-                  </a>
-                );
-              }
-            }}
-          >
-            {tuDongGaiLinkMaTran(noiDungMoTa)}
-          </ReactMarkdown>
+                // 🔥 BỘ LỌC ĐIỀU HƯỚNG MA TRẬN SILO
+                a: ({node, ...props}) => {
+                  const targetUrl = props.href || '#';
+                  const isInternalSilo = targetUrl.startsWith('/') || targetUrl.includes('tranhuyland.vn');
+                  
+                  return isInternalSilo ? (
+                    <Link 
+                      href={targetUrl} 
+                      className="text-[#E03C31] font-bold underline decoration-1 hover:decoration-2 hover:text-red-700 transition-all cursor-pointer"
+                    >
+                      {props.children}
+                    </Link>
+                  ) : (
+                    <a 
+                      href={targetUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors cursor-pointer"
+                    >
+                      {props.children}
+                    </a>
+                  );
+                }
+              }}
+            >
+              {tuDongGaiLinkMaTran(noiDungMoTa)}
+            </ReactMarkdown>
+          </div>
         </div>
 
       </div>
