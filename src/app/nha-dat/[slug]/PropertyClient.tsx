@@ -222,7 +222,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
         />
       </div>
 
-      </div>
+  
 
       {/* 📝 2. NỘI DUNG SẢN PHẨM */}
       <div className="p-5 sm:p-8 w-full max-w-full">
