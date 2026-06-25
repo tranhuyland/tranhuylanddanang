@@ -4,16 +4,18 @@ import { FileText } from 'lucide-react';
 
 export default function KyGuiButton() {
   const handleOpenKyGui = () => {
-    window.dispatchEvent(new CustomEvent('open-ky-goi-modal'));
+    window.dispatchEvent(
+      new CustomEvent('open-ky-goi-modal')
+    );
   };
 
   return (
     <button
       onClick={handleOpenKyGui}
-      className="w-full sm:w-auto flex justify-center items-center gap-2 bg-white text-slate-800 border border-white hover:bg-white font-bold py-3 px-6 rounded-2xl text-sm shadow-md active:scale-95 transition-all"
+      className="w-full sm:w-auto flex justify-center items-center gap-2 bg-orange-500 text-white font-bold py-3.5 px-8 rounded-full hover:bg-orange-600 transition-colors"
     >
-      <FileText className="w-4 h-4 text-blue-600" />
-      Ký Gởi Nhà Đất
+      <FileText className="w-4 h-4" />
+      Ký Gửi Nhanh
     </button>
   );
 }
