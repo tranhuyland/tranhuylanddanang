@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
 import { getBdsData } from "@/lib/googleSheets";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -8,11 +8,14 @@ import Blog from "@/components/Blog";
 import ContactCTA from "@/components/ContactCTA";
 import Footer from "@/components/Footer";
 import dynamic from "next/dynamic";
+import Script from "next/script";
 
-// 🚀 ISR cache (OK cho BĐS)
+// 🚀 ISR
 export const revalidate = 60;
 
-// ⚡ Lazy load JS-heavy components (giảm INP + TBT)
+/* =========================
+   ⚡ DYNAMIC (GIẢM JS LOAD)
+========================= */
 const FloatingWidgets = dynamic(
   () => import("@/components/FloatingWidgets"),
   { ssr: false }
@@ -23,109 +26,95 @@ const AIChatbot = dynamic(
   { ssr: false }
 );
 
-// 🌐 SEO Metadata (giữ nguyên nhưng tối ưu nhẹ)
+/* =========================
+   🌐 METADATA SEO
+========================= */
 export const metadata: Metadata = {
-  title: 'Trần Huy Land - Bất động sản Đà Nẵng chính chủ',
+  title: "Trần Huy Land - Bất động sản Đà Nẵng chính chủ",
   description:
-    'Nhà đất chính chủ Đà Nẵng - mua bán ký gửi uy tín, cập nhật mỗi ngày.',
+    "Nhà đất Đà Nẵng chính chủ - mua bán ký gửi uy tín, cập nhật mỗi ngày.",
   openGraph: {
-    title: 'Trần Huy Land - Bất động sản Đà Nẵng',
-    description:
-      'Nhà đất chính chủ Đà Nẵng - cập nhật giỏ hàng thực tế mỗi ngày.',
-    url: 'https://tranhuyland.vn',
-    siteName: 'Trần Huy Land',
+    title: "Trần Huy Land - Bất động sản Đà Nẵng",
+    description: "Nhà đất Đà Nẵng chính chủ - cập nhật mỗi ngày.",
+    url: "https://tranhuyland.vn",
+    siteName: "Trần Huy Land",
     images: [
       {
-        url: 'https://tranhuyland.vn/og-image.jpg',
+        url: "https://tranhuyland.vn/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: 'Trần Huy Land Bất Động Sản Đà Nẵng',
+        alt: "Trần Huy Land",
       },
     ],
-    locale: 'vi_VN',
-    type: 'website',
+    type: "website",
   },
 };
 
+/* =========================
+   🏠 PAGE (SERVER COMPONENT)
+========================= */
 export default async function Home() {
-  // 🚨 KHÔNG BLOCK RENDER CRITICAL PATH
+  // ⚡ KHÔNG BLOCK CRITICAL RENDER
   const dataPromise = getBdsData();
 
-  // Schema JSON-LD (giữ nguyên)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
-    "name": "Trần Huy Land",
-    "image": "https://tranhuyland.vn/logo.png",
-    "@id": "https://tranhuyland.vn",
-    "url": "https://tranhuyland.vn",
-    "telephone": "0905778852",
-    "priceRange": "$$",
-    "address": {
+    name: "Trần Huy Land",
+    url: "https://tranhuyland.vn",
+    image: "https://tranhuyland.vn/logo.png",
+    telephone: "0905778852",
+    address: {
       "@type": "PostalAddress",
-      "streetAddress": "Hải Châu",
-      "addressLocality": "Đà Nẵng",
-      "addressRegion": "Đà Nẵng",
-      "postalCode": "550000",
-      "addressCountry": "VN"
+      streetAddress: "Hải Châu",
+      addressLocality: "Đà Nẵng",
+      addressCountry: "VN",
     },
-    "geo": {
-      "@type": "GeoCoordinates",
-      "latitude": 16.0544,
-      "longitude": 108.2022
-    },
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": [
-        "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday", "Saturday", "Sunday"
-      ],
-      "opens": "07:30",
-      "closes": "21:30"
-    }
   };
 
   return (
     <>
-      {/* SEO STRUCTURED DATA */}
-      <script
+      {/* SEO STRUCTURED DATA (tách script riêng cho sạch render) */}
+      <Script
+        id="jsonld-home"
         type="application/ld+json"
+        strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLd),
         }}
       />
 
-      {/* HEADER (critical) */}
+      {/* HEADER */}
       <Header />
 
-      {/* HERO (LCP PRIORITY - render ngay lập tức) */}
+      {/* HERO (LCP PRIORITY - giữ render sync) */}
       <Hero />
 
-      {/* LISTING (non-blocking render) */}
+      {/* LISTING (STREAMING + NON-BLOCKING) */}
       <ListingAsync dataPromise={dataPromise} />
 
-      {/* STATIC CONTENT */}
+      {/* STATIC SECTIONS */}
       <About />
       <Blog />
       <ContactCTA />
       <Footer />
 
-      {/* JS HEAVY - LOAD LAST */}
+      {/* HEAVY JS - LOAD LAST */}
       <FloatingWidgets />
       <AIChatbot />
     </>
   );
 }
 
-/* ================================
-   ⚡ ASYNC LISTING COMPONENT
-   ================================ */
+/* =========================
+   ⚡ STREAMING LISTING
+========================= */
 async function ListingAsync({
   dataPromise,
 }: {
   dataPromise: Promise<any>;
 }) {
-  const initialData = await dataPromise;
+  const data = await dataPromise;
 
-  return <ListingSection allBdsItems={initialData} />;
+  return <ListingSection allBdsItems={data} />;
 }
