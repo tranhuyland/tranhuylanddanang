@@ -1,14 +1,14 @@
 "use client";
-import React from "react";
+
+import React, { useMemo } from "react";
+import Link from "next/link";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 
-// 📍 Tọa độ trung tâm Đà Nẵng
 const DA_NANG_CENTER: [number, number] = [16.0544, 108.2022];
 
-// 🗺️ Từ điển tọa độ giả lập trung tâm các Phường/Xã (Dùng làm cơ chế dự phòng)
 const PHUONG_COORDS: Record<string, [number, number]> = {
   "Hòa Cường": [16.0350, 108.2180],
   "Hải Châu": [16.0680, 108.2200],
@@ -22,70 +22,137 @@ const PHUONG_COORDS: Record<string, [number, number]> = {
   "Hòa Hải": [15.9920, 108.2600],
   "An Hải": [16.0650, 108.2350],
   "An Khê": [16.0610, 108.1750],
-  "Hòa Minh": [16.0670, 108.1580]
+  "Hòa Minh": [16.0670, 108.1580],
 };
 
-// ⚙️ Thuật toán bóc tách tọa độ từ chữ (VD: "16.035, 108.218")
 const parseCoordinates = (coordStr: any): [number, number] | null => {
-  if (!coordStr || typeof coordStr !== 'string') return null;
-  const parts = coordStr.split(',');
-  if (parts.length === 2) {
-    const lat = parseFloat(parts[0].trim());
-    const lng = parseFloat(parts[1].trim());
-    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
-  }
-  return null;
+  if (!coordStr || typeof coordStr !== "string") return null;
+
+  const parts = coordStr.split(",");
+
+  if (parts.length !== 2) return null;
+
+  const lat = parseFloat(parts[0].trim());
+  const lng = parseFloat(parts[1].trim());
+
+  if (isNaN(lat) || isNaN(lng)) return null;
+
+  return [lat, lng];
 };
 
-export default function MapWrapper({ bdsList }: { bdsList: any[] }) {
+// tạo offset cố định theo id
+const generateStableOffset = (seed: string) => {
+  let hash = 0;
+
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const latOffset = ((hash % 100) - 50) * 0.0001;
+  const lngOffset = (((hash >> 3) % 100) - 50) * 0.0001;
+
+  return {
+    latOffset,
+    lngOffset,
+  };
+};
+
+export default function MapWrapper({
+  bdsList,
+}: {
+  bdsList: any[];
+}) {
+  const markers = useMemo(() => {
+    return bdsList.map((item) => {
+      const rawToaDo =
+        item.toaDo ||
+        item.toado ||
+        item.ToaDo ||
+        item["ToaDo"] ||
+        item["Tọa độ"];
+
+      const exactCoord = parseCoordinates(rawToaDo);
+
+      let lat: number;
+      let lng: number;
+
+      if (exactCoord) {
+        lat = exactCoord[0];
+        lng = exactCoord[1];
+      } else {
+        const base =
+          PHUONG_COORDS[item.khuVuc] || DA_NANG_CENTER;
+
+        const offset = generateStableOffset(
+          item.id?.toString() ||
+            item.slug ||
+            item.tieude ||
+            ""
+        );
+
+        lat = base[0] + offset.latOffset;
+        lng = base[1] + offset.lngOffset;
+      }
+
+      return {
+        item,
+        lat,
+        lng,
+        exactCoord,
+      };
+    });
+  }, [bdsList]);
+
   return (
     <MapContainer
       center={DA_NANG_CENTER}
-      zoom={13}
+      zoom={12}
       scrollWheelZoom={true}
-      style={{ height: "100%", width: "100%", zIndex: 0 }}
+      style={{
+        height: "100%",
+        width: "100%",
+      }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        attribution="&copy; OpenStreetMap"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {bdsList?.map((item, index) => {
-        // 1. Quét tìm cột Tọa độ trong Google Sheet (Bao quát các cách viết hoa/thường)
-        const rawToaDo = item.toaDo || item.toado || item.ToaDo || item['ToaDo'] || item['Tọa độ'];
-        const exactCoord = parseCoordinates(rawToaDo);
-
-        let lat: number, lng: number;
-
-        if (exactCoord) {
-          // 🎯 TRƯỜNG HỢP 1: Có tọa độ chính xác -> Bắn tỉa đúng vị trí
-          lat = exactCoord[0];
-          lng = exactCoord[1];
-        } else {
-          // 🎲 TRƯỜNG HỢP 2: Không có tọa độ -> Dùng thuật toán tản mác quanh Phường
-          const baseCoord = PHUONG_COORDS[item.khuVuc] || DA_NANG_CENTER;
-          lat = baseCoord[0] + (Math.random() - 0.5) * 0.015;
-          lng = baseCoord[1] + (Math.random() - 0.5) * 0.015;
-        }
-
-        return (
-          <Marker key={index} position={[lat, lng]}>
-            <Popup>
-              <div className="text-sm font-sans min-w-[150px]">
-                <strong className="text-orange-500 block text-base mb-1">{item.gia || "Thỏa thuận"}</strong>
-                <p className="text-slate-700 font-medium leading-tight mb-2 line-clamp-2">{item.tieude}</p>
-                <div className="text-xs text-slate-500 mb-2 flex flex-col gap-1">
-                  <span>📍 {item.diaChi || item.khuVuc}</span>
-                  {exactCoord && <span className="text-emerald-600 bg-emerald-50 inline-block px-1.5 py-0.5 rounded w-fit">✓ Tọa độ chính xác</span>}
-                </div>
-                <a href={`/nha-dat/${item.slug}`} className="text-blue-600 font-bold text-xs hover:underline flex items-center gap-1" target="_blank" rel="noopener noreferrer">
-                  Xem chi tiết &rarr;
-                </a>
+      {markers.map(({ item, lat, lng, exactCoord }) => (
+        <Marker
+          key={item.id || item.slug}
+          position={[lat, lng]}
+        >
+          <Popup>
+            <div className="min-w-[180px]">
+              <div className="font-bold text-orange-600 mb-1">
+                {item.gia || "Thỏa thuận"}
               </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+
+              <div className="text-sm line-clamp-2 mb-2">
+                {item.tieude}
+              </div>
+
+              <div className="text-xs text-slate-500 mb-2">
+                📍 {item.diaChi || item.khuVuc}
+              </div>
+
+              {exactCoord && (
+                <div className="inline-block text-[11px] px-2 py-1 rounded bg-emerald-50 text-emerald-700 mb-2">
+                  ✓ Vị trí chính xác
+                </div>
+              )}
+
+              <Link
+                href={`/nha-dat/${item.slug}`}
+                className="block text-blue-600 font-semibold text-xs"
+              >
+                Xem chi tiết →
+              </Link>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
     </MapContainer>
   );
 }
