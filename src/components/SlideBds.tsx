@@ -25,6 +25,9 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
+  
+  // 🚀 Bổ sung State để điều khiển Swiper Zoom bằng nút bấm
+  const [lightboxSwiper, setLightboxSwiper] = useState<any>(null);
 
   useEffect(() => {
     const handlePopState = () => setIsLightboxOpen(false);
@@ -50,7 +53,7 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // 🧠 THUẬT TOÁN BẢN ĐỒ ÉP TÂM VÀ GHIM TRÙNG NHAU 100% (No-Drift Formula)
+  // 🧠 THUẬT TOÁN BẢN ĐỒ ÉP TÂM VÀ GHIM TRÙNG NHAU 100% (Đã vá lỗi Cú Pháp URL)
   const getSafeWorkingMapUrl = () => {
     if (toaDo && toaDo.trim() !== '') {
       // Gọt sạch mọi ký tự tàng hình (\n, \r, khoảng trắng), chỉ giữ lại đúng số, dấu chấm, dấu phẩy và dấu trừ
@@ -59,10 +62,7 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
       if (pureCoords.includes(',')) {
         const [lat, lon] = pureCoords.split(',');
 
-        // CÔNG THỨC CHUẨN GOOGLE MAPS EMBED (Đã gỡ bỏ link ảo proxy):
-        // q={lat},{lon}  -> Đặt ghim đỏ đúng tọa độ
-        // ll={lat},{lon} -> Khóa cứng tâm bản đồ tại tọa độ ghim (Cấm trôi)
-        // z=16           -> Zoom chi tiết ngõ hẻm
+        // CÔNG THỨC CHUẨN GOOGLE MAPS EMBED:
         return `https://maps.google.com/maps?q=${lat},${lon}&ll=${lat},${lon}&z=16&output=embed`;
       }
     }
@@ -123,7 +123,8 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
                   setIsLightboxOpen(true);
                 }}
               >
-                <Image src={layUrlAnhChuan(img)} alt={`${alt} - Hình ${idx + 1}`} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority={idx === 0} />
+                {/* Ảnh cover bên ngoài tối ưu */}
+                <Image src={layUrlAnhChuan(img, 800)} alt={`${alt} - Hình ${idx + 1}`} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority={idx === 0} />
               </div>
             </SwiperSlide>
           ))}
@@ -166,8 +167,9 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
             <div className="flex items-center justify-end w-16 sm:w-24 gap-1 sm:gap-2">
               {activeTab === 'images' && (
                 <>
-                  <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-out"><ZoomOut className="w-5 h-5" /></button>
-                  <button className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer lb-zoom-in"><ZoomIn className="w-5 h-5" /></button>
+                  {/* 🚀 Đã kết nối hàm Zoom của Swiper vào nút bấm */}
+                  <button onClick={() => lightboxSwiper?.zoom?.out()} className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer"><ZoomOut className="w-5 h-5" /></button>
+                  <button onClick={() => lightboxSwiper?.zoom?.in()} className="hidden sm:flex text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer"><ZoomIn className="w-5 h-5" /></button>
                 </>
               )}
               <button onClick={closeLightbox} className="text-white p-2 hover:bg-white/20 rounded-full transition cursor-pointer">
@@ -183,6 +185,7 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
                 spaceBetween={20}
                 slidesPerView={1}
                 initialSlide={activeIndex}
+                onSwiper={setLightboxSwiper} // Lấy biến tham chiếu của Swiper để điều khiển nút Zoom
                 onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
                 zoom={true}
                 keyboard={{ enabled: true }}
@@ -192,7 +195,15 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
                 {images.map((img, idx) => (
                   <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
                     <div className="swiper-zoom-container h-full w-full flex items-center justify-center">
-                      <Image src={layUrlAnhChuan(img)} alt={`${alt} - Full ${idx + 1}`} width={1600} height={1200} className="object-contain max-h-[85vh] max-w-full" priority />
+                      {/* 🚀 Tối ưu tải ảnh khổng lồ: Chỉ tải ưu tiên tấm đang xem, các tấm khác Lazy Load */}
+                      <Image 
+                        src={layUrlAnhChuan(img, 1600)} 
+                        alt={`${alt} - Full ${idx + 1}`} 
+                        width={1600} 
+                        height={1200} 
+                        className="object-contain max-h-[85vh] max-w-full" 
+                        priority={idx === activeIndex} 
+                      />
                     </div>
                   </SwiperSlide>
                 ))}
@@ -216,7 +227,7 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
             {activeTab === 'map' && workingMapUrl && (
               <div className="w-full h-[55vh] sm:h-[80vh] max-w-5xl mx-auto px-4 flex flex-col items-center justify-center relative z-50">
                 
-                {/* 🚨 HỆ THỐNG RADAR BÁO LỖI: Sẽ hiện băng rôn vàng nếu file cha bên ngoài truyền hụt prop toaDo */}
+                {/* 🚨 HỆ THỐNG RADAR BÁO LỖI */}
                 {!toaDo && (
                   <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 font-bold text-xs px-4 py-1.5 rounded-full z-50 shadow-lg border border-amber-300 flex items-center gap-1.5">
                     <span className="animate-ping">⚠️</span> Dữ liệu "toaDo" đang bị trống! Đang hiển thị theo tên đường.
