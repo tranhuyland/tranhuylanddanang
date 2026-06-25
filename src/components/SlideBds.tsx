@@ -101,55 +101,44 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
 
   return (
     <>
-      // Trong file src/components/SlideBds.tsx
-// Tìm đoạn return và sửa phần <div className="..."> bao quanh Swiper thành như sau:
-
-<div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 relative group z-0">
-  <Swiper
-    modules={[Navigation, Pagination, Keyboard]}
-    spaceBetween={0}
-    slidesPerView={1}
-    initialSlide={activeIndex}
-    onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
-    keyboard={{ enabled: true }}
-    navigation={{ nextEl: '.nm-next', prevEl: '.nm-prev' }}
-    pagination={{ type: 'fraction', el: '.nm-fraction' }}
-    className="w-full h-full"
-  >
-    {images.map((img, idx) => (
-      <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
-        <div 
-          className="w-full h-full relative cursor-zoom-in" 
-          onClick={() => {
-            setActiveIndex(idx);
-            setActiveTab('images');
-            setIsLightboxOpen(true);
-          }}
+      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group z-0">
+        <Swiper
+          modules={[Navigation, Pagination, Keyboard]}
+          spaceBetween={0}
+          slidesPerView={1}
+          initialSlide={activeIndex}
+          onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+          keyboard={{ enabled: true }}
+          navigation={{ nextEl: '.nm-next', prevEl: '.nm-prev' }}
+          pagination={{ type: 'fraction', el: '.nm-fraction' }}
+          className="w-full h-full"
         >
-          {/* Đảm bảo ảnh lấp đầy khung tràn viền */}
-          <Image 
-            src={layUrlAnhChuan(img, 1200)} 
-            alt={`${alt} - Hình ${idx + 1}`} 
-            fill 
-            sizes="100vw" 
-            className="object-cover" 
-            priority={idx === 0} 
-          />
-        </div>
-      </SwiperSlide>
-    ))}
-  </Swiper>
+          {images.map((img, idx) => (
+            <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
+              <div 
+                className="w-full h-full relative cursor-zoom-in" 
+                onClick={() => {
+                  setActiveIndex(idx);
+                  setActiveTab('images');
+                  setIsLightboxOpen(true);
+                }}
+              >
+                {/* Ảnh cover bên ngoài tối ưu */}
+                <Image src={layUrlAnhChuan(img, 800)} alt={`${alt} - Hình ${idx + 1}`} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" priority={idx === 0} />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
 
-  {/* Nút điều hướng sát mép */}
-  <button className="nm-prev absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition active:scale-95 cursor-pointer">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-  </button>
-  <button className="nm-next absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition active:scale-95 cursor-pointer">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-  </button>
+        <button className="nm-prev absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button className="nm-next absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white text-gray-800 rounded-md flex items-center justify-center shadow-lg hover:bg-gray-50 transition active:scale-95 disabled:opacity-0 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
 
-  <div className="nm-fraction absolute bottom-3 right-3 z-10 flex items-center justify-center pointer-events-none"></div>
-</div>
+        <div className="nm-fraction absolute bottom-3 right-3 z-10 flex items-center justify-center pointer-events-none"></div>
+      </div>
 
       {isLightboxOpen && (
         <div className="fixed inset-0 bg-black z-[99999] flex flex-col animate-fade-in">
