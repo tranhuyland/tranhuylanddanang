@@ -101,8 +101,6 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
 
   return (
     <>
-      // Trong file src/components/SlideBds.tsx
-// Tìm đoạn return và sửa phần <div className="..."> bao quanh Swiper thành như sau:
 
 <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 relative group z-0">
   <Swiper
