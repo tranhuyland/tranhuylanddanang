@@ -3,22 +3,24 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import dynamic from "next/dynamic";
 import "./globals.css";
 
-// 🚀 BÙA CHÚ TỐI ƯU (ĐÃ SỬA LỖI): Tải chậm (Lazy-load / Code-splitting)
-// Bỏ { ssr: false } để tuân thủ chuẩn Server Component của Next.js 15
+// 🚀 BÙA CHÚ TỐI ƯU: Tải chậm (Lazy-load / Code-splitting)
 const AIChatbot = dynamic(() => import("@/components/AIChatbot"));
 const ScrollToTop = dynamic(() => import("@/components/ScrollToTop"));
 
-// 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap để không chặn hiển thị
+// 🌟 Khởi tạo Font chữ - Thêm preload: true để chặn độ trễ LCP 150ms
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["vietnamese"],
   display: "swap",
+  preload: true,
   variable: "--font-plus-jakarta",
 });
 
+// 🔥 ĐÃ SỬA LỖI: Khóa Zoom hoàn toàn trên iPhone/Safari khi bấm vào ô Tìm Kiếm
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#ffffff",
 };
 
