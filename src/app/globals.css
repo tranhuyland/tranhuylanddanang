@@ -10,7 +10,7 @@ html {
 }
 
 body { 
-  font-family: 'Plus Jakarta Sans', sans-serif; 
+  /* Đã loại bỏ font-family thủ công vì Next.js đã xử lý trực tiếp ở thẻ body */
   background-color: #F8FAFC; 
   color: #0f172a; 
   -webkit-font-smoothing: antialiased;
