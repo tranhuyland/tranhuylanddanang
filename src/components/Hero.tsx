@@ -1,8 +1,6 @@
-'use client';
-
-import React from 'react';
 import Image from 'next/image';
-import { Phone, FileText } from 'lucide-react';
+import { Phone } from 'lucide-react';
+import KyGuiButton from './KyGuiButton';
 
 const HERO_STATS = [
   { value: '500+', label: 'Sản Phẩm' },
@@ -11,13 +9,8 @@ const HERO_STATS = [
 ] as const;
 
 export default function Hero() {
-  const handleOpenKyGui = () => {
-    window.dispatchEvent(new CustomEvent('open-ky-goi-modal'));
-  };
-
   return (
     <section className="relative w-full h-[65vh] min-h-[480px] flex items-center justify-center overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
@@ -25,9 +18,7 @@ export default function Hero() {
           fill
           priority
           fetchPriority="high"
-          loading="eager"
           quality={85}
-          placeholder="empty"
           sizes="100vw"
           className="object-cover object-center"
         />
@@ -35,7 +26,6 @@ export default function Hero() {
         <div className="absolute inset-0 bg-slate-900/45" />
       </div>
 
-      {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
         <div className="w-full md:max-w-xl lg:max-w-2xl bg-slate-900/40 p-6 md:p-8 rounded-[2rem] border border-white/15">
 
@@ -48,7 +38,8 @@ export default function Hero() {
           </h1>
 
           <p className="text-slate-100 font-medium text-base sm:text-lg mb-6 max-w-md leading-relaxed">
-            Nhà thật, giá thật, pháp lý minh bạch. Hình ảnh khảo sát thực tế, hỗ trợ đối chiếu sổ đỏ ngay.
+            Nhà thật, giá thật, pháp lý minh bạch. Hình ảnh khảo sát thực tế,
+            hỗ trợ đối chiếu sổ đỏ ngay.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -60,13 +51,7 @@ export default function Hero() {
               Gọi Ngay
             </a>
 
-            <button
-              onClick={handleOpenKyGui}
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-orange-500 text-white font-bold py-3.5 px-8 rounded-full hover:bg-orange-600 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              Ký Gửi Nhanh
-            </button>
+            <KyGuiButton />
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-white/20">
