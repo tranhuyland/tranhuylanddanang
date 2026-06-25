@@ -1,86 +1,92 @@
+import React from 'react';
 import Image from 'next/image';
-import { Phone } from 'lucide-react';
+import { Phone, Building2, MapPin, TrendingUp } from 'lucide-react';
 import KyGuiButton from './KyGuiButton';
-
-const HERO_STATS = [
-  { value: '500+', label: 'Sản Phẩm' },
-  { value: '100%', label: 'Chính Chủ' },
-  { value: 'Siêu', label: 'Đầu Tư' },
-] as const;
 
 export default function Hero() {
   return (
-    <section
-      className="relative w-full h-[min(65vh,700px)] min-h-[480px] flex items-center justify-center overflow-hidden"
-      aria-label="Kho bất động sản Đà Nẵng"
-    >
-      {/* HERO IMAGE - LCP */}
+    <section className="relative w-full pt-8 pb-16 md:pt-14 md:pb-20 flex items-center justify-center overflow-hidden">
+      {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
-          alt="Kho bất động sản Đà Nẵng - Trần Huy Land"
+          alt="Toàn cảnh Đà Nẵng"
           fill
           priority
           fetchPriority="high"
-          quality={70}
-          sizes="100vw"
           loading="eager"
-          decoding="async"
+          sizes="100vw"
           className="object-cover object-center"
         />
-
-        {/* Overlay - tối giản để giảm paint cost */}
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-slate-900/20" />
       </div>
 
-      {/* CONTENT */}
+      {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        <div className="w-full md:max-w-xl lg:max-w-2xl bg-slate-900/60 p-6 md:p-8 rounded-[2rem] border border-white/15">
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/30 backdrop-blur-lg p-5 md:p-6 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
 
-          <h1 className="text-[32px] sm:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight mb-4">
-            Trần Huy Land
-            <br />
-            <span className="text-orange-400">
-              Kho Nhà Đất Đà Nẵng
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm border border-white">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+            </span>
+            Kho Nhà Đất Đà Nẵng
+          </div>
+
+          <h1 className="text-[28px] sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight mb-2">
+            Nhà Thật • Giá Thật <br />
+            <span className="text-slate-900">
+              Giao Dịch Minh Bạch
             </span>
           </h1>
 
-          <p className="text-slate-100 font-medium text-base sm:text-lg mb-6 max-w-md leading-relaxed">
-            Nhà thật, giá thật, pháp lý minh bạch.
-            Hình ảnh khảo sát thực tế,
-            hỗ trợ đối chiếu sổ đỏ ngay.
+          <p className="text-slate-900 font-medium text-sm sm:text-base mb-4 max-w-lg leading-relaxed">
+            Chuyên phân phối nhà phố, đất nền, mặt tiền kinh doanh tại Đà Nẵng.
+            Hình ảnh thực tế, hỗ trợ đối chiếu sổ đỏ trực tiếp.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-1">
             <a
               href="tel:0905778852"
-              aria-label="Gọi ngay Trần Huy Land"
-              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-slate-900 text-white font-bold py-3.5 px-8 rounded-full hover:bg-slate-800 transition-colors"
+              className="w-full sm:w-auto flex justify-center items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-orange-500/30 text-sm hover:shadow-orange-500/50 active:scale-95 transition-all"
             >
               <Phone className="w-4 h-4" />
-              Gọi Ngay
+              Liên Hệ Tư Vấn
             </a>
 
             <KyGuiButton />
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-white/20">
-            {HERO_STATS.map((stat, idx) => (
-              <div
-                key={stat.label}
-                className={`flex flex-col ${
-                  idx > 0 ? 'border-l border-white/20 pl-3 md:pl-4' : ''
-                }`}
-              >
-                <span className="text-white font-black text-xl md:text-2xl">
-                  {stat.value}
-                </span>
+          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-900/10">
+            <div className="flex flex-col">
+              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
+                <Building2 className="w-4 h-4 text-orange-600" />
+                500+
+              </span>
+              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
+                Sản Phẩm
+              </span>
+            </div>
 
-                <span className="text-slate-300 text-[11px] font-bold uppercase tracking-wider mt-1">
-                  {stat.label}
-                </span>
-              </div>
-            ))}
+            <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
+              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
+                <MapPin className="w-4 h-4 text-orange-600" />
+                100%
+              </span>
+              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
+                Chính Chủ
+              </span>
+            </div>
+
+            <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
+              <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
+                <TrendingUp className="w-4 h-4 text-orange-600" />
+                Siêu
+              </span>
+              <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
+                Đầu Tư
+              </span>
+            </div>
           </div>
 
         </div>
