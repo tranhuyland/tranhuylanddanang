@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+
 import { getBdsData } from "@/lib/googleSheets";
 
 import Header from "@/components/Header";
@@ -13,16 +14,18 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 
 const AIChatbot = dynamic(() => import("@/components/AIChatbot"), {
   ssr: false,
+  loading: () => null,
 });
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Trần Huy Land - Bất động sản Đà Nẵng",
-  description: "Nhà đất chính chủ tại Đà Nẵng",
+  title: "Trần Huy Land | Bất động sản Đà Nẵng chính chủ",
+  description:
+    "Nhà đất Đà Nẵng chính chủ, giá tốt, pháp lý rõ ràng.",
   openGraph: {
     title: "Trần Huy Land",
-    description: "Bất động sản Đà Nẵng",
+    description: "Nhà đất Đà Nẵng",
     url: "https://tranhuyland.vn",
     siteName: "Trần Huy Land",
     images: [
@@ -58,14 +61,16 @@ export default async function Home() {
 
       <Header />
       <Hero />
+
+      {/* SSR listing => giảm JS cực mạnh */}
       <ListingSection allBdsItems={initialData} />
+
       <About />
       <Blog />
       <ContactCTA />
       <Footer />
       <FloatingWidgets />
 
-      {/* lazy client only */}
       <AIChatbot />
     </>
   );
