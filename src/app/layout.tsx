@@ -37,7 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         {/* Ưu tiên tải toàn bộ nội dung chính (Trang chủ, Nhà đất, Hình ảnh) trước */}
         {children}
-        
+        {/* 🚀 BÙA CHÚ QUAN TRỌNG: Ép trình duyệt tải ảnh Hero ngay lập tức */}
+      <link rel="preload" href="/hero-bg.jpg" as="image" />
         {/* Chatbot và Nút cuộn được tách luồng tải riêng */}
         <AIChatbot /> 
         <ScrollToTop />
