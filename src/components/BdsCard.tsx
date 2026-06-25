@@ -15,7 +15,7 @@ interface BdsCardProps {
 }
 
 export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: BdsCardProps) {
-  const thumbnail = layUrlAnhChuan(item.anh);
+  const thumbnail = layUrlAnhChuan(item.anh, 400);
   const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
   const soLuongAnh = useMemo(() => countImages(item), [item]);
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
