@@ -5,14 +5,14 @@ import KyGuiButton from './KyGuiButton';
 
 export default function Hero() {
   return (
-    <section className="relative w-full h-[60vh] sm:h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden">
+    <section className="relative w-full pt-8 pb-16 md:pt-14 md:pb-20 flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
           alt="Toàn cảnh Đà Nẵng"
           fill
-          priority={true}
+          priority
           fetchPriority="high"
           loading="eager"
           sizes="100vw"
@@ -60,7 +60,7 @@ export default function Hero() {
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-900/10">
             <div className="flex flex-col">
               <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <Building2 className="w-4 h-4 shrink-0 text-orange-600" />
+                <Building2 className="w-4 h-4 text-orange-600" />
                 500+
               </span>
               <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
@@ -70,7 +70,7 @@ export default function Hero() {
 
             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
               <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <MapPin className="w-4 h-4 shrink-0 text-orange-600" />
+                <MapPin className="w-4 h-4 text-orange-600" />
                 100%
               </span>
               <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
@@ -80,7 +80,7 @@ export default function Hero() {
 
             <div className="flex flex-col border-l border-slate-900/10 pl-3 md:pl-4">
               <span className="flex items-center gap-1 text-slate-900 font-black text-lg">
-                <TrendingUp className="w-4 h-4 shrink-0 text-orange-600" />
+                <TrendingUp className="w-4 h-4 text-orange-600" />
                 Siêu
               </span>
               <span className="text-slate-800 text-[10px] font-bold uppercase tracking-wide mt-0.5">
