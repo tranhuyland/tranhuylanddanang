@@ -23,7 +23,7 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
   const tags = useMemo(() => parsePropertyTags(item), [item]);
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
-  // 🔥 THUẬT TOÁN TÍNH TUỔI TIN ĐĂNG (Trả về chính xác số ngày)
+  // 🔥 THUẬT TOÁN TÍNH TUỔI TIN ĐĂNG
   const daysOld = useMemo(() => {
     const rawDate = item.ngayDang || item.ngay || "";
     if (!rawDate) return 999;
@@ -85,8 +85,8 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
         
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           
-          {/* 🌟 DUY NHẤT 1 TEM ĐỎ TĨNH: Sang trọng, đứng im đĩnh đạc, không nhấp nháy */}
-          <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider">
+          {/* 🌟 THÊM BÙA CHÚ suppressHydrationWarning: Ép React bỏ qua lỗi #418 do lệch múi giờ Server vs Client */}
+          <span suppressHydrationWarning className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider">
             {rankBadgeText}
           </span>
 
@@ -128,9 +128,11 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
           <div className="flex flex-col justify-center min-w-0 pr-2">
             <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" aria-hidden="true" />
-              <span>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
+              {/* 🌟 THÊM BÙA CHÚ Ở ĐÂY NỮA */}
+              <span suppressHydrationWarning>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
             </div>
-            <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
+            {/* 🌟 VÀ Ở ĐÂY NỮA CHỐNG LỖI HIỂN THỊ CHỮ "HÔM QUA" */}
+            <span suppressHydrationWarning className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]">
               {dateInfo.relative}
             </span>
           </div>
