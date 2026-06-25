@@ -3,7 +3,6 @@ import React from 'react';
 import Image from 'next/image';
 import { Phone, Building2, MapPin, TrendingUp, FileText } from 'lucide-react';
 
-// 💡 1. TÁCH DỮ LIỆU TĨNH (DRY Principle): Giúp JSX phía dưới cực kỳ sạch
 const HERO_STATS = [
   { icon: Building2, value: '500+', label: 'Sản Phẩm' },
   { icon: MapPin, value: '100%', label: 'Chính Chủ' },
@@ -16,19 +15,22 @@ export default function Hero() {
   };
 
   return (
+    // 💡 Định hình kích thước cứng tại đây: Mobile 65vh, PC tự co giãn theo tỷ lệ
     <section className="relative w-full h-[65vh] min-h-[480px] flex items-center justify-center overflow-hidden">
-      {/* Background Hero - Tối ưu LCP */}
+      
+      {/* Background Hero - Cố định kích thước khung để tránh Layout Shift */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
           alt="Toàn cảnh Đà Nẵng"
           fill
-          priority={true}        // 🔥 Ép tải ngay lập tức
-          fetchPriority="high"   // 🔥 Ưu tiên cao nhất
-          loading="eager"        // 🔥 Cấm tải lười
+          priority={true}
+          fetchPriority="high"
+          loading="eager"
           sizes="100vw"
           className="object-cover object-center"
         />
+        {/* Lớp phủ tối */}
         <div className="absolute inset-0 bg-slate-900/40" />
       </div>
 
