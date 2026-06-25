@@ -29,7 +29,7 @@ export default function Footer() {
         <div>
           <div className="flex items-center gap-2.5 mb-5">
             <div className="relative h-10 w-10">
-              <Image src="https://i.postimg.cc/JhKg8VZ9/70554272-47DB-4D3A-A1AE-2782EFCAF00F.png" alt="Trần Huy Land" fill className="object-contain" />
+              <Image src="https://res.cloudinary.com/ds6k0kfbz/image/upload/v1782399841/n0v7ti6adzvy4sf9fhpn.avif" alt="Trần Huy Land" fill className="object-contain" />
             </div>
             <h3 className="text-white font-extrabold text-base tracking-wide">TRẦN HUY LAND</h3>
           </div>
