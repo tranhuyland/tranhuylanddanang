@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // 🚀 KÍCH HOẠT CRITTERS: Tự động bóc tách CSS quan trọng chèn thẳng vào HTML
+  // Triệt tiêu con số 170ms chờ đợi tải tệp global CSS
+  experimental: {
+    optimizeCss: true,
+  },
+
   images: {
     // 🚀 BÙA CHÚ CHÍ MẠNG: Tắt bộ nén trung gian của Vercel. 
     // Trả thẳng link WebP gốc của Cloudinary ra ngoài -> Miễn nhiễm 100% lỗi sập hạn mức 1000 ảnh/tháng
