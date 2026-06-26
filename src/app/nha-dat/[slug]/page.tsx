@@ -5,7 +5,6 @@ import FloatingWidgets from "@/components/FloatingWidgets";
 import { notFound } from "next/navigation";
 import BackButton from "@/components/BackButton";
 import PropertyClient from "./PropertyClient";
-import Script from "next/script";
 import { layUrlAnhChuan } from "@/lib/utils";
 import RelatedProducts from "@/components/RelatedProducts";
 import Link from "next/link";
@@ -31,7 +30,6 @@ function convertToSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-// 🌟 RAM CACHE: Tránh Vercel gọi Google Sheet 2 lần trong 1 nhịp render
 const getPropertyBySlug = cache(async (slug: string) => {
   const data = await getBdsData();
   const safeData = Array.isArray(data) ? data : [];
@@ -42,7 +40,6 @@ const getPropertyBySlug = cache(async (slug: string) => {
   };
 });
 
-// 🌐 1. BƠM THẺ SEO ĐỘNG CHO GOOGLE (Full OpenGraph & Twitter)
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const { item } = await getPropertyBySlug(slug);
@@ -69,7 +66,6 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-// 🖥️ 2. KHUNG KẾT NỐI GIAO DIỆN
 export default async function NhaDatDetail({ params }: Props) {
   const { slug } = await params;
   const { item, allItems } = await getPropertyBySlug(slug);
@@ -81,7 +77,8 @@ export default async function NhaDatDetail({ params }: Props) {
   const locationName = item.khuVuc || item.KhuVuc || "";
   const locationSlug = convertToSlug(locationName);
 
-  // Đảm bảo dữ liệu map không bị thất lạc
+  const imageSeo = layUrlAnhChuan(item.anh || item.Anh) || "";
+
   const enrichedItem = {
     ...item,
     linkMap: item.linkMap || item.toado || item.toaDo || "",
@@ -89,11 +86,9 @@ export default async function NhaDatDetail({ params }: Props) {
   };
 
   return (
-    // 🚀 Đã đổi text-slate-900 thành Soft Charcoal #222222 để triệt tiêu lóa sáng
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-[#222222] selection:bg-orange-500 selection:text-white">
       <Header />
 
-      {/* BREADCRUMB DÁN SÁT HEADER */}
       <nav className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-1.5 text-xs md:text-sm text-slate-500 overflow-hidden font-medium">
           <Link href="/" className="flex items-center gap-1 hover:text-orange-600 font-semibold shrink-0">
@@ -108,7 +103,6 @@ export default async function NhaDatDetail({ params }: Props) {
             </>
           )}
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          {/* 🚀 Hạ font-extrabold xuống font-bold để dải ghim nhìn đắt giá hơn */}
           <span className="text-orange-600 font-bold truncate tracking-tight">
             {titleText}
           </span>
@@ -116,8 +110,8 @@ export default async function NhaDatDetail({ params }: Props) {
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
-        {/* NẠP TỚI THỂ XÁC CLIENT COMPONENT */}
-        <PropertyClient item={enrichedItem} />
+        {/* 🚀 ĐÃ BƠM ẢNH TĨNH LCP TRỰC TIẾP TỪ SERVER XUỐNG */}
+        <PropertyClient item={enrichedItem} initialCoverImage={imageSeo} />
 
         <div className="mt-16">
           <RelatedProducts currentItem={enrichedItem} allItems={allItems} />
