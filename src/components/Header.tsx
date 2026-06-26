@@ -45,12 +45,11 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-[55] bg-white/85 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
-        {isHomePage && (
-          <div className={`flex items-center justify-center overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'h-0 opacity-0' : 'h-14 opacity-100'}`}>
-            <Link href="/" className="relative h-10 w-40 mt-2 block">
-              <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
-            </Link>
-          </div>
+        {/* ĐÃ TỐI ƯU DOM: Loại bỏ div bọc ngoài cùng không cần thiết của logo khi cuộn */}
+        {isHomePage && !isScrolled && (
+          <Link href="/" className="relative h-10 w-40 mt-2 mx-auto block animate-in fade-in duration-200">
+            <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
+          </Link>
         )}
 
         <div className="flex items-center justify-between px-3 py-2.5 min-h-[56px] gap-2">
@@ -60,15 +59,9 @@ export default function Header() {
                 <ChevronLeft size={24} aria-hidden="true" />
               </button>
 
-              <div className="flex-1 flex items-center justify-center mr-6">
-                <Link 
-                  href="/" 
-                  className="relative h-8 w-36 sm:h-9 sm:w-40 block active:scale-95 transition-transform"
-                  aria-label="Về trang chủ Trần Huy Land"
-                >
-                  <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
-                </Link>
-              </div>
+              <Link href="/" className="relative h-8 w-36 sm:h-9 sm:w-40 mx-auto block active:scale-95 transition-transform" aria-label="Về trang chủ Trần Huy Land">
+                <Image src="/logo.png" alt="Trần Huy Land" fill className="object-contain" priority />
+              </Link>
             </>
           ) : (
             <div className="flex items-center gap-2 w-full">
@@ -139,43 +132,19 @@ export default function Header() {
             </div>
             
             <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-2 px-3">
-              <Link 
-                href="/" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
-                  isHomePage ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
-                }`}
-              >
+              <Link href="/" onClick={() => setIsMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${isHomePage ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'}`}>
                 <Home size={18} className="text-orange-500" aria-hidden="true" /> Trang chủ
               </Link>
 
-              <Link 
-                href="/blog" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
-                  pathname.startsWith('/blog') ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
-                }`}
-              >
+              <Link href="/blog" onClick={() => setIsMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${pathname.startsWith('/blog') ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'}`}>
                 <BookOpen size={18} className="text-orange-500" aria-hidden="true" /> Góc tư vấn
               </Link>
 
-              <Link 
-                href="/dang-tin" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
-                  pathname === '/dang-tin' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
-                }`}
-              >
+              <Link href="/dang-tin" onClick={() => setIsMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${pathname === '/dang-tin' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'}`}>
                 <PlusCircle size={18} className="text-orange-500" aria-hidden="true" /> Úp sản phẩm mới
               </Link>
 
-              <Link 
-                href="/dang-blog" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${
-                  pathname === '/dang-blog' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'
-                }`}
-              >
+              <Link href="/dang-blog" onClick={() => setIsMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-colors ${pathname === '/dang-blog' ? 'bg-orange-50 text-orange-600' : 'text-slate-700 hover:bg-orange-50 hover:text-orange-600'}`}>
                 <FileText size={18} className="text-orange-500" aria-hidden="true" /> Viết blog mới
               </Link>
 
