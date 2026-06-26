@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import dynamic from "next/dynamic";
 import "./globals.css";
 
-const DynamicAIChatbot = dynamic(() => import("@/components/AIChatbot"));
 const DynamicScrollToTop = dynamic(() => import("@/components/ScrollToTop"));
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -32,7 +31,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
       
-      {/* 🚀 BÙA CHÚ BẺ GÃY CHUỖI TIẾP SỨC: Ép tải song song 2 tệp Font ngay mốc 327ms */}
       <head>
         <link
           rel="preload"
@@ -52,7 +50,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         {children}
-        <DynamicAIChatbot />
         <DynamicScrollToTop />
       </body>
     </html>
