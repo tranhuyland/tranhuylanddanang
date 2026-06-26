@@ -17,7 +17,8 @@
     "react-markdown": "^9.0.0",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "leaflet-defaulticon-compatibility": "^0.1.2"
+    "critters": "^0.0.23",
+   "leaflet-defaulticon-compatibility": "^0.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
