@@ -1,4 +1,5 @@
-import type { Metadata } from 'next'; // 🌟 Import kiểu dữ liệu Metadata của Next.js
+import type { Metadata } from 'next'; 
+import ReactDOM from 'react-dom'; // 🌟 Vũ khí kích hoạt nạp trước LCP
 import { getBdsData } from "@/lib/googleSheets";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -10,10 +11,8 @@ import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
 import AIChatbot from "@/components/AIChatbot";
 
-// 🚀 BẬT TÍNH NĂNG TỰ ĐỘNG CẬP NHẬT: Tải lại dữ liệu mới từ Google Sheet sau mỗi 60 giây
 export const revalidate = 60; 
 
-// 🌐 BỔ SUNG METADATA: Khắc phục lỗi không hiện ảnh khi chia sẻ trang chủ lên Zalo, Facebook
 export const metadata: Metadata = {
   title: 'Trần Huy Land - Kênh thông tin bất động sản uy tín',
   description: 'Trần Huy Land - Chuyên cung cấp thông tin mua bán, cho thuê nhà đất, căn hộ uy tín và minh bạch tại Đà Nẵng.',
@@ -24,7 +23,6 @@ export const metadata: Metadata = {
     siteName: 'Trần Huy Land',
     images: [
       {
-        // 💡 Mẹo: Thêm ?v=1 để ép Zalo/Facebook xóa cache cũ và nhận diện ảnh mới ngay lập tức
         url: 'https://tranhuyland.vn/logo.png?v=1', 
         width: 1200,
         height: 630,
@@ -37,29 +35,32 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  // 🚀 BÙA CHÚ CHÍ MẠNG TRIỆT TIÊU 360ms ĐỢI TẢI:
+  // Ra lệnh trình duyệt lập tức kéo tấm ảnh Hero ngay ở mili-giây thứ 10
+  ReactDOM.preload('/hero-bg.jpg', { as: 'image', fetchPriority: 'high' });
+
   const initialData = await getBdsData();
 
-  // 🏢 KHAI BÁO SCHEMA DOANH NGHIỆP: Định danh "Trần Huy Land" trên Google Search & Maps
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
     "name": "Trần Huy Land",
-    "image": "https://tranhuyland.vn/logo.png", // Thay bằng link logo thật của bạn
+    "image": "https://tranhuyland.vn/logo.png", 
     "@id": "https://tranhuyland.vn",
     "url": "https://tranhuyland.vn",
-    "telephone": "0905778852", // Cập nhật số điện thoại hotline
-    "priceRange": "$$", // Bắt buộc phải có với Local Business
+    "telephone": "0905778852", 
+    "priceRange": "$$", 
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Hải Châu", // Cập nhật địa chỉ văn phòng cụ thể nếu có
+      "streetAddress": "Hải Châu", 
       "addressLocality": "Đà Nẵng",
       "addressRegion": "Đà Nẵng",
-      "postalCode": "550000", // Mã bưu chính của Đà Nẵng
+      "postalCode": "550000", 
       "addressCountry": "VN"
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": 16.0544, // Tọa độ trung tâm Đà Nẵng
+      "latitude": 16.0544, 
       "longitude": 108.2022
     },
     "openingHoursSpecification": {
@@ -67,14 +68,13 @@ export default async function Home() {
       "dayOfWeek": [
         "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
       ],
-      "opens": "07:30", // Giờ mở cửa
-      "closes": "21:30" // Giờ đóng cửa
+      "opens": "07:30", 
+      "closes": "21:30" 
     }
   };
 
   return (
     <>
-      {/* ⚡ Chèn Script SEO Doanh nghiệp bằng thẻ HTML thường (Tối ưu nhất cho JSON-LD) */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
