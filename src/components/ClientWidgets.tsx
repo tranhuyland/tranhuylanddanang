@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-// Khóa cứng tải sau phía Client hoàn toàn hợp lệ tại đây
 const AIChatbot = dynamic(() => import("./AIChatbot"), { ssr: false });
 const ScrollToTop = dynamic(() => import("./ScrollToTop"), { ssr: false });
 
