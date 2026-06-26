@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import FilterWidget from "./FilterWidget"; 
 import MapView from "./MapView";
-import BdsCard from "./BdsCard"; // Import component thẻ sản phẩm vừa tách
-import { extractPriceInBillion, parsePropertyTags, removeAccents, generatePagination } from "@/lib/bdsHelpers"; // Import thuật toán từ file helpers
+import BdsCard from "./BdsCard"; 
+import { extractPriceInBillion, parsePropertyTags, removeAccents, generatePagination } from "@/lib/bdsHelpers"; 
 
 interface ListingSectionProps {
   allBdsItems: any[];
@@ -174,29 +174,29 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       <section className="w-full relative z-10 -mt-6 sm:-mt-10">
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
+            
+            {/* ĐÃ TỐI ƯU DOM: Gộp nhãn và số lượng vào chung 1 nút, loại bỏ thẻ span bao bọc gạch chân */}
             <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none overflow-hidden overflow-x-auto custom-scrollbar">
               {TAB_OPTIONS.map((tab, index) => {
                 const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
                 const isActive = !showFavorites && activeLoaiHinh === tab.id;
                 return (
                   <button key={tab.id} aria-label={`Lọc theo ${tab.label}`}
-                    onClick={() => { { setActiveLoaiHinh(tab.id); setShowFavorites(false); setFilters(initialFilters); setTempFilters(initialFilters); setCurrentPage(1); } }}
-                    className={`flex-1 min-w-[80px] flex flex-col justify-center items-center py-4 px-2 transition-all relative ${index === 0 ? 'rounded-tl-[2rem] sm:rounded-none' : ''} ${isActive ? "text-orange-600 bg-white" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80"}`}
+                    onClick={() => { setActiveLoaiHinh(tab.id); setShowFavorites(false); setFilters(initialFilters); setTempFilters(initialFilters); setCurrentPage(1); }}
+                    className={`flex-1 min-w-[80px] flex flex-col justify-center items-center py-4 px-2 transition-all border-b-[3px] ${index === 0 ? 'rounded-tl-[2rem] sm:rounded-none' : ''} ${isActive ? "text-orange-600 bg-white border-orange-500 font-extrabold" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 border-transparent font-semibold"}`}
                   >
-                    <span className="whitespace-nowrap text-center text-[12px] min-[390px]:text-[13px] md:text-[15px] font-extrabold">{tab.label}</span>
-                    <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${isActive ? "text-orange-600" : "text-slate-500"}`}>({currentCount})</span>
-                    {isActive && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-gradient-to-r from-orange-500 to-red-600" />}
+                    <span className="whitespace-nowrap text-[12px] min-[390px]:text-[13px] md:text-[15px]">{tab.label}</span>
+                    <span className="text-[10px] md:text-[11px] mt-0.5">({currentCount})</span>
                   </button>
                 );
               })}
               <button aria-label="Xem danh sách tin đã lưu" onClick={handleToggleShowFavorites}
-                className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all relative border-l-2 border-slate-100 ${showFavorites ? 'text-red-500 bg-white' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80'}`}
+                className={`hidden md:flex flex-1 sm:flex-none sm:px-8 flex-col justify-center items-center py-4 px-1 transition-all border-l-2 border-slate-100 border-b-[3px] ${showFavorites ? 'text-red-500 bg-white border-red-500 font-extrabold' : 'text-slate-500 hover:text-red-500 hover:bg-slate-100/80 border-transparent font-semibold'}`}
               >
-                <span className="whitespace-nowrap text-center text-[13px] min-[390px]:text-[14px] md:text-[16px] font-extrabold flex items-center gap-1.5">
+                <span className="whitespace-nowrap text-[13px] min-[390px]:text-[14px] md:text-[16px] flex items-center gap-1.5">
                   <Heart size={16} fill={showFavorites ? "currentColor" : "none"} aria-hidden="true" /> Đã lưu
                 </span>
-                <span className={`text-[10px] md:text-[11px] mt-0.5 font-semibold ${showFavorites ? 'text-red-500' : 'text-slate-500'}`}>({isClient ? favoriteIds.length : 0})</span>
-                {showFavorites && <span className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-red-500" /> }
+                <span className="text-[10px] md:text-[11px] mt-0.5">({isClient ? favoriteIds.length : 0})</span>
               </button>
             </div>
 
