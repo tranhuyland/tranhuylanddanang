@@ -1,12 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import dynamic from "next/dynamic";
+import ClientWidgets from "@/components/ClientWidgets";
 import "./globals.css";
-
-// 🚀 BÙA CHÚ TỐI ƯU HIỆU NĂNG: Khóa cứng chế độ tải muộn phía Client (ssr: false)
-// Việc này giúp bẻ gãy hoàn toàn chuỗi chặn kết xuất, giải phóng băng thông cho file CSS toàn cục nạp trước
-const AIChatbot = dynamic(() => import("@/components/AIChatbot"), { ssr: false });
-const ScrollToTop = dynamic(() => import("@/components/ScrollToTop"), { ssr: false });
 
 // 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap để không chặn hiển thị chữ
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -36,12 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
         
-        {/* ⚡ LUỒNG 1: Ưu tiên tối đa hiển thị nội dung trang chủ, hình ảnh nhà đất & ảnh Hero */}
+        {/* ⚡ LUỒNG 1: Tải trọn vẹn Trang chủ, BĐS và ảnh Hero tức thì */}
         {children}
         
-        {/* ⚡ LUỒNG 2: Tiện ích phụ chỉ được kích hoạt sau khi giao diện chính đã vẽ xong mượt mà */}
-        <AIChatbot /> 
-        <ScrollToTop />
+        {/* ⚡ LUỒNG 2: Các tiện ích nặng được cô lập an toàn trong trạm Client */}
+        <ClientWidgets />
         
       </body>
     </html>
