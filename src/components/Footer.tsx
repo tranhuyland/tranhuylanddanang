@@ -13,7 +13,6 @@ export default function Footer() {
     { name: "Sơn Trà", slug: "son-tra" },
   ];
 
-  // 🏷️ CÁC ĐƯỜNG LINK LOẠI HÌNH ĐỂ GOOGLE QUÉT
   const topTypes = [
     { name: "Mua bán Đất", slug: "dat" },
     { name: "Mua bán Nhà phố", slug: "nha-pho" },
@@ -38,9 +37,8 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* CỘT 2 & 3: KHU VỰC VÀ PHÂN KHÚC (GỘP CHUNG VÀO 1 LƯỚI ĐỂ NẰM NGANG TRÊN MOBILE) */}
-        <div className="grid grid-cols-2 gap-4 lg:col-span-2">
-          {/* Cột con: ĐỊA BÀN KHẢO SÁT */}
+        {/* ĐÃ TỐI ƯU DOM: Loại bỏ div bọc ngoài cùng không cần thiết, đẩy thẳng grid con lên thẻ cha */}
+        <div className="col-span-1 sm:col-span-2 grid grid-cols-2 gap-4">
           <div>
             <h4 className="text-white font-bold text-sm uppercase mb-5">ĐỊA BÀN KHẢO SÁT</h4>
             <ul className="space-y-3 text-sm">
@@ -54,7 +52,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Cột con: PHÂN KHÚC SẢN PHẨM */}
           <div>
             <h4 className="text-white font-bold text-sm uppercase mb-5">PHÂN KHÚC</h4>
             <ul className="space-y-3 text-sm">
