@@ -30,7 +30,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
-      
       <head>
         <link
           rel="preload"
@@ -49,6 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
+        {/* 🚀 CHỐT CHẶN 1: Khóa trình duyệt tự động lướt trang khi bấm Back */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }`
+          }}
+        />
         {children}
         <DynamicScrollToTop />
       </body>
