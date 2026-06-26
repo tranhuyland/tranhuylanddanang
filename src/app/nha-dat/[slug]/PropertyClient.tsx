@@ -3,18 +3,16 @@
 import PropertyGallery from "@/components/SlideBds";
 import { MapPin, Calendar, ShieldCheck, Map, FileText, X, ZoomIn, ZoomOut, RefreshCw, BedDouble, Bath, Compass, Heart, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import Link from "next/link";
 import { layUrlAnhChuan } from "@/lib/utils";
 import { tuDongGaiLinkMaTran } from "@/lib/matrixLinker";
 
 interface PropertyClientProps {
   item: any;
+  initialCoverImage?: string;
 }
 
-// ==========================================
-// 🛠️ HÀM TIỆN ÍCH
-// ==========================================
 const removeAccents = (str: string) => {
   if (!str) return "";
   return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
@@ -98,10 +96,7 @@ const calculateGiaM2 = (item: any) => {
   return null;
 };
 
-// ==========================================
-// 🏡 COMPONENT CHÍNH: CHI TIẾT SẢN PHẨM
-// ==========================================
-export default function PropertyClient({ item }: PropertyClientProps) {
+export default function PropertyClient({ item, initialCoverImage }: PropertyClientProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -110,6 +105,17 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   const touchStartDist = useRef(0);
 
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  // ⚡ BÙA CHÚ TỐI ƯU HIỆU NĂNG: Trì hoãn xử lý chuỗi Ma trận nặng để không nghẽn luồng vẽ ban đầu
+  const noiDungMoTaGoc = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
+  const [matrixContent, setMatrixContent] = useState<string>(noiDungMoTaGoc);
+
+  useEffect(() => {
+    // Trì hoãn xử lý liên kết Ma trận ra phía sau tiến trình vẽ ảnh Hero
+    startTransition(() => {
+      setMatrixContent(tuDongGaiLinkMaTran(noiDungMoTaGoc));
+    });
+  }, [noiDungMoTaGoc]);
 
   useEffect(() => {
     if (!isPopupOpen) {
@@ -156,7 +162,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
     tatCaAnhGallery.push(anhSoDoGoc);
   }
 
-  const noiDungMoTa = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
 
@@ -211,7 +216,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
   return (
     <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full">
       
-            {/* 🖼️ 1. GALLERY HÌNH ẢNH */}
+      {/* 🖼️ 1. GALLERY HÌNH ẢNH CÓ KẾ THỪA LCP tĩnh */}
       <div className="relative w-full max-w-full p-2 sm:p-3 pb-0">
         <PropertyGallery 
           images={tatCaAnhGallery} 
@@ -221,8 +226,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           toaDo={item.toaDo || item.ToaDo || item.Toado || item.toado} 
         />
       </div>
-
-  
 
       {/* 📝 2. NỘI DUNG SẢN PHẨM */}
       <div className="p-5 sm:p-8 w-full max-w-full">
@@ -253,7 +256,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         </header>
 
-        <hr className="border-slate-100 mb-6" />
+        <div className="w-full border-t border-slate-100 my-6"></div>
 
         {/* Mức Giá & Diện Tích */}
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4 mb-6">
@@ -342,7 +345,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
           </div>
         )}
 
-        {/* 🚀 LÕI RENDER MARKDOWN CHUẨN ĐẶC TẢ BẤT ĐỘNG SẢN (SPEC-SCANNING MODE) */}
+        {/* 🚀 LÕI RENDER MARKDOWN CHUẨN ĐẶC TẢ BẤT ĐỘNG SẢN */}
         <div className="w-full pt-2">
           <h4 className="font-extrabold text-slate-900 text-lg mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             Mô tả chi tiết
@@ -358,7 +361,6 @@ export default function PropertyClient({ item }: PropertyClientProps) {
                 li: ({node, ...props}) => <li className="leading-[1.65]" {...props} />,
                 strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
                 
-                // 🔥 BỘ LỌC ĐIỀU HƯỚNG MA TRẬN SILO
                 a: ({node, ...props}) => {
                   const targetUrl = props.href || '#';
                   const isInternalSilo = targetUrl.startsWith('/') || targetUrl.includes('tranhuyland.vn');
@@ -383,7 +385,7 @@ export default function PropertyClient({ item }: PropertyClientProps) {
                 }
               }}
             >
-              {tuDongGaiLinkMaTran(noiDungMoTa)}
+              {matrixContent}
             </ReactMarkdown>
           </div>
         </div>
