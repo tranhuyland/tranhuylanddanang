@@ -26,7 +26,8 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
   
-  // 🚀 Bổ sung State để điều khiển Swiper Zoom bằng nút bấm
+  // ⚡ Bùa chú tối ưu: Trạng thái xác định Swiper ngoài đã chạy xong hoàn toàn
+  const [isSwiperReady, setIsSwiperReady] = useState(false);
   const [lightboxSwiper, setLightboxSwiper] = useState<any>(null);
 
   useEffect(() => {
@@ -53,11 +54,10 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // 🧠 THUẬT TOÁN BẢN ĐỒ ÉP TÂM VÀ GHIM TRÙNG NHAU 100% (Đã vá lỗi Cú Pháp URL)
+  // 🧠 THUẬT TOÁN BẢN ĐỒ ÉP TÂM VÀ GHIM TRÙNG NHAU 100%
   const getSafeWorkingMapUrl = () => {
     if (toaDo && toaDo.trim() !== '') {
       const pureCoords = toaDo.replace(/[^0-9.,-]/g, '');
-
       if (pureCoords.includes(',')) {
         const [lat, lon] = pureCoords.split(',');
         return `https://maps.google.com/maps?q=${lat},${lon}&ll=${lat},${lon}&z=16&output=embed`;
@@ -95,13 +95,31 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
 
   return (
     <>
-      {/* 🔥 CỐ ĐỊNH KHUNG HÌNH (Aspect Ratio) cấm trình duyệt nhảy giật Layout */}
-      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gray-100 rounded-xl overflow-hidden relative border border-gray-200 group z-0">
+      {/* 🌟 KHUNG CHỨA CỐ ĐỊNH CHIỀU CAO CAO CẤP */}
+      <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-slate-100 rounded-xl overflow-hidden relative border border-slate-200 group z-0">
+        
+        {/* 🚀 ĐỈNH CAO TỐI ƯU LCP: Ảnh tĩnh số 0 render thô lập tức từ file HTML, bỏ qua Swiper cản trở ban đầu */}
+        {!isSwiperReady && (
+          <div className="absolute inset-0 z-20 w-full h-full pointer-events-none bg-slate-100 animate-pulse-slow">
+            <Image 
+              src={layUrlAnhChuan(images[0], 800)} 
+              alt={`${alt} - Bìa hiển thị khẩn cấp`} 
+              fill 
+              priority={true}
+              fetchPriority="high"
+              loading="eager"
+              sizes="(max-width: 768px) 100vw, 800px" 
+              className="object-cover transition-opacity duration-300"
+            />
+          </div>
+        )}
+
         <Swiper
           modules={[Navigation, Pagination, Keyboard]}
           spaceBetween={0}
           slidesPerView={1}
           initialSlide={activeIndex}
+          onInit={() => setIsSwiperReady(true)} // ⚡ Kích hoạt tắt ảnh tĩnh khi Swiper đã thông suốt
           onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
           keyboard={{ enabled: true }}
           navigation={{ nextEl: '.nm-next', prevEl: '.nm-prev' }}
@@ -118,13 +136,12 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
                   setIsLightboxOpen(true);
                 }}
               >
-                {/* 🚀 ĐÃ BƠM BÙA CHÚ LCP: Tấm 0 ép tải khẩn cấp, các tấm sau ngủ đông */}
                 <Image 
                   src={layUrlAnhChuan(img, 800)} 
                   alt={`${alt} - Hình ${idx + 1}`} 
                   fill 
+                  // ⚡ Tấm 0 ở slide thật vẫn gán priority để trình duyệt nạp song song ngầm phía sau
                   priority={idx === 0}
-                  fetchPriority={idx === 0 ? "high" : "low"}
                   loading={idx === 0 ? "eager" : "lazy"}
                   sizes="(max-width: 768px) 100vw, 800px" 
                   className="object-cover" 
@@ -198,7 +215,6 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
                 {images.map((img, idx) => (
                   <SwiperSlide key={idx} className="flex items-center justify-center overflow-hidden">
                     <div className="swiper-zoom-container h-full w-full flex items-center justify-center">
-                      {/* ⚡ Tối ưu Lightbox: Chỉ tấm đang chọn mới được gán Priority */}
                       <Image 
                         src={layUrlAnhChuan(img, 1600)} 
                         alt={`${alt} - Full ${idx + 1}`} 
@@ -275,6 +291,13 @@ export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, t
           letter-spacing: 2px !important;
         }
         .lb-main-swiper .swiper-pagination { display: none !important; }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.95; }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
       `}</style>
     </>
   );
