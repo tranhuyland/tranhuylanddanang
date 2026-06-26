@@ -6,7 +6,7 @@ import KyGuiButton from './KyGuiButton';
 export default function Hero() {
   return (
     <section className="relative w-full pt-8 pb-16 md:pt-14 md:pb-20 flex items-center justify-center overflow-hidden">
-      {/* Background */}
+      {/* Background - Tối ưu LCP tối đa */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
@@ -15,6 +15,7 @@ export default function Hero() {
           priority
           fetchPriority="high"
           loading="eager"
+          decoding="async"
           sizes="100vw"
           className="object-cover object-center"
         />
@@ -23,7 +24,8 @@ export default function Hero() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto w-full px-4 relative z-10">
-        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/30 backdrop-blur-lg p-5 md:p-6 rounded-[2rem] shadow-2xl border border-white/50 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+        {/* 🔥 ĐÃ SỬA LCP: Xóa animate-in duration-1000 bóp nghẹt 1.16s vẽ ảnh */}
+        <div className="w-full md:max-w-xl lg:max-w-2xl bg-white/30 backdrop-blur-lg p-5 md:p-6 rounded-[2rem] shadow-2xl border border-white/50">
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-orange-600 text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm border border-white">
             <span className="relative flex h-2 w-2">
