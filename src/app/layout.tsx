@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import ClientWidgets from "@/components/ClientWidgets";
+import dynamic from "next/dynamic";
 import "./globals.css";
 
-// 🌟 Khởi tạo Font chữ - Tối ưu bằng display: swap để không chặn hiển thị chữ
+const DynamicAIChatbot = dynamic(() => import("@/components/AIChatbot"));
+const DynamicScrollToTop = dynamic(() => import("@/components/ScrollToTop"));
+
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["vietnamese"],
   display: "swap",
@@ -29,14 +31,29 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
+      
+      {/* 🚀 BÙA CHÚ BẺ GÃY CHUỖI TIẾP SỨC: Ép tải song song 2 tệp Font ngay mốc 327ms */}
+      <head>
+        <link
+          rel="preload"
+          href="/_next/static/media/9e7b0a821b9dfcb4-s.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/_next/static/media/636a5ac981f94f8b-s.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
+
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
-        
-        {/* ⚡ LUỒNG 1: Tải trọn vẹn Trang chủ, BĐS và ảnh Hero tức thì */}
         {children}
-        
-        {/* ⚡ LUỒNG 2: Các tiện ích nặng được cô lập an toàn trong trạm Client */}
-        <ClientWidgets />
-        
+        <DynamicAIChatbot />
+        <DynamicScrollToTop />
       </body>
     </html>
   );
