@@ -51,12 +51,12 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       if (savedPage) setCurrentPage(parseInt(savedPage, 10));
     } catch (e) {}
 
-    const handlePopState = () => {
-      document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
-      setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 150);
+    // 🚀 CHỐT CHẶN 2: Lưu tọa độ mỗi khi khách cuộn màn hình
+    const handleScrollPos = () => {
+      sessionStorage.setItem("saved_scroll_pos", window.scrollY.toString());
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('scroll', handleScrollPos, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollPos);
   }, []);
 
   useEffect(() => {
@@ -166,6 +166,17 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return result;
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
+  // 🚀 CHỐT CHẶN 3: Kích hoạt dịch chuyển tức thì (instant) ngay khi danh sách vừa lọc xong
+  useEffect(() => {
+    const savedPos = sessionStorage.getItem("saved_scroll_pos");
+    if (savedPos && filteredItems.length > 0) {
+      window.scrollTo({
+        top: parseInt(savedPos, 10),
+        behavior: "instant" as ScrollBehavior
+      });
+    }
+  }, [filteredItems]);
+
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const paginationArray = generatePagination(currentPage, totalPages);
 
@@ -175,7 +186,6 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
         <div className="bg-white w-full shadow-lg border-b border-slate-200 rounded-t-[2rem] sm:rounded-none pb-6">
           <div className="max-w-7xl mx-auto">
             
-            {/* ĐÃ TỐI ƯU DOM: Gộp nhãn và số lượng vào chung 1 nút, loại bỏ thẻ span bao bọc gạch chân */}
             <div className="flex w-full items-stretch mb-6 border-b-2 border-slate-100 bg-slate-50 rounded-t-[2rem] sm:rounded-none overflow-hidden overflow-x-auto custom-scrollbar">
               {TAB_OPTIONS.map((tab, index) => {
                 const currentCount = tab.id === "all" ? tabCounts.all : tabCounts[tab.id as keyof typeof tabCounts] || 0;
