@@ -9,7 +9,7 @@ import Blog from "@/components/Blog";
 import ContactCTA from "@/components/ContactCTA";
 import Footer from "@/components/Footer";
 import FloatingWidgets from "@/components/FloatingWidgets";
-import AIChatbot from "@/components/AIChatbot";
+
 
 export const revalidate = 60; 
 
@@ -88,7 +88,7 @@ export default async function Home() {
       <ContactCTA />
       <Footer />
       <FloatingWidgets />
-      <AIChatbot />
+      
     </>
   );
 }
