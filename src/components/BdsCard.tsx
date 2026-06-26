@@ -72,21 +72,20 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
     }
   };
 
-  // Hàm xử lý cuộn mượt khi click Link
   const handleLinkClick = () => {
     document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important'); 
     setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300);
   };
 
   return (
-    // 💡 ĐÃ SỬA: Đổi <Link> ngoài cùng thành <div> để tránh lỗi HTML lồng nhau
     <div className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]">
       
-      {/* KHU VỰC ẢNH (Bọc Link) */}
+      {/* KHU VỰC ẢNH */}
       <Link href={`/nha-dat/${item.slug}`} onClick={handleLinkClick} aria-label={`Xem chi tiết: ${item.tieude}`} className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 block">
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
+        {/* ĐÃ TỐI ƯU DOM: Loại bỏ div thừa bên trong nhãn */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider">
             {rankBadgeText}
@@ -103,33 +102,34 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
         </div>
 
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
-          <ImageIcon size={12} aria-hidden="true" /><span className="text-white">{soLuongAnh}</span>
+          <ImageIcon size={12} aria-hidden="true" /><span>{soLuongAnh}</span>
         </div>
       </Link>
 
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
-          {/* KHU VỰC TIÊU ĐỀ (Bọc Link) */}
           <Link href={`/nha-dat/${item.slug}`} onClick={handleLinkClick} className="block">
             <h2 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
               {item.tieude}
             </h2>
           </Link>
 
+          {/* ĐÃ TỐI ƯU DOM: Gộp các thẻ span phân cách lại để giảm số lượng node */}
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item.gia || "Thỏa thuận"}</span>
-            {item.dienTich && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-bold text-[#E03C31]">{item.dienTich}</span></>}
-            {giaM2 && <><span className="text-slate-300 text-[10px]">●</span><span className="whitespace-nowrap font-medium text-[#777] text-[13px]">{giaM2}</span></>}
-            {pn && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{pn} <BedDouble size={14} className="text-slate-400" /></span></>}
-            {wc && <><span className="text-slate-300 text-[10px]">●</span><span className="flex items-center gap-1 whitespace-nowrap font-medium">{wc} <Bath size={14} className="text-slate-400" /></span></>}
+            {item.dienTich && <span className="whitespace-nowrap font-bold text-[#E03C31] before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{item.dienTich}</span>}
+            {giaM2 && <span className="whitespace-nowrap font-medium text-[#777] text-[13px] before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{giaM2}</span>}
+            {pn && <span className="flex items-center gap-1 whitespace-nowrap font-medium before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{pn} <BedDouble size={14} className="text-slate-400" /></span>}
+            {wc && <span className="flex items-center gap-1 whitespace-nowrap font-medium before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{wc} <Bath size={14} className="text-slate-400" /></span>}
           </div>
+
           <div className="flex items-center gap-1.5 text-[14px] sm:text-[15px] font-normal text-green-800 mb-4">
             <MapPin size={16} className="text-green-800 shrink-0" aria-hidden="true" />
             <span className="truncate">{displayLocation}</span>
           </div>
         </div>
 
-        {/* KHU VỰC CHỨA CÁC NÚT TƯƠNG TÁC (Nằm an toàn ngoài thẻ Link) */}
+        {/* NÚT TƯƠNG TÁC */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex flex-col justify-center min-w-0 pr-2">
             <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
