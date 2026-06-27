@@ -31,33 +31,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={plusJakartaSans.variable} suppressHydrationWarning>
       <head>
-      
-      
-        
-        
-        <link
-          rel="preload"
-          href="/_next/static/media/9e7b0a821b9dfcb4-s.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/_next/static/media/636a5ac981f94f8b-s.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
+        {/* 🚀 CHỐT CHẶN TRÌNH DUYỆT: Thi hành trước khi Body render 1 mili-giây */}
+        <script dangerouslySetInnerHTML={{ __html: `history.scrollRestoration = 'manual'` }} />
+
+        <link rel="preload" href="/_next/static/media/9e7b0a821b9dfcb4-s.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/_next/static/media/636a5ac981f94f8b-s.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
 
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
-          <script dangerouslySetInnerHTML={{ __html: `
-  if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
-  }
-`}} />
-
         {children}
         <DynamicScrollToTop />
       </body>
