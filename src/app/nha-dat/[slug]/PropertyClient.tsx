@@ -198,8 +198,8 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
   return (
     <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full">
       
-      {/* 🚀 CHỐT CHẶN UX 0ms: Truyền bùa chú initialCoverImage tĩnh vào Slider để xóa chớp trắng */}
-      <div className="relative w-full max-w-full p-2 sm:p-3 pb-0">
+      {/* 🚀 BÙA CHÚ LCP & CLS: Khóa cứng tỷ lệ khung hình trước khi Slider nạp xong JS */}
+      <div className="relative w-full max-w-full p-2 sm:p-3 pb-0 aspect-[4/3] sm:aspect-[16/10] bg-slate-100/50">
         <PropertyGallery 
           images={tatCaAnhGallery} 
           alt={item.tieude || item.Title || "Trần Huy Land"} 
