@@ -52,7 +52,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
-/* 🔥 BÙA CHÚ VUỐT BACK: Cho phép trình duyệt tự động ghi nhớ tọa độ 
           <script dangerouslySetInnerHTML={{ __html: `
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
