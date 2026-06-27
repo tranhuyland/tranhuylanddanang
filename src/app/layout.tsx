@@ -48,11 +48,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
 
       <body className={`${plusJakartaSans.className} antialiased min-h-screen flex flex-col pb-20 md:pb-0 bg-slate-50`} suppressHydrationWarning>
-        {/* 🚀 CHỐT CHẶN 1: Khóa trình duyệt tự động lướt trang khi bấm Back */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }`
-          }}
+          {/* 🔥 BÙA CHÚ VUỐT BACK: Cho phép trình duyệt tự động ghi nhớ tọa độ RAM */}
+  <script
+    dangerouslySetInnerHTML={{
+      __html: `
+        if ('scrollRestoration' in window.history) {
+          window.history.scrollRestoration = 'auto';
+        }
+      `,
+    }}
         />
         {children}
         <DynamicScrollToTop />
