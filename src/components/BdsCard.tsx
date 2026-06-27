@@ -23,7 +23,6 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
   const tags = useMemo(() => parsePropertyTags(item), [item]);
   const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
 
-  // 🔥 THUẬT TOÁN TÍNH TUỔI TIN ĐĂNG
   const daysOld = useMemo(() => {
     const rawDate = item.ngayDang || item.ngay || "";
     if (!rawDate) return 999;
@@ -72,7 +71,9 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
     }
   };
 
+  // 🚀 CHỐT CHẶN BẤM LINK: Ghi nhận chính xác tọa độ Y trước khi trình duyệt chuyển trang
   const handleLinkClick = () => {
+    sessionStorage.setItem("thl_scroll_pos", window.scrollY.toString());
     document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important'); 
     setTimeout(() => document.documentElement.style.removeProperty('scroll-behavior'), 300);
   };
@@ -80,12 +81,10 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
   return (
     <div className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]">
       
-      {/* KHU VỰC ẢNH */}
       <Link href={`/nha-dat/${item.slug}`} onClick={handleLinkClick} aria-label={`Xem chi tiết: ${item.tieude}`} className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 block">
         <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* ĐÃ TỐI ƯU DOM: Loại bỏ div thừa bên trong nhãn */}
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
           <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider">
             {rankBadgeText}
@@ -114,7 +113,6 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
             </h2>
           </Link>
 
-          {/* ĐÃ TỐI ƯU DOM: Gộp các thẻ span phân cách lại để giảm số lượng node */}
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
             <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item.gia || "Thỏa thuận"}</span>
             {item.dienTich && <span className="whitespace-nowrap font-bold text-[#E03C31] before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{item.dienTich}</span>}
@@ -129,7 +127,6 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
           </div>
         </div>
 
-        {/* NÚT TƯƠNG TÁC */}
         <div className="mt-auto border-t border-slate-100 pt-3 flex items-center justify-between">
           <div className="flex flex-col justify-center min-w-0 pr-2">
             <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
