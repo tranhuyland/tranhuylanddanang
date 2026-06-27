@@ -12,19 +12,25 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/zoom';
 
-interface PropertyGalleryProps {
-  images: string[];
-  alt: string;
+interface PropertyGalleryProps { 
+  images: string[]; 
+  alt: string; 
   videoUrl?: string; 
-  linkMap?: string;  
+  linkMap?: string; 
   maNhungMap?: string; 
-  toaDo?: string; // Tọa độ từ Google Sheet (vd: "16.0472, 108.2068")
+  toaDo?: string;
+  initialCoverImage?: string;
 }
 
-export default function SlideBds({ images, alt, videoUrl, linkMap, maNhungMap, toaDo }: PropertyGalleryProps) {
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
+export default function SlideBds({ 
+  images, 
+  alt, 
+  videoUrl, 
+  linkMap, 
+  maNhungMap, 
+  toaDo,
+  initialCoverImage 
+}: PropertyGalleryProps) {
   
   // ⚡ Bùa chú tối ưu: Trạng thái xác định Swiper ngoài đã chạy xong hoàn toàn
   const [isSwiperReady, setIsSwiperReady] = useState(false);
