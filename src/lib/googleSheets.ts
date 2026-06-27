@@ -17,7 +17,7 @@ export interface RealEstateItem {
   anh: string;
   anhSoDo: string;
   linkMap: string;
-  toaDo: string; // 💡 ĐÃ BỔ SUNG: Khai báo trường Tọa độ
+  toaDo: string;
   videoUrl: string;
   ngayDang: string;
   isMatTien: boolean;
@@ -27,20 +27,33 @@ export function convertToSlug(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
-    .replace(/á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ/gi, 'a')
-    .replace(/é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/gi, 'e')
-    .replace(/i|í|ì|ỉ|ĩ|ị/gi, 'i')
-    .replace(/ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/gi, 'o')
-    .replace(/ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/gi, 'u')
-    .replace(/ý|ỳ|ỷ|ỹ|ị/gi, 'y')
-    .replace(/đ/gi, 'd')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
     .replace(/[^a-z0-9 -]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 }
 
-// ⛳ HÀM 1: LẤY DỮ LIỆU NHÀ ĐẤT (Đã chuẩn hóa tách biệt Tab BDS)
+// 🚀 CHỐT CHẶN BẬC THẦY: Khai báo bộ đệm RAM Singleton toàn cục (Memory Cache)
+type CacheStore<T> = { data: T | null; lastFetched: number };
+const GLOBAL_RAM_CACHE: {
+  bds: CacheStore<RealEstateItem[]>;
+  blog: CacheStore<any[]>;
+} = {
+  bds: { data: null, lastFetched: 0 },
+  blog: { data: null, lastFetched: 0 }
+};
+const CACHE_TTL_MS = 60 * 1000; // Khóa chết 60 giây không nạp lại Sheet
+
+// ⛳ HÀM 1: LẤY DỮ LIỆU NHÀ ĐẤT SIÊU TỐC
 export async function getBdsData(): Promise<RealEstateItem[]> {
+  const now = Date.now();
+  // Nếu RAM có sẵn dữ liệu và chưa quá 60s -> Trả về tức thì 0ms
+  if (GLOBAL_RAM_CACHE.bds.data && (now - GLOBAL_RAM_CACHE.bds.lastFetched < CACHE_TTL_MS)) {
+    return GLOBAL_RAM_CACHE.bds.data;
+  }
+
   const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
   const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=BDS`;
   try {
@@ -67,9 +80,7 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
         currentRow.push(currentField.trim());
         currentField = '';
       } else if ((char === '\n' || char === '\r') && !inQuotes) {
-        if (char === '\r' && nextChar === '\n') {
-          i++;
-        }
+        if (char === '\r' && nextChar === '\n') { i++; }
         currentRow.push(currentField.trim());
         if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
           rows.push(currentRow);
@@ -124,25 +135,31 @@ export async function getBdsData(): Promise<RealEstateItem[]> {
         anh: obj.anh || obj.image || "",
         anhSoDo: obj.anhsodo || obj.sodo || "",
         linkMap: obj.linkmap || "",
-        toaDo: obj.toado || obj.toa_do || "", // 💡 ĐÃ BỔ SUNG: Gắp đúng cột toado dưới Excel đưa lên
+        toaDo: obj.toado || obj.toa_do || "",
         videoUrl: obj.videourl || "",
         ngayDang: obj.ngaydang || "Tin mới",
         isMatTien: ((obj.tag?.toLowerCase().includes("mặt tiền")) || obj.ismattien === "TRUE")
       };
       
-      if (item.slug) {
-        items.push(item);
-      }
+      if (item.slug) items.push(item);
     }
+
+    // Ghi đè vào RAM Cache
+    GLOBAL_RAM_CACHE.bds = { data: items, lastFetched: now };
     return items;
   } catch (e) { 
-    console.error("Lỗi parse file Google Sheet CSV BDS:", e);
-    return []; 
+    console.error("Lỗi parse Google Sheet CSV BDS:", e);
+    return GLOBAL_RAM_CACHE.bds.data || []; 
   }
 }
 
-// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG
+// 📰 HÀM 2: LẤY DỮ LIỆU TAB BLOG (Đã tích hợp RAM Cache)
 export async function getBlogData(): Promise<any[]> {
+  const now = Date.now();
+  if (GLOBAL_RAM_CACHE.blog.data && (now - GLOBAL_RAM_CACHE.blog.lastFetched < CACHE_TTL_MS)) {
+    return GLOBAL_RAM_CACHE.blog.data;
+  }
+
   const spreadsheetId = "1-LupBV6uNuUitz4vF6pFv6MupuVDMujafqhjQBNNPTA";
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=Blog`;
 
@@ -151,10 +168,7 @@ export async function getBlogData(): Promise<any[]> {
     if (!response.ok) return [];
     const csvText = await response.text();
 
-    if (csvText.trim().startsWith("<!DOCTYPE") || csvText.trim().startsWith("<html")) {
-      console.error("🚨 Lỗi: Google Sheet trả về trang HTML. Hãy kiểm tra tên Tab dưới Sheet phải gõ đúng chữ 'Blog'");
-      return [];
-    }
+    if (csvText.trim().startsWith("<!DOCTYPE") || csvText.trim().startsWith("<html")) return [];
     
     const rows: string[][] = [];
     let currentRow: string[] = [];
@@ -166,46 +180,30 @@ export async function getBlogData(): Promise<any[]> {
       const nextChar = csvText[i + 1];
 
       if (char === '"') {
-        if (inQuotes && nextChar === '"') {
-          currentField += '"';
-          i++; 
-        } else {
-          inQuotes = !inQuotes;
-        }
+        if (inQuotes && nextChar === '"') { currentField += '"'; i++; } 
+        else { inQuotes = !inQuotes; }
       } else if (char === ',' && !inQuotes) {
-        currentRow.push(currentField.trim());
-        currentField = '';
+        currentRow.push(currentField.trim()); currentField = '';
       } else if ((char === '\n' || char === '\r') && !inQuotes) {
-        if (char === '\r' && nextChar === '\n') {
-          i++;
-        }
+        if (char === '\r' && nextChar === '\n') i++;
         currentRow.push(currentField.trim());
-        if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
-          rows.push(currentRow);
-        }
-        currentRow = [];
-        currentField = '';
-      } else {
-        currentField += char;
-      }
+        if (currentRow.length > 0 && currentRow.some(field => field !== '')) rows.push(currentRow);
+        currentRow = []; currentField = '';
+      } else { currentField += char; }
     }
     
     if (currentField || currentRow.length > 0) {
       currentRow.push(currentField.trim());
-      if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
-        rows.push(currentRow);
-      }
+      if (currentRow.length > 0 && currentRow.some(field => field !== '')) rows.push(currentRow);
     }
 
     if (rows.length < 2) return [];
-
     const headers = rows[0].map(h => h.trim().replace(/['"]+/g, '').toLowerCase());
     const blogItems: any[] = [];
 
     for (let i = 1; i < rows.length; i++) {
       const rowData = rows[i];
       const obj: any = {};
-      
       headers.forEach((headerName, idx) => {
         let value = rowData[idx] || "";
         obj[headerName] = value.replace(/^"|"$/g, '').trim();
@@ -213,7 +211,6 @@ export async function getBlogData(): Promise<any[]> {
 
       const rawTitle = obj.title || obj.tieude || "";
       const safeSlug = obj.slug ? convertToSlug(obj.slug) : convertToSlug(rawTitle);
-
       const finalItem = {
         slug: safeSlug,
         title: rawTitle || "Bài viết chưa có tiêu đề",
@@ -223,13 +220,12 @@ export async function getBlogData(): Promise<any[]> {
         date: obj.date || obj.ngay || obj.ngaydang || '24/06/2026'
       };
 
-      if (finalItem.title !== "" && finalItem.slug !== "") {
-        blogItems.push(finalItem);
-      }
+      if (finalItem.title !== "" && finalItem.slug !== "") blogItems.push(finalItem);
     }
+
+    GLOBAL_RAM_CACHE.blog = { data: blogItems, lastFetched: now };
     return blogItems;
   } catch (error) {
-    console.error("Lỗi fetch dữ liệu Blog từ Google Sheet:", error);
-    return [];
+    return GLOBAL_RAM_CACHE.blog.data || [];
   }
 }
