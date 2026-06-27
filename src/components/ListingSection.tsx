@@ -84,6 +84,28 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     };
   }, []);
 
+  // 1. Lưu vị trí cuộn khi người dùng rời trang
+useEffect(() => {
+  const handleScroll = () => {
+    sessionStorage.setItem("scrollPosition", window.scrollY.toString());
+  };
+  window.addEventListener("scroll", handleScroll);
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+
+// 2. Khôi phục vị trí cuộn khi trang quay lại
+useEffect(() => {
+  const savedPosition = sessionStorage.getItem("scrollPosition");
+  if (savedPosition) {
+    // Đợi danh sách render xong rồi mới cuộn tới
+    setTimeout(() => {
+      window.scrollTo(0, parseInt(savedPosition));
+      sessionStorage.removeItem("scrollPosition"); // Xóa để không bị cuộn lại lần sau
+    }, 100); 
+  }
+}, []);
+
+
   useEffect(() => {
     if (currentPage > 0) sessionStorage.setItem("bds_page", currentPage.toString());
   }, [currentPage]);
