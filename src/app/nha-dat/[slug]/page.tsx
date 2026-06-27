@@ -76,8 +76,43 @@ export default async function NhaDatDetail({ params }: Props) {
   const locationText = item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   const locationName = item.khuVuc || item.KhuVuc || "";
   const locationSlug = convertToSlug(locationName);
-
   const imageSeo = layUrlAnhChuan(item.anh || item.Anh) || "";
+
+  // Chuẩn hóa gọt giá tiền thô sang con số thuần (ví dụ: "3.5 tỷ" -> 3500000000) để bọ Google hiểu
+  const rawPrice = item.gia || item.Gia || "0";
+  let numericPrice = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
+  if (rawPrice.toLowerCase().includes("tỷ") || rawPrice.toLowerCase().includes("ty")) {
+    numericPrice = numericPrice * 1000000000;
+  } else if (rawPrice.toLowerCase().includes("triệu") || rawPrice.toLowerCase().includes("trieu")) {
+    numericPrice = numericPrice * 1000000;
+  }
+
+  // 🚀 VŨ KHÍ BẬC THẦY SEO: Khai báo mảng Schema chuẩn RealEstateListing kết hợp cấu trúc phân cấp địa điểm
+  const jsonLdSchema = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": titleText,
+    "description": `${titleText} tại khu vực ${locationText}. Diện tích thực tế ${item.dienTich || "Chưa rõ"}.`,
+    "datePosted": item.ngayDang || new Date().toISOString().split("T")[0],
+    "image": imageSeo,
+    "offers": {
+      "@type": "Offer",
+      "price": numericPrice > 0 ? numericPrice : rawPrice,
+      "priceCurrency": "VND",
+      "availability": "https://schema.org/InStock"
+    },
+    "about": {
+      "@type": "SingleFamilyResidence",
+      "name": titleText,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": locationText,
+        "addressLocality": "Đà Nẵng",
+        "addressRegion": "Đà Nẵng",
+        "addressCountry": "VN"
+      }
+    }
+  };
 
   const enrichedItem = {
     ...item,
@@ -87,6 +122,12 @@ export default async function NhaDatDetail({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-[#222222] selection:bg-orange-500 selection:text-white">
+      {/* Tiêm Schema siêu sạch vào thẻ head ảo của trang */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSchema) }}
+      />
+
       <Header />
 
       <nav className="sticky top-[56px] md:top-[64px] z-30 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -110,7 +151,6 @@ export default async function NhaDatDetail({ params }: Props) {
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
-        {/* 🚀 ĐÃ BƠM ẢNH TĨNH LCP TRỰC TIẾP TỪ SERVER XUỐNG */}
         <PropertyClient item={enrichedItem} initialCoverImage={imageSeo} />
 
         <div className="mt-16">
