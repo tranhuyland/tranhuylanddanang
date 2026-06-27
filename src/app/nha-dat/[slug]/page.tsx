@@ -30,15 +30,20 @@ function convertToSlug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-const getPropertyBySlug = cache(async (slug: string) => {
+// 🌟 RAM CACHE: Bọc riêng mảng tổng để React Request Memoization ghi nhớ, không bắt Server gọi API 2 lần
+const getCachedAllItems = cache(async () => {
   const data = await getBdsData();
-  const safeData = Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? data : [];
+});
+
+const getPropertyBySlug = async (slug: string) => {
+  const safeData = await getCachedAllItems();
   const foundItem = safeData.find((p: any) => p?.slug === slug);
   return {
     item: foundItem ? (foundItem as any) : null,
     allItems: safeData,
   };
-});
+};
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
@@ -87,19 +92,21 @@ export default async function NhaDatDetail({ params }: Props) {
     numericPrice = numericPrice * 1000000;
   }
 
-  // 🚀 VŨ KHÍ BẬC THẦY SEO: Khai báo mảng Schema chuẩn RealEstateListing kết hợp cấu trúc phân cấp địa điểm
+  // 🚀 VŨ KHÍ BẬC THẦY SEO: Cấu trúc Schema chuẩn Google Rich Results Test 2026
   const jsonLdSchema = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     "name": titleText,
     "description": `${titleText} tại khu vực ${locationText}. Diện tích thực tế ${item.dienTich || "Chưa rõ"}.`,
+    "url": `https://tranhuyland.vn/nha-dat/${slug}`,
     "datePosted": item.ngayDang || new Date().toISOString().split("T")[0],
     "image": imageSeo,
     "offers": {
       "@type": "Offer",
       "price": numericPrice > 0 ? numericPrice : rawPrice,
       "priceCurrency": "VND",
-      "availability": "https://schema.org/InStock"
+      "availability": "https://schema.org/InStock",
+      "url": `https://tranhuyland.vn/nha-dat/${slug}`
     },
     "about": {
       "@type": "SingleFamilyResidence",
