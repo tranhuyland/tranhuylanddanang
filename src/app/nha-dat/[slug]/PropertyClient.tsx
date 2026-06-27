@@ -32,23 +32,15 @@ const extractRooms = (item: any) => {
   if (!pn) {
     const matchPhong1 = fullText.match(/(\d+)\s*(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)(?![a-z])/i);
     const matchPhong2 = fullText.match(/\b(?:pn|phong ngu|p ngu|ngu|p\.ngu|phong)[\s:-]*(\d+)/i);
-    
-    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) {
-      pn = parseInt(matchPhong1[1]).toString();
-    } else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) {
-      pn = parseInt(matchPhong2[1]).toString();
-    }
+    if (matchPhong1 && parseInt(matchPhong1[1]) > 0) pn = parseInt(matchPhong1[1]).toString();
+    else if (matchPhong2 && parseInt(matchPhong2[1]) > 0) pn = parseInt(matchPhong2[1]).toString();
   }
 
   if (!wc) {
     const matchWC1 = fullText.match(/(\d+)\s*(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)(?![a-z])/i);
     const matchWC2 = fullText.match(/\b(?:wc|phong tam|nha ve sinh|phong ve sinh|toilet|nvs)[\s:-]*(\d+)/i);
-    
-    if (matchWC1 && parseInt(matchWC1[1]) > 0) {
-      wc = parseInt(matchWC1[1]).toString();
-    } else if (matchWC2 && parseInt(matchWC2[1]) > 0) {
-      wc = parseInt(matchWC2[1]).toString();
-    }
+    if (matchWC1 && parseInt(matchWC1[1]) > 0) wc = parseInt(matchWC1[1]).toString();
+    else if (matchWC2 && parseInt(matchWC2[1]) > 0) wc = parseInt(matchWC2[1]).toString();
   }
 
   return { pn, wc };
@@ -103,25 +95,19 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const touchStartDist = useRef(0);
-
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // ⚡ BÙA CHÚ TỐI ƯU HIỆU NĂNG: Trì hoãn xử lý chuỗi Ma trận nặng để không nghẽn luồng vẽ ban đầu
   const noiDungMoTaGoc = item.mota || item.moTa || item.Mota || item.description || item.Description || "Thông tin đang được cập nhật...";
   const [matrixContent, setMatrixContent] = useState<string>(noiDungMoTaGoc);
 
   useEffect(() => {
-    // Trì hoãn xử lý liên kết Ma trận ra phía sau tiến trình vẽ ảnh Hero
     startTransition(() => {
       setMatrixContent(tuDongGaiLinkMaTran(noiDungMoTaGoc));
     });
   }, [noiDungMoTaGoc]);
 
   useEffect(() => {
-    if (!isPopupOpen) {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-    }
+    if (!isPopupOpen) { setScale(1); setPosition({ x: 0, y: 0 }); }
   }, [isPopupOpen]);
 
   useEffect(() => {
@@ -137,7 +123,6 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
     const bdsId = item.id?.toString() || item.slug;
     const savedFavs = localStorage.getItem("thl_favorites");
     let parsedFavs = savedFavs ? JSON.parse(savedFavs) : [];
-    
     if (isFavorite) {
       parsedFavs = parsedFavs.filter((id: string) => id !== bdsId);
       setIsFavorite(false);
@@ -170,14 +155,11 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
     if (item.diachiFull) return item.diachiFull;
     if (item.diaChi) return item.diaChi;
     if (item.Diachi) return item.Diachi;
-    
     const parts = [];
     if (item.duong || item.Duong) parts.push(item.duong || item.Duong);
     if (item.phuong || item.Phuong) parts.push(item.phuong || item.Phuong);
     if (item.khuVuc || item.Khuvuc || item.quan || item.Quan) parts.push(item.khuVuc || item.Khuvuc || item.quan || item.Quan);
-    
     if (parts.length > 0) return parts.join(", ");
-    
     return item.khuVucFull || item.khuvucFull || "Đà Nẵng";
   }, [item]);
 
@@ -216,20 +198,19 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
   return (
     <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full max-w-full">
       
-      {/* 🖼️ 1. GALLERY HÌNH ẢNH CÓ KẾ THỪA LCP tĩnh */}
+      {/* 🚀 CHỐT CHẶN UX 0ms: Truyền bùa chú initialCoverImage tĩnh vào Slider để xóa chớp trắng */}
       <div className="relative w-full max-w-full p-2 sm:p-3 pb-0">
         <PropertyGallery 
           images={tatCaAnhGallery} 
           alt={item.tieude || item.Title || "Trần Huy Land"} 
           videoUrl={item.videoUrl || item.VideoUrl} 
           linkMap={item.linkMap || item.LinkMap} 
-          toaDo={item.toaDo || item.ToaDo || item.Toado || item.toado} 
+          toaDo={item.toaDo || item.ToaDo || item.Toado || item.toado}
+          initialCoverImage={initialCoverImage} 
         />
       </div>
 
-      {/* 📝 2. NỘI DUNG SẢN PHẨM */}
       <div className="p-5 sm:p-8 w-full max-w-full">
-        
         <header>
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-[1.3] tracking-tight flex-1 pr-0 sm:pr-4">
@@ -258,7 +239,6 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
 
         <div className="w-full border-t border-slate-100 my-6"></div>
 
-        {/* Mức Giá & Diện Tích */}
         <div className="flex flex-wrap items-end gap-x-8 gap-y-4 mb-6">
           <div>
             <div className="text-slate-400 text-[11px] font-bold mb-1 uppercase tracking-wider">Mức giá</div>
@@ -277,7 +257,6 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
           )}
         </div>
 
-        {/* Bảng Thông số Kỹ thuật */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-slate-100 mb-8">
           {pn && (
             <div className="flex items-center gap-3">
@@ -321,7 +300,6 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
           </div>
         </div>
 
-        {/* Nút bản đồ & Sổ */}
         {((item.linkMap || item.LinkMap) || !!anhSoDoGoc) && (
           <div className={`grid gap-2.5 sm:gap-4 mb-8 w-full ${(item.linkMap || item.LinkMap) && !!anhSoDoGoc ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {(item.linkMap || item.LinkMap) && (
@@ -345,7 +323,6 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
           </div>
         )}
 
-        {/* 🚀 LÕI RENDER MARKDOWN CHUẨN ĐẶC TẢ BẤT ĐỘNG SẢN */}
         <div className="w-full pt-2">
           <h4 className="font-extrabold text-slate-900 text-lg mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             Mô tả chi tiết
@@ -360,25 +337,15 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
                 ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-4 space-y-1.5 text-slate-800" {...props} />,
                 li: ({node, ...props}) => <li className="leading-[1.65]" {...props} />,
                 strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
-                
                 a: ({node, ...props}) => {
                   const targetUrl = props.href || '#';
                   const isInternalSilo = targetUrl.startsWith('/') || targetUrl.includes('tranhuyland.vn');
-                  
                   return isInternalSilo ? (
-                    <Link 
-                      href={targetUrl} 
-                      className="text-[#E03C31] font-bold underline decoration-1 hover:decoration-2 hover:text-red-700 transition-all cursor-pointer"
-                    >
+                    <Link href={targetUrl} className="text-[#E03C31] font-bold underline decoration-1 hover:decoration-2 hover:text-red-700 transition-all cursor-pointer">
                       {props.children}
                     </Link>
                   ) : (
-                    <a 
-                      href={targetUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors cursor-pointer"
-                    >
+                    <a href={targetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors cursor-pointer">
                       {props.children}
                     </a>
                   );
@@ -392,60 +359,27 @@ export default function PropertyClient({ item, initialCoverImage }: PropertyClie
 
       </div>
 
-      {/* POPUP XEM SỔ ĐỎ */}
       {isPopupOpen && (
-        <div 
-          className="fixed inset-0 bg-black/95 backdrop-blur-md z-[99999] flex flex-col items-center justify-center animate-fade-in touch-none select-none"
-          onClick={() => setIsPopupOpen(false)}
-        >
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md z-[99999] flex flex-col items-center justify-center animate-fade-in touch-none select-none" onClick={() => setIsPopupOpen(false)}>
           <div className="absolute top-4 left-4 z-50 flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-white/10 p-1.5 rounded-xl">
-            <button onClick={(e) => { e.stopPropagation(); handleZoomIn(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
-              <ZoomIn size={20} />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); handleZoomOut(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
-              <ZoomOut size={20} />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); handleResetZoom(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
-              <RefreshCw size={16} />
-            </button>
+            <button onClick={(e) => { e.stopPropagation(); handleZoomIn(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer"><ZoomIn size={20} /></button>
+            <button onClick={(e) => { e.stopPropagation(); handleZoomOut(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer"><ZoomOut size={20} /></button>
+            <button onClick={(e) => { e.stopPropagation(); handleResetZoom(); }} className="p-2 text-white hover:text-amber-400 bg-white/5 hover:bg-white/10 rounded-lg transition-all cursor-pointer"><RefreshCw size={16} /></button>
             <span className="text-white text-[11px] font-bold px-2 tracking-wide bg-white/10 rounded-md py-1">Zoom: {Math.round(scale * 100)}%</span>
           </div>
 
-          <button 
-            onClick={(e) => { e.stopPropagation(); setIsPopupOpen(false); }}
-            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-all z-50 cursor-pointer border border-white/10 shadow-lg"
-          >
-            <X size={24} />
-          </button>
+          <button onClick={(e) => { e.stopPropagation(); setIsPopupOpen(false); }} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-all z-50 cursor-pointer border border-white/10 shadow-lg"><X size={24} /></button>
 
           <div 
             className="relative w-full h-full flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
-            onClick={(e) => e.stopPropagation()} 
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={() => { isDragging.current = false; }}
-            onMouseLeave={() => { isDragging.current = false; }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
+            onClick={(e) => e.stopPropagation()} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove}
+            onMouseUp={() => { isDragging.current = false; }} onMouseLeave={() => { isDragging.current = false; }}
+            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={() => { isDragging.current = false; touchStartDist.current = 0; }}
           >
-            <img 
-              src={layUrlAnhChuan(anhSoDoGoc)}
-              alt="Sổ hồng bản vẽ chi tiết" 
-              draggable={false}
-              style={{
-                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                transition: isDragging.current ? "none" : "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
-              className="max-w-[95vw] max-h-[80vh] object-contain rounded-lg shadow-2xl origin-center pointer-events-auto select-none"
-            />
+            <img src={layUrlAnhChuan(anhSoDoGoc)} alt="Sổ hồng bản vẽ chi tiết" draggable={false} style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isDragging.current ? "none" : "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)" }} className="max-w-[95vw] max-h-[80vh] object-contain rounded-lg shadow-2xl origin-center pointer-events-auto select-none" />
           </div>
 
-          {scale === 1 && (
-            <div className="absolute bottom-6 text-white/50 text-xs font-medium bg-black/40 px-4 py-1.5 rounded-full pointer-events-none tracking-wider uppercase text-center">
-              Dùng 2 ngón tay hoặc bấm nút để phóng to bản vẽ
-            </div>
-          )}
+          {scale === 1 && (<div className="absolute bottom-6 text-white/50 text-xs font-medium bg-black/40 px-4 py-1.5 rounded-full pointer-events-none tracking-wider uppercase text-center">Dùng 2 ngón tay hoặc bấm nút để phóng to bản vẽ</div>)}
         </div>
       )}
     </article>
