@@ -19,7 +19,6 @@ interface PropertyGalleryProps {
   linkMap?: string; 
   maNhungMap?: string; 
   toaDo?: string;
-  initialCoverImage?: string;
 }
 
 export default function SlideBds({ 
@@ -28,11 +27,13 @@ export default function SlideBds({
   videoUrl, 
   linkMap, 
   maNhungMap, 
-  toaDo,
-  initialCoverImage 
+  toaDo 
 }: PropertyGalleryProps) {
   
-  // ⚡ Bùa chú tối ưu: Trạng thái xác định Swiper ngoài đã chạy xong hoàn toàn
+  // ⚡ Bùa chú tối ưu: Khai báo đầy đủ toàn bộ bộ nhớ State của giao diện
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<'images' | 'video' | 'map'>('images');
   const [isSwiperReady, setIsSwiperReady] = useState(false);
   const [lightboxSwiper, setLightboxSwiper] = useState<any>(null);
 
@@ -104,7 +105,7 @@ export default function SlideBds({
       {/* 🌟 KHUNG CHỨA CỐ ĐỊNH CHIỀU CAO CAO CẤP */}
       <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-slate-100 rounded-xl overflow-hidden relative border border-slate-200 group z-0">
         
-        {/* 🚀 ĐỈNH CAO TỐI ƯU LCP: Ảnh tĩnh số 0 render thô lập tức từ file HTML, bỏ qua Swiper cản trở ban đầu */}
+        {/* 🚀 ĐỈNH CAO TỐI ƯU LCP: Ảnh tĩnh số 0 render thô lập tức từ file HTML */}
         {!isSwiperReady && (
           <div className="absolute inset-0 z-20 w-full h-full pointer-events-none bg-slate-100 animate-pulse-slow">
             <Image 
@@ -125,7 +126,7 @@ export default function SlideBds({
           spaceBetween={0}
           slidesPerView={1}
           initialSlide={activeIndex}
-          onInit={() => setIsSwiperReady(true)} // ⚡ Kích hoạt tắt ảnh tĩnh khi Swiper đã thông suốt
+          onInit={() => setIsSwiperReady(true)}
           onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
           keyboard={{ enabled: true }}
           navigation={{ nextEl: '.nm-next', prevEl: '.nm-prev' }}
@@ -146,7 +147,6 @@ export default function SlideBds({
                   src={layUrlAnhChuan(img, 800)} 
                   alt={`${alt} - Hình ${idx + 1}`} 
                   fill 
-                  // ⚡ Tấm 0 ở slide thật vẫn gán priority để trình duyệt nạp song song ngầm phía sau
                   priority={idx === 0}
                   loading={idx === 0 ? "eager" : "lazy"}
                   sizes="(max-width: 768px) 100vw, 800px" 
@@ -308,3 +308,4 @@ export default function SlideBds({
     </>
   );
 }
+l
