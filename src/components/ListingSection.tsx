@@ -58,8 +58,8 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
       if (savedTab) setActiveLoaiHinh(savedTab);
     } catch (e) {}
 
-    // 🚀 CHỐT CHẶN TỐI THƯỢNG: Kích hoạt bộ nhớ đệm BFCache của trình duyệt
-    const handlePageShow = (event: PageShowEvent) => {
+    // 🚀 CHỐT CHẶN TỐI THƯỢNG (Đã fix Type lỗi Vercel): Dùng 'any' thay cho 'PageShowEvent'
+    const handlePageShow = (event: any) => {
       if (event.persisted) {
         isRestoringRef.current = true;
         const savedPos = sessionStorage.getItem("saved_scroll_pos");
@@ -320,7 +320,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
               {totalPages > 1 && (
                 <div className="flex flex-wrap justify-center items-center gap-1.5 sm:gap-2 mt-12 sm:mt-16">
                   <button onClick={() => handlePageChange(1)} disabled={currentPage === 1} aria-label="Trang đầu" 
-                    className={`hidden sm:flex items-center justify-center px-3 h-10 rounded-xl font-bold transition-all ${currentPage === 1 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}
+                    className={`hidden sm:flex items-center justify-center px-3 h-10 rounded-xl font-bold transition-all ${currentPage === 1 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-white border borderslate-200 text-slate-600 hover:border-orange-300 hover:text-orange-600 shadow-sm active:scale-95'}`}
                   >
                     <ChevronsLeft size={18} />
                   </button>
