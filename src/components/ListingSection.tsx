@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   SlidersHorizontal, Check, RotateCcw, X, Heart, 
   Map as MapIcon, List, ChevronLeft, ChevronRight, 
@@ -41,70 +41,46 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const itemsPerPage = 6;
   const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
-  
-  // Cờ hiệu ngăn chập chờn cuộn kép
-  const isRestoringRef = useRef(false);
 
+  // 1. Khởi tạo & nạp cache từ bộ nhớ trình duyệt
   useEffect(() => {
     setIsClient(true);
     try {
       const savedFavs = localStorage.getItem("thl_favorites");
       if (savedFavs) setFavoriteIds(JSON.parse(savedFavs));
       
-      // Đọc trạng thái cũ
       const savedPage = sessionStorage.getItem("bds_page");
       if (savedPage) setCurrentPage(parseInt(savedPage, 10));
       const savedTab = sessionStorage.getItem("bds_tab");
       if (savedTab) setActiveLoaiHinh(savedTab);
     } catch (e) {}
 
-    // 🚀 CHỐT CHẶN TỐI THƯỢNG (Đã fix Type lỗi Vercel): Dùng 'any' thay cho 'PageShowEvent'
+    // Cơ chế bão lãnh khi Safari/Chrome Mobile dùng BFCache (đóng băng trang)
     const handlePageShow = (event: any) => {
       if (event.persisted) {
-        isRestoringRef.current = true;
-        const savedPos = sessionStorage.getItem("saved_scroll_pos");
+        const savedPos = sessionStorage.getItem("thl_scroll_pos");
         if (savedPos) {
-          window.scrollTo({ top: parseInt(savedPos, 10), behavior: "instant" as ScrollBehavior });
+          window.scrollTo({ top: parseInt(savedPos, 10), behavior: "instant" });
         }
-        setTimeout(() => { isRestoringRef.current = false; }, 200);
-      }
-    };
-
-    const handleScrollPos = () => {
-      if (!isRestoringRef.current) {
-        sessionStorage.setItem("saved_scroll_pos", window.scrollY.toString());
       }
     };
 
     window.addEventListener('pageshow', handlePageShow);
-    window.addEventListener('scroll', handleScrollPos, { passive: true });
-    return () => {
-      window.removeEventListener('pageshow', handlePageShow);
-      window.removeEventListener('scroll', handleScrollPos);
-    };
+    return () => window.removeEventListener('pageshow', handlePageShow);
   }, []);
 
-  // 1. Lưu vị trí cuộn khi người dùng rời trang
-useEffect(() => {
-  const handleScroll = () => {
-    sessionStorage.setItem("scrollPosition", window.scrollY.toString());
-  };
-  window.addEventListener("scroll", handleScroll);
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
-
-// 2. Khôi phục vị trí cuộn khi trang quay lại
-useEffect(() => {
-  const savedPosition = sessionStorage.getItem("scrollPosition");
-  if (savedPosition) {
-    // Đợi danh sách render xong rồi mới cuộn tới
-    setTimeout(() => {
-      window.scrollTo(0, parseInt(savedPosition));
-      sessionStorage.removeItem("scrollPosition"); // Xóa để không bị cuộn lại lần sau
-    }, 100); 
-  }
-}, []);
-
+  // 2. ENGINE NEO VỊ TRÍ CUỘN (Hoạt động sau khi danh sách đã nạp xong DOM)
+  useEffect(() => {
+    const savedPos = sessionStorage.getItem("thl_scroll_pos");
+    if (savedPos && safeBdsItems.length > 0) {
+      const targetY = parseInt(savedPos, 10);
+      const timer = setTimeout(() => {
+        window.scrollTo({ top: targetY, behavior: "instant" });
+        sessionStorage.removeItem("thl_scroll_pos"); // 🔥 CHÍ MẠNG: Xóa ngay để bấm chuyển trang không bị nhảy lại!
+      }, 30);
+      return () => clearTimeout(timer);
+    }
+  }, [safeBdsItems]);
 
   useEffect(() => {
     if (currentPage > 0) sessionStorage.setItem("bds_page", currentPage.toString());
@@ -170,7 +146,6 @@ useEffect(() => {
     return counts;
   }, [safeBdsItems]);
 
-  // 🚀 TỐI ƯU 60 FPS: Luồng tính toán mảng được đóng băng trong useMemo
   const filteredItems = useMemo(() => {
     let result = safeBdsItems.filter(i => showFavorites ? favoriteIds.includes(i.id?.toString() || i.slug) : true);
     result.sort((a: any, b: any) => {
@@ -217,18 +192,6 @@ useEffect(() => {
     }
     return result;
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
-
-  // Khôi phục tọa độ lập tức sau khi tính toán cây DOM xong
-  useEffect(() => {
-    if (isRestoringRef.current) return;
-    const savedPos = sessionStorage.getItem("saved_scroll_pos");
-    if (savedPos && filteredItems.length > 0) {
-      window.scrollTo({
-        top: parseInt(savedPos, 10),
-        behavior: "instant" as ScrollBehavior
-      });
-    }
-  }, [filteredItems]);
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const paginationArray = generatePagination(currentPage, totalPages);
