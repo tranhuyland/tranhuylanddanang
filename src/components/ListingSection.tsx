@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { 
   SlidersHorizontal, Check, RotateCcw, X, Heart, 
   Map as MapIcon, List, ChevronLeft, ChevronRight, 
@@ -25,8 +25,8 @@ const TAB_OPTIONS = [
 ];
 
 export default function ListingSection({ allBdsItems = [], forceDistrict }: ListingSectionProps) {
-  const safeBdsItems = Array.isArray(allBdsItems) ? allBdsItems : [];
-  const initialFilters = { khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" };
+  const safeBdsItems = useMemo(() => Array.isArray(allBdsItems) ? allBdsItems : [], [allBdsItems]);
+  const initialFilters = useMemo(() => ({ khuVuc: forceDistrict || "all", khoangGia: "all", huong: "all", tag: "all" }), [forceDistrict]);
   
   const [filters, setFilters] = useState(initialFilters);
   const [tempFilters, setTempFilters] = useState(initialFilters);
@@ -41,27 +41,56 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
 
   const itemsPerPage = 6;
   const activeFiltersCount = Object.values(filters).filter(v => v !== "all").length;
+  
+  // Cờ hiệu ngăn chập chờn cuộn kép
+  const isRestoringRef = useRef(false);
 
   useEffect(() => {
     setIsClient(true);
     try {
       const savedFavs = localStorage.getItem("thl_favorites");
       if (savedFavs) setFavoriteIds(JSON.parse(savedFavs));
+      
+      // Đọc trạng thái cũ
       const savedPage = sessionStorage.getItem("bds_page");
       if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+      const savedTab = sessionStorage.getItem("bds_tab");
+      if (savedTab) setActiveLoaiHinh(savedTab);
     } catch (e) {}
 
-    // 🚀 CHỐT CHẶN 2: Lưu tọa độ mỗi khi khách cuộn màn hình
-    const handleScrollPos = () => {
-      sessionStorage.setItem("saved_scroll_pos", window.scrollY.toString());
+    // 🚀 CHỐT CHẶN TỐI THƯỢNG: Kích hoạt bộ nhớ đệm BFCache của trình duyệt
+    const handlePageShow = (event: PageShowEvent) => {
+      if (event.persisted) {
+        isRestoringRef.current = true;
+        const savedPos = sessionStorage.getItem("saved_scroll_pos");
+        if (savedPos) {
+          window.scrollTo({ top: parseInt(savedPos, 10), behavior: "instant" as ScrollBehavior });
+        }
+        setTimeout(() => { isRestoringRef.current = false; }, 200);
+      }
     };
+
+    const handleScrollPos = () => {
+      if (!isRestoringRef.current) {
+        sessionStorage.setItem("saved_scroll_pos", window.scrollY.toString());
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('scroll', handleScrollPos, { passive: true });
-    return () => window.removeEventListener('scroll', handleScrollPos);
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('scroll', handleScrollPos);
+    };
   }, []);
 
   useEffect(() => {
     if (currentPage > 0) sessionStorage.setItem("bds_page", currentPage.toString());
   }, [currentPage]);
+
+  useEffect(() => {
+    sessionStorage.setItem("bds_tab", activeLoaiHinh);
+  }, [activeLoaiHinh]);
 
   useEffect(() => {
     const handleOpenDrawer = () => { setTempFilters(filters); setIsDrawerOpen(true); };
@@ -119,6 +148,7 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return counts;
   }, [safeBdsItems]);
 
+  // 🚀 TỐI ƯU 60 FPS: Luồng tính toán mảng được đóng băng trong useMemo
   const filteredItems = useMemo(() => {
     let result = safeBdsItems.filter(i => showFavorites ? favoriteIds.includes(i.id?.toString() || i.slug) : true);
     result.sort((a: any, b: any) => {
@@ -166,8 +196,9 @@ export default function ListingSection({ allBdsItems = [], forceDistrict }: List
     return result;
   }, [filters, activeLoaiHinh, searchTerm, safeBdsItems, showFavorites, favoriteIds]);
 
-  // 🚀 CHỐT CHẶN 3: Kích hoạt dịch chuyển tức thì (instant) ngay khi danh sách vừa lọc xong
+  // Khôi phục tọa độ lập tức sau khi tính toán cây DOM xong
   useEffect(() => {
+    if (isRestoringRef.current) return;
     const savedPos = sessionStorage.getItem("saved_scroll_pos");
     if (savedPos && filteredItems.length > 0) {
       window.scrollTo({
