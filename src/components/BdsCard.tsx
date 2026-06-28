@@ -15,16 +15,16 @@ interface BdsCardProps {
 }
 
 export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: BdsCardProps) {
-  const thumbnail = layUrlAnhChuan(item.anh, 400);
-  const displayLocation = item.khuVuc || item.diaChi || item.diaChiFull || item.khuVucFull || "Đà Nẵng";
+  const thumbnail = layUrlAnhChuan(item?.anh, 400);
+  const displayLocation = item?.khuVuc || item?.diaChi || item?.diaChiFull || item?.khuVucFull || "Đà Nẵng";
   const soLuongAnh = useMemo(() => countImages(item), [item]);
   const giaM2 = useMemo(() => calculateGiaM2(item), [item]);
   const { pn, wc } = useMemo(() => extractRooms(item), [item]);
   const tags = useMemo(() => parsePropertyTags(item), [item]);
-  const dateInfo = useMemo(() => parseDateInfo(item.ngayDang || item.ngay || ""), [item]);
+  const dateInfo = useMemo(() => parseDateInfo(item?.ngayDang || item?.ngay || ""), [item]);
 
   const daysOld = useMemo(() => {
-    const rawDate = item.ngayDang || item.ngay || "";
+    const rawDate = item?.ngayDang || item?.ngay || "";
     if (!rawDate) return 999;
 
     let d: Date;
@@ -53,7 +53,7 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
     const diffTime = now.getTime() - d.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return diffDays < 0 ? 0 : diffDays; 
-  }, [item.ngayDang, item.ngay]);
+  }, [item?.ngayDang, item?.ngay]);
 
   const isTinMoi = daysOld <= 2;
 
@@ -63,9 +63,9 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
-    const url = `${window.location.origin}/nha-dat/${item.slug}`;
+    const url = `${window.location.origin}/nha-dat/${item?.slug || ''}`;
     if (navigator.share) {
-      try { await navigator.share({ title: item.tieude, text: 'Xem bất động sản này trên website:', url }); } catch (error) {}
+      try { await navigator.share({ title: item?.tieude || 'Trần Huy Land', text: 'Xem bất động sản này trên website:', url }); } catch (error) {}
     } else {
       navigator.clipboard.writeText(url).then(() => { alert("Đã sao chép đường dẫn chia sẻ!"); });
     }
@@ -81,23 +81,24 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
   return (
     <div className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-orange-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]">
       
-      <Link href={`/nha-dat/${item.slug}`} onClick={handleLinkClick} aria-label={`Xem chi tiết: ${item.tieude}`} className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 block">
-        <Image src={thumbnail} alt={item.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
+      <Link href={`/nha-dat/${item?.slug || ''}`} onClick={handleLinkClick} aria-label={`Xem chi tiết: ${item?.tieude || ''}`} className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 block">
+        <Image src={thumbnail} alt={item?.tieude || "Trần Huy Land"} fill className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out" sizes="(max-width: 1280px) 100vw" priority={false} />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         <div className="absolute top-2 left-0 flex flex-col items-start gap-1.5 z-10">
-          <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider">
+          {/* 🔥 BÙA CHÚ CHỐNG HYDRATION MISMATCH #418 CHO TEM ĐỎ */}
+          <span className="bg-[#E03C31] text-white text-[11px] font-bold px-2.5 py-1 rounded-r shadow-sm tracking-wider" suppressHydrationWarning>
             {rankBadgeText}
           </span>
-          {tags.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
-          {tags.isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
-          {tags.isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
-          {tags.isNhaMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Nhà Mặt Tiền</span>}
-          {tags.isNhaKiet && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Nhà Kiệt</span>}
-          {tags.isDatNen && <span className="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Nền</span>}
-          {tags.isDatMatTien && <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Mặt Tiền</span>}
-          {tags.isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
-          {tags.isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
+          {tags?.isSapHam && <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider animate-pulse">🔥 Sập Hầm</span>}
+          {tags?.isChoThue && <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🔑 Cho Thuê</span>}
+          {tags?.isChinhChu && <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">✓ Chính Chủ</span>}
+          {tags?.isNhaMatTien && <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Nhà Mặt Tiền</span>}
+          {tags?.isNhaKiet && <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🛣️ Nhà Kiệt</span>}
+          {tags?.isDatNen && <span className="bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Nền</span>}
+          {tags?.isDatMatTien && <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Mặt Tiền</span>}
+          {tags?.isDatKiet && <span className="bg-cyan-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">⛳ Đất Kiệt</span>}
+          {tags?.isCanHo && <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 ml-2 rounded shadow-sm uppercase tracking-wider">🏢 Căn Hộ</span>}
         </div>
 
         <div className="absolute bottom-2 right-2 bg-slate-900/70 text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 z-10 backdrop-blur-sm">
@@ -107,15 +108,15 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
 
       <div className="p-4 flex flex-col flex-grow justify-between">
         <div>
-          <Link href={`/nha-dat/${item.slug}`} onClick={handleLinkClick} className="block">
+          <Link href={`/nha-dat/${item?.slug || ''}`} onClick={handleLinkClick} className="block">
             <h2 className="text-[#2C2C2C] font-bold text-[14px] sm:text-[15px] uppercase line-clamp-2 leading-snug mb-3 group-hover:text-orange-600 transition-colors duration-300 h-[2.6rem] sm:h-[2.8rem]">
-              {item.tieude}
+              {item?.tieude}
             </h2>
           </Link>
 
           <div className="flex flex-wrap items-center text-[14px] text-[#505050] mb-3 gap-x-2 gap-y-1">
-            <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item.gia || "Thỏa thuận"}</span>
-            {item.dienTich && <span className="whitespace-nowrap font-bold text-[#E03C31] before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{item.dienTich}</span>}
+            <span className="text-[#E03C31] font-bold text-[16px] whitespace-nowrap">{item?.gia || "Thỏa thuận"}</span>
+            {item?.dienTich && <span className="whitespace-nowrap font-bold text-[#E03C31] before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{item?.dienTich}</span>}
             {giaM2 && <span className="whitespace-nowrap font-medium text-[#777] text-[13px] before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{giaM2}</span>}
             {pn && <span className="flex items-center gap-1 whitespace-nowrap font-medium before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{pn} <BedDouble size={14} className="text-slate-400" /></span>}
             {wc && <span className="flex items-center gap-1 whitespace-nowrap font-medium before:content-['●'] before:text-slate-300 before:text-[10px] before:mr-2">{wc} <Bath size={14} className="text-slate-400" /></span>}
@@ -131,10 +132,10 @@ export default function BdsCard({ item, rank, isFavorite, onToggleFavorite }: Bd
           <div className="flex flex-col justify-center min-w-0 pr-2">
             <div className="flex items-center gap-1 text-[12px] sm:text-[13px] text-slate-800 font-bold truncate">
               <Clock size={13} strokeWidth={2} className="text-slate-600 shrink-0" aria-hidden="true" />
-              <span suppressHydrationWarning>Ngày đăng: {dateInfo.fullDate} {dateInfo.time && ` ${dateInfo.time}`}</span>
+              <span suppressHydrationWarning>Ngày đăng: {dateInfo?.fullDate} {dateInfo?.time && ` ${dateInfo.time}`}</span>
             </div>
             <span className="text-[11px] sm:text-[12px] text-slate-600 font-normal italic mt-0.5 truncate pl-[18px]" suppressHydrationWarning>
-              {dateInfo.relative}
+              {dateInfo?.relative}
             </span>
           </div>
           
